@@ -7,12 +7,6 @@ pub struct Vec3 {
     pub z: f64,
 }
 
-impl Vec3 {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
-        Self { x, y, z }
-    }
-}
-
 impl Mul<f64> for Vec3 {
     type Output = Self;
 
@@ -22,6 +16,35 @@ impl Mul<f64> for Vec3 {
             y: self.y * rhs,
             z: self.z * rhs,
         }
+    }
+}
+
+impl Add<Self> for Vec3 {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
+    }
+}
+
+impl Vec3 {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
+        Self { x, y, z }
+    }
+
+    /// Returns the vector magnitude.
+    pub fn magnitude(&self) -> f64 {
+        (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
+    }
+
+    /// Returns the normalised version of the vector
+    pub fn to_normalized(self) -> Self {
+        let mag_recip = 1. / self.magnitude();
+        self * mag_recip
     }
 }
 
@@ -84,12 +107,7 @@ impl Quaternion {
 
     /// Rotate a vector using this quaternion.
     pub fn rotate_vec(self, vec: Vec3) -> Vec3 {
-        let q = (self * vec) * self.inverse();
-        Vec3 {
-            x: q.x,
-            y: q.y,
-            z: q.z,
-        }
+        (self * vec * self.inverse()).to_vec()
     }
 
     /// Create a rotation quaternion from an axis and angle.
@@ -116,31 +134,21 @@ impl Quaternion {
         }
     }
 }
-
-/// A point in cartesian coordinates
-#[derive(Debug)]
-pub struct Pt3 {
-    x: f64,
-    y: f64,
-    z: f64,
-}
-
-impl Add<Self> for Pt3 {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Self {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-            z: self.z + rhs.z,
-        }
-    }
-}
-
-
-impl Pt3 {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
-        Self { x, y, z }
-    }
-}
-
+//
+// /// A point in cartesian coordinates
+// #[derive(Clone, Copy, Debug)]
+// pub struct Vec3 {
+//     pub x: f64,
+//     pub y: f64,
+//     pub z: f64,
+// }
+//
+//
+//
+//
+// impl Vec3 {
+//     pub fn new(x: f64, y: f64, z: f64) -> Self {
+//         Self { x, y, z }
+//     }
+// }
+//

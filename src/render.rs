@@ -7,21 +7,56 @@ pub fn setup_render(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // sphere
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-        material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-        transform: Transform::from_xyz(0.0, 0.0, 0.0),
-        ..default()
-    });
+    // todo: Unsafe - temp for using static mut pts
+    unsafe {
+        // sphere
+        commands.spawn_bundle(PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
+            material: materials.add(Color::rgb(1., 0., 0.).into()),
+            transform: Transform::from_xyz(
+                crate::PT1.x as f32,
+                crate::PT1.y as f32,
+                crate::PT1.z as f32,
+            ),
+            ..default()
+        });
 
-    // sphere
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-        material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-        transform: Transform::from_xyz(0.0, 2., 2.0),
-        ..default()
-    });
+        // sphere
+        commands.spawn_bundle(PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
+            material: materials.add(Color::rgb(0., 1., 0.).into()),
+            transform: Transform::from_xyz(
+                crate::PT2.x as f32,
+                crate::PT2.y as f32,
+                crate::PT2.z as f32,
+            ),
+            ..default()
+        });
+
+        // sphere
+        commands.spawn_bundle(PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
+            material: materials.add(Color::rgb(0., 0., 1.).into()),
+            transform: Transform::from_xyz(
+                crate::PT3.x as f32,
+                crate::PT3.y as f32,
+                crate::PT3.z as f32,
+            ),
+            ..default()
+        });
+
+        // sphere
+        commands.spawn_bundle(PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
+            material: materials.add(Color::rgb(1., 1., 0.).into()),
+            transform: Transform::from_xyz(
+                crate::PT4.x as f32,
+                crate::PT4.y as f32,
+                crate::PT4.z as f32,
+            ),
+            ..default()
+        });
+    }
 
     // light
     commands.spawn_bundle(PointLightBundle {
