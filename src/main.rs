@@ -15,16 +15,39 @@ use std::f64::consts::TAU;
 
 use bevy::prelude::*;
 
+mod lin_alg;
+mod render;
+
+use lin_alg::{Quaternion, Vec3, Pt3};
+
+// Double bond len of C' to N.
+const LEN_CP_N: f64 = 1.32; // angstrom
+const LEN_N_CALPHA: f64 = 1.; // angstrom // todo
+const LEN_CALPHA_CP: f64 = 1.; // angstrom // todo
+
+// todo: These may change under diff circumstances, and be diff for the diff atoms
+// and diff things on the atom.
+const BACKBONE_BOND_ANGLES: f64 = 1.911; // radians
+
+#[derive(Clone, Copy)]
+enum CarbonBond {
+    // todo: Come back to what these mean for the 3 backbone atoms
+    A,
+    B,
+    C,
+    D,
+}
+
 /// Location of an atom in 3d space, using the AA it's part of's
-/// coordinate system. Pt 0 is defined as the __ atom.
+/// coordinate system. Pt 0 is defined as the α atom.
 #[derive(Debug)]
 struct AtomLocation {
     atom: Atom,
-    point: PtCart,
+    point: Pt3,
 }
 
 impl AtomLocation {
-    pub fn new(atom: Atom, point: PtCart) -> Self {
+    pub fn new(atom: Atom, point: Pt3) -> Self {
         Self { atom, point }
     }
 }
@@ -41,7 +64,7 @@ enum Atom {
 
 impl Atom {
     // todo: What is the significance of this? It's a bit nebulous
-    pub fn charge(&self) -> f64 {
+    pub fn _charge(&self) -> f64 {
         match self {
             Self::C => 4.,
             Self::N => -3.,
@@ -50,20 +73,6 @@ impl Atom {
             Self::P => 0., // (5., 3., -3.)
             Self::S => 0., // (-2., 2., 4., 6.)
         }
-    }
-}
-
-/// A point in cartesian coordinates
-#[derive(Debug)]
-struct PtCart {
-    x: f64,
-    y: f64,
-    z: f64,
-}
-
-impl PtCart {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
-        Self { x, y, z }
     }
 }
 
@@ -97,6 +106,7 @@ impl AminoAcid {
             Self::A => "Ala",
             Self::R => "Arg",
             Self::N => "Asn",
+            Self::D => "Asp",
             Self::C => "Cys",
             Self::Q => "Gln",
             Self::E => "Glu",
@@ -116,10 +126,11 @@ impl AminoAcid {
         }
     }
 
+    /// See note on `BackBoneCoords` for direction and related conventions.
     pub fn structure(&self) -> Vec<AtomLocation> {
         match self {
             Self::A => {
-                vec![AtomLocation::new(Atom::C, PtCart::new(0., 0., 0.))]
+                vec![AtomLocation::new(Atom::C, Pt3::new(0., 0., 0.))]
             }
 
             _ => Vec::new(), // todo
@@ -127,69 +138,158 @@ impl AminoAcid {
     }
 }
 
-/// An amino acid in a protein structure, including position information.
+/// A struct holding backbone atom coordinates, relative to the alpha carbon.
+/// We will use the convention of the chain starting at NH2 (amine) end (N terminus), and ending in
+/// COOH (carboxyl) (C terminus).
+/// Flow is N -> C_alpha -> C'.
+/// Coordinates are in relation to the Nitrogen molecule at the start of the segement, using the
+/// directional convention described above. (todo: How do we orient axes?)
+/// todo: To start, convention is the previous C' to this AA's starting A is on the positive X axis.
+#[derive(Debug)]
+struct BackBoneCoords {
+    // pub c_alpha: f64, // This field may be unecessary if we define it to be 0.
+    // /// Nitrogen atom bonded to C_alpha // defined as 0.
+    // pub n: f64,
 
+    // note: We currently don't store rotations (eg quaternions) here for each atom,
+    // since the relation of the point to each other contains this information.
+    /// Cα
+    pub c_alpha: Pt3,
+    /// Carbon' atom bound to C_alpha
+    pub c_p: Pt3,
+    /// Nitrogen atom of the next module.
+    pub n_next: Pt3,
+}
+
+/// An amino acid in a protein structure, including position information.
 #[derive(Debug)]
 struct AaInProtein {
     aa: AminoAcid,
-    sequence_num: usize, // todo: Instead of this, use an array?
-    // omega: f64,  // ω Assumed to be TAU/2
-    /// φ bond, between C^α and N
-    phi: f64,
-    /// ψ bond, between C^α and C'
-    psi: f64,
+    // sequence_num: usize, // todo: Instead of this, use an array?
+    ω: f64, // ω Assumed to be TAU/2 for most cases
+    /// φ bond, between Cα and N
+    ϕ: f64,
+    /// ψ bond, between Cα and C'
+    ψ: f64,
+    // todo: Include bond lengths here if they're not constant.
 }
 
-/// set up a simple 3D scene
+// todo?
+// fn bond_angle(orientation: Quaternion, bond: CarbonBond) -> Vec3 {
+//
+// }
 
-fn setup_render(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-) {
-    // plane
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Plane { size: 5.0 })),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
-        ..default()
-    });
+/// Calculate the orientation, as a quaternion, of a backbone atom, given the orientation of the
+/// previous atom, and the bond angle. `torsion_angle` is the vector representing the bond to
+/// this atom from the previous atom's orientation.
+fn find_backbone_atom_orientation(q_prev: Quaternion, torsion_angle_prev: Vec3, bond_angle: f64) {
+    // We split up determining the orientation of each backbone atom into 3 steps:
 
-    // cube
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-        material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-        transform: Transform::from_xyz(0.0, 0.5, 0.0),
-        ..default()
-    });
+    // #1: Find the bond axis. This is the world-space vector of the bond by rotating the
+    // torsion angle by the previous atom's orientation quaternion.
+    let bond_axis = q_prev.rotate_vec(torsion_angle_prev);
 
-    // light
-    commands.spawn_bundle(PointLightBundle {
-        point_light: PointLight {
-            intensity: 1500.0,
-            shadows_enabled: true,
-            ..default()
-        },
+    // #2: Calculate the orientation quaternion of the current atom so its bond to the previous atom
+    // is aligned with the bond axis found above.
+    let current_atom_orientation = Quaternion::from_axis_angle(bond_axis);
 
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
-        ..default()
-    });
+    // #3: Rotate the current atom's orientation by the bond's rotation. (eg ϕ, or ψ).
+    // let todo bond_angle
+    current_atom_orientation * bond_angle
+}
 
-    // camera
-    commands.spawn_bundle(PerspectiveCameraBundle {
-        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+impl AaInProtein {
+    /// Generate cartesian coordinates of points from diahedral angles and bond lengths. Starts with
+    /// N, and ends with C'.
+    /// Accepts position, and orientation of the N atom that starts this segment.
+    /// Also returns orientation of the N atom, for use when calculating coordinates for the next
+    /// AA in the chain.
+    // pub fn backbone_cart_coords(&self, cp_n_bond_angle_prev: Vec3, ω_prev: f64) -> BackBoneCoords {
+    pub fn backbone_cart_coords(
+        &self,
+        pos_n: Pt3,
+        q_n: Quaternion,
+    ) -> (BackBoneCoords, Quaternion) {
+        let torsion_angle_next_atom = Vec3::new(0.577, 0.577, 0.577); // todo temp
+        let torsion_angle_a = Vec3::new(-0.577, 0.577, 0.577); // todo temp
+        let torsion_angle_b = Vec3::new(0.577, -0.577, 0.577); // todo temp
+        let torsion_angle_c = Vec3::new(0., 0., -1.); // todo temp
+
+        let q_calpha = find_backbone_atom_orientation(q_prev: q_n, torsion_angle_next_atom, self.ψ);
+        let q_cp = find_backbone_atom_orientation(q_prev: q_calpha, torsion_angle_next_atom, self.ϕ);
+        let q_n_next = find_backbone_atom_orientation(q_prev: q_cp, torsion_angle_next_atom, self.ω);
+
+        // Orientations for the various atoms, Z up. todo ?
+
+        // Calculate the orientation of each atom from the orientation, and torsion angle of the
+        // bond from the previous atom, and the dihedral angle between the two.
+
+        // Set up atom-oriented vectors encoding the angle and len of each bond.
+        let bond_n_calpha = torsion_angle_next_atom * LEN_N_CALPHA;
+        let bond_calpha_cp = torsion_angle_next_atom * LEN_CALPHA_CP;
+        let bond_cp_n = torsion_angle_next_atom * LEN_CP_N;
+
+        // Calculate the position of each atom from the position, orientation and torsion angle of the
+        // bond from the previous atom.
+        // todo: Start by describing each term in terms of its dependencies.
+        let c_alpha = pos_n + q_n.rotate_vec(bond_n_c_alpha);
+        let c_p = c_alpha + q_calpha.rotate_vec(bond_c_alpha_cp);
+        let n_next = c_p + q_cp.rotate_vec(bond_cp_n);
+
+        (
+            BackBoneCoords {
+                c_alpha,
+                c_p,
+                n_next,
+            },
+            q_n_next,
+        )
+    }
 }
 
 #[derive(Debug)]
 struct Protein {
-    aas: Vec<AaInProtein>,
+    pub aas: Vec<AaInProtein>,
 }
 
 fn main() {
+    let a = AaInProtein {
+        aa: AminoAcid::A,
+        ω: TAU / 2., // ω Assumed to be TAU/2 for most cases
+        ϕ: 0. * TAU,
+        ψ: 0. * TAU,
+    };
+
+    let b = AaInProtein {
+        aa: AminoAcid::A,
+        ω: TAU / 2., // ω Assumed to be TAU/2 for most cases
+        ϕ: 0. * TAU,
+        ψ: 0. * TAU,
+    };
+
+    let c = AaInProtein {
+        aa: AminoAcid::A,
+        ω: TAU / 2., // ω Assumed to be TAU/2 for most cases
+        ϕ: 0. * TAU,
+        ψ: 0. * TAU,
+    };
+
+    let prot = Protein { aas: vec![a, b, c] };
+
+    let coords = a.backbone_cart_coords(
+        Pt3 {
+            x: 0.,
+            y: 0.,
+            z: 0.,
+        },
+        Quaternion::new_identity(),
+    );
+
+    println!("Coords: {:?}", coords);
+
     App::new()
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
-        .add_startup_system(setup_render)
+        .add_startup_system(render::setup_render)
         .run();
 }
