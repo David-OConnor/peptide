@@ -1,61 +1,42 @@
 use bevy::prelude::*;
 use bevy::render::primitives::Sphere;
 
+use crate::lin_alg::{Vec3, Quaternion};
+
+// Reference: https://bevyengine.org/examples/games/alien-cake-addict/
+
+// use gdnative::prelude::*;
+
+pub const BACKGROUND_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
+
+pub const TIME_STEP: f32 = 1.0 / 60.0;
+
 /// set up a simple 3D scene
 pub fn setup_render(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    mut render_state: Res<crate::RenderState>
 ) {
     // todo: Unsafe - temp for using static mut pts
     unsafe {
         // sphere
-        commands.spawn_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
-            material: materials.add(Color::rgb(1., 0., 0.).into()),
-            transform: Transform::from_xyz(
-                crate::PT1.x as f32,
-                crate::PT1.y as f32,
-                crate::PT1.z as f32,
-            ),
-            ..default()
-        });
 
-        // sphere
-        commands.spawn_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
-            material: materials.add(Color::rgb(0., 1., 0.).into()),
-            transform: Transform::from_xyz(
-                crate::PT2.x as f32,
-                crate::PT2.y as f32,
-                crate::PT2.z as f32,
-            ),
-            ..default()
-        });
+        for atom in render_state.atoms {
+            commands.spawn_bundle(PbrBundle {
+                mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
+                material: materials.add(Color::rgb(1., 0., 0.).into()),
+                transform: Transform::from_xyz(
+                    atom.0.x as f32,
+                    atom.0.y as f32,
+                    atom.0.z as f32,
+                ),
+                ..default()
+            });
 
-        // sphere
-        commands.spawn_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
-            material: materials.add(Color::rgb(0., 0., 1.).into()),
-            transform: Transform::from_xyz(
-                crate::PT3.x as f32,
-                crate::PT3.y as f32,
-                crate::PT3.z as f32,
-            ),
-            ..default()
-        });
+            // todo: Also render bonds, perhaps as a cylinder or line for now.
 
-        // sphere
-        commands.spawn_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
-            material: materials.add(Color::rgb(1., 1., 0.).into()),
-            transform: Transform::from_xyz(
-                crate::PT4.x as f32,
-                crate::PT4.y as f32,
-                crate::PT4.z as f32,
-            ),
-            ..default()
-        });
+        }
     }
 
     // light
@@ -76,3 +57,25 @@ pub fn setup_render(
         ..default()
     });
 }
+
+// #[derive(NativeClass)]
+// #[inherit(Node)]
+// pub struct HelloWorld;
+//
+// #[methods]
+// impl HelloWorld {
+//     fn new(_owner: &Node) -> Self {
+//         HelloWorld
+//     }
+//
+//     #[export]
+//     fn _ready(&self, _owner: &Node) {
+//         godot_print!("Hello, world.");
+//     }
+// }
+//
+// fn init(handle: InitHandle) {
+//     handle.add_class::<HelloWorld>();
+// }
+//
+// godot_init!(init);

@@ -7,4 +7,7 @@ edition = "2021"
 
 [dependencies]
 bevy = "^0.7.0"
-#bevy = { git = "https://github.com/bevyengine/bevy", branch = "pipelined-rendering" }
+
+# Git so we can use the official examples.
+#bevy = { git = "https://github.com/bevyengine/bevy" }
+#gdnative = "0.10.0"

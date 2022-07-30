@@ -2,7 +2,7 @@
 //! as an immutable basis for structure. Attempts to find foldin patterns
 //! that may lead to an ultimate structure.
 
-// todo: Switch from Bevy to Ash or similar.
+// todo: Switch from Bevy to Ash or similar. Or perhaps Godot's rust bindings.
 // todo: Temperature sensitivity. Surroundin water molecules.
 // Initially, focus on modeling the bond angles and backbone. Both
 // data to describe, and a 3d render
@@ -12,45 +12,17 @@
 use std::f64::consts::TAU;
 
 // todo: Don' glob import
-use bevy::prelude::*;
+use bevy::{core::FixedTimestep, prelude::*};
+// use gdnative::prelude::*;
 
 mod lin_alg;
 mod render;
 
+use render::{TIME_STEP};
+
 use lin_alg::{Quaternion, Vec3};
 
 // todo temp while we figure out how to pass val to bevy
-
-static mut PT1: Vec3 = Vec3 {
-    x: 0.,
-    y: 0.,
-    z: 0.,
-};
-static mut PT2: Vec3 = Vec3 {
-    x: 0.,
-    y: 0.,
-    z: 0.,
-};
-static mut PT3: Vec3 = Vec3 {
-    x: 0.,
-    y: 0.,
-    z: 0.,
-};
-static mut PT4: Vec3 = Vec3 {
-    x: 0.,
-    y: 0.,
-    z: 0.,
-};
-static mut PT5: Vec3 = Vec3 {
-    x: 0.,
-    y: 0.,
-    z: 0.,
-};
-static mut PT6: Vec3 = Vec3 {
-    x: 0.,
-    y: 0.,
-    z: 0.,
-};
 
 // Double bond len of C' to N.
 // todo: 1.089000
@@ -61,6 +33,15 @@ const LEN_CALPHA_CP: f64 = 1.; // angstrom // todo
 // todo: These may change under diff circumstances, and be diff for the diff atoms
 // and diff things on the atom.
 const BACKBONE_BOND_ANGLES: f64 = 1.911; // radians
+
+const ROTATION_SPEED: f32 = 1.; // radians/s
+
+/// Store our atom coordinates and orientations here, for use
+/// with the renderer.
+#[derive(Default)] // Bevy resources must implement `Default` or FromWorld
+struct RenderState {
+    pub atoms: Vec<(Vec3, Quaternion)>,
+}
 
 #[derive(Clone, Copy)]
 enum CarbonBond {
@@ -310,6 +291,7 @@ struct Protein {
     pub aas: Vec<AaInProtein>,
 }
 
+
 fn main() {
     let a = AaInProtein {
         aa: AminoAcid::A,
@@ -343,35 +325,61 @@ fn main() {
 
     let prot = Protein { aas: vec![a, b, c] };
 
-    // todo temp
-    unsafe {
-        PT1 = Vec3 {
-            x: 0.,
-            y: 0.,
-            z: 0.,
-        };
-        PT2 = Vec3 {
-            x: coords.0.cα.x,
-            y: coords.0.cα.y,
-            z: coords.0.cα.z,
-        };
-        PT3 = Vec3 {
-            x: coords.0.cp.x,
-            y: coords.0.cp.y,
-            z: coords.0.cp.z,
-        };
-        PT4 = Vec3 {
-            x: coords.0.n_next.x,
-            y: coords.0.n_next.y,
-            z: coords.0.n_next.z,
-        };
-    }
-
     println!("Coords: {:?}\n\n", coords);
+
+    fn change_dihedral_angle(
+        keyboard_input: Res<Input<KeyCode>>,
+        mut atom_render_state: ResMut<RenderState>,
+    ) {
+        let mut paddle_transform = query.single_mut();
+        let mut direction = 0.0;
+
+        if keyboard_input.pressed(KeyCode::Left) {
+            println!("A");
+            direction -= 1.0;
+        }
+
+        if keyboard_input.pressed(KeyCode::Right) {
+            println!("B");
+            direction += 1.0;
+        }
+
+        if keyboard_input.pressed(KeyCode::Up) {
+            println!("C");
+            direction += 1.0;
+        }
+
+        // Calculate the new horizontal paddle position based on player input
+        let new_paddle_position =
+            paddle_transform.translation.x + direction * ROTATION_SPEED * TIME_STEP;
+
+        let left_bound = 0.;
+        let right_bound = 0.;
+
+
+        paddle_transform.translation.x = new_paddle_position.clamp(left_bound, right_bound);
+    }
 
     App::new()
         .insert_resource(Msaa { samples: 4 })
+        .init_resource::<RenderState>()
         .add_plugins(DefaultPlugins)
         .add_startup_system(render::setup_render)
+        // .add_state(SomeEnum?)
+        .add_system(change_dihedral_angle)
+        // .insert_resource(Scoreboard { score: 0 })
+        .insert_resource(ClearColor(render::BACKGROUND_COLOR))
+        // .add_event::<CollisionEvent>()
+        .add_system_set(
+            SystemSet::new()
+                .with_run_criteria(FixedTimestep::step(render::TIME_STEP as f64))
+                // .with_system(move_paddle.before(check_for_collisions))
+                .with_system(change_angles), // .with_system(check_for_collisions)
+                                             // .with_system(move_paddle.before(check_for_collisions))
+                                             // .with_system(apply_velocity.before(check_for_collisions))
+                                             // .with_system(play_collision_sound.after(check_for_collisions)),
+        )
+        // .add_system(update_scoreboard)
+        .add_system(bevy::input::system::exit_on_esc_system)
         .run();
 }
