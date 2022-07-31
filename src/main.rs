@@ -11,14 +11,11 @@
 
 use std::f64::consts::TAU;
 
-// todo: Don' glob import
-use bevy::{core::FixedTimestep, prelude::*};
+// use graphics;
 // use gdnative::prelude::*;
 
 mod lin_alg;
 mod render;
-
-use render::{TIME_STEP};
 
 use lin_alg::{Quaternion, Vec3};
 
@@ -34,13 +31,11 @@ const LEN_CALPHA_CP: f64 = 1.; // angstrom // todo
 // and diff things on the atom.
 const BACKBONE_BOND_ANGLES: f64 = 1.911; // radians
 
-const ROTATION_SPEED: f32 = 1.; // radians/s
+const ROTATION_SPEED: f64 = 1.; // radians/s
 
-/// Store our atom coordinates and orientations here, for use
-/// with the renderer.
-#[derive(Default)] // Bevy resources must implement `Default` or FromWorld
-struct RenderState {
-    pub atoms: Vec<(Vec3, Quaternion)>,
+#[derive(Debug)]
+struct _Protein {
+    pub aas: Vec<AaInProtein>,
 }
 
 #[derive(Clone, Copy)]
@@ -52,22 +47,22 @@ enum CarbonBond {
     D,
 }
 
-/// Location of an atom in 3d space, using the AA it's part of's
-/// coordinate system. Pt 0 is defined as the α atom.
-#[derive(Debug)]
-struct AtomLocation {
-    atom: Atom,
-    point: Vec3,
-}
-
-impl AtomLocation {
-    pub fn new(atom: Atom, point: Vec3) -> Self {
-        Self { atom, point }
-    }
-}
+// /// Location of an atom in 3d space, using the AA it's part of's
+// /// coordinate system. Pt 0 is defined as the α atom.
+// #[derive(Debug)]
+// struct AtomLocation {
+//     atom: Atom,
+//     point: Vec3,
+// }
+//
+// impl AtomLocation {
+//     pub fn new(atom: Atom, point: Vec3) -> Self {
+//         Self { atom, point }
+//     }
+// }
 
 #[derive(Clone, Copy, Debug)]
-enum Atom {
+enum AtomType {
     C,
     N,
     H,
@@ -76,7 +71,7 @@ enum Atom {
     S,
 }
 
-impl Atom {
+impl AtomType {
     // todo: What is the significance of this? It's a bit nebulous
     pub fn _charge(&self) -> f64 {
         match self {
@@ -140,19 +135,20 @@ impl AminoAcid {
         }
     }
 
-    /// See note on `BackBoneCoords` for direction and related conventions.
-    pub fn structure(&self) -> Vec<AtomLocation> {
-        match self {
-            Self::A => {
-                vec![AtomLocation::new(Atom::C, Vec3::new(0., 0., 0.))]
-            }
-
-            _ => Vec::new(), // todo
-        }
-    }
+    // /// See note on `BackBoneCoords` for direction and related conventions.
+    // pub fn structure(&self) -> Vec<AtomLocation> {
+    //     match self {
+    //         Self::A => {
+    //             vec![AtomLocation::new(Atom::C, Vec3::new(0., 0., 0.))]
+    //         }
+    //
+    //         _ => Vec::new(), // todo
+    //     }
+    // }
 }
 
 /// A struct holding backbone atom coordinates, relative to the alpha carbon.
+/// Also hols orientations.
 /// We will use the convention of the chain starting at NH2 (amine) end (N terminus), and ending in
 /// COOH (carboxyl) (C terminus).
 /// Flow is N -> C_alpha -> C'.
@@ -161,18 +157,17 @@ impl AminoAcid {
 /// todo: To start, convention is the previous C' to this AA's starting A is on the positive X axis.
 #[derive(Debug)]
 struct BackBoneCoords {
-    // pub c_alpha: f64, // This field may be unecessary if we define it to be 0.
     // /// Nitrogen atom bonded to C_alpha // defined as 0.
     // pub n: f64,
-
-    // note: We currently don't store rotations (eg quaternions) here for each atom,
-    // since the relation of the point to each other contains this information.
     /// Cα
     pub cα: Vec3,
     /// Carbon' atom bound to C_alpha
     pub cp: Vec3,
     /// Nitrogen atom of the next module.
     pub n_next: Vec3,
+    pub cα_orientation: Quaternion,
+    pub cp_orientation: Quaternion,
+    pub n_next_orientation: Quaternion,
 }
 
 // todo?
@@ -214,7 +209,7 @@ fn find_backbone_atom_orientation(
 }
 
 /// Used to represent one atom in a system built of atoms.
-struct ZmatrixItem {
+struct _ZmatrixItem {
     atomic_number: u8,
     bond_len: f64,       // Angstrom
     bond_angle: f64,     // radians
@@ -224,17 +219,17 @@ struct ZmatrixItem {
 /// An amino acid in a protein structure, including position information.
 #[derive(Debug)]
 struct AaInProtein {
-    aa: AminoAcid,
+    pub aa: AminoAcid,
     /// Dihedral angle between C' and N
     /// Tor (Cα, C, N, Cα) is the ω torsion angle
     /// Assumed to be TAU/2 for most cases
-    ω: f64,
+    pub ω: f64,
     /// Dihedral angle between Cα and N.
     /// Tor (C, N, Cα, C) is the φ torsion angle
-    φ: f64,
+    pub φ: f64,
     /// Dihedral angle, between Cα and C'
     ///  Tor (N, Cα, C, N) is the ψ torsion angle
-    ψ: f64,
+    pub ψ: f64,
     // todo: Include bond lengths here if they're not constant.
 }
 
@@ -244,11 +239,7 @@ impl AaInProtein {
     /// Accepts position, and orientation of the N atom that starts this segment.
     /// Also returns orientation of the N atom, for use when calculating coordinates for the next
     /// AA in the chain.
-    pub fn backbone_cart_coords(
-        &self,
-        pos_n: Vec3,
-        q_n: Quaternion,
-    ) -> (BackBoneCoords, Quaternion) {
+    pub fn backbone_cart_coords(&self, pos_n: Vec3, n_orientation: Quaternion) -> BackBoneCoords {
         // These are the angles between each of 2 4 equally-spaced atoms on a tetrahedron,
         // with center of (0., 0., 0.). They are the angle formed between 3 atoms.
         // We have chosen the two angles to describe the backbone. We have chosen these arbitrarily.
@@ -261,9 +252,9 @@ impl AaInProtein {
 
         // todo: You must anchor the dihedral angle in terms of the plane formed by the atom pairs
         // todo on each side of the angle; that's how it's defined.
-        let q_cα = find_backbone_atom_orientation(q_n, bond_prev, self.ψ);
-        let q_cp = find_backbone_atom_orientation(q_cα, bond_prev, self.φ);
-        let q_n_next = find_backbone_atom_orientation(q_cp, bond_prev, self.ω);
+        let cα_orientation = find_backbone_atom_orientation(n_orientation, bond_prev, self.ψ);
+        let cp_orientation = find_backbone_atom_orientation(cα_orientation, bond_prev, self.φ);
+        let n_next_orientation = find_backbone_atom_orientation(cp_orientation, bond_prev, self.ω);
 
         // Orientations for the various atoms, Z up. todo ?
 
@@ -278,21 +269,23 @@ impl AaInProtein {
         // Calculate the position of each atom from the position, orientation and bond angle
         // from the previous atom.
         // todo: Start by describing each term in terms of its dependencies.
-        let cα = pos_n + q_n.rotate_vec(bond_n_cα);
-        let cp = cα + q_cα.rotate_vec(bond_cα_cp);
-        let n_next = cp + q_cp.rotate_vec(bond_cp_n);
+        let cα = pos_n + n_orientation.rotate_vec(bond_n_cα);
+        let cp = cα + cα_orientation.rotate_vec(bond_cα_cp);
+        let n_next = cp + cp_orientation.rotate_vec(bond_cp_n);
 
-        (BackBoneCoords { cα, cp, n_next }, q_n_next)
+        BackBoneCoords {
+            cα,
+            cp,
+            n_next,
+            cα_orientation,
+            cp_orientation,
+            n_next_orientation,
+        }
     }
 }
 
-#[derive(Debug)]
-struct Protein {
-    pub aas: Vec<AaInProtein>,
-}
-
-
-fn main() {
+/// Set up our protein; passed to our initial render state.
+fn init_protein() -> Vec<AaInProtein> {
     let a = AaInProtein {
         aa: AminoAcid::A,
         ω: TAU / 2., // ω Assumed to be TAU/2 for most cases
@@ -314,72 +307,9 @@ fn main() {
         ψ: 0. * TAU,
     };
 
-    let coords = a.backbone_cart_coords(
-        Vec3 {
-            x: 0.,
-            y: 0.,
-            z: 0.,
-        },
-        Quaternion::new_identity(),
-    );
+    vec![a]
+}
 
-    let prot = Protein { aas: vec![a, b, c] };
-
-    println!("Coords: {:?}\n\n", coords);
-
-    fn change_dihedral_angle(
-        keyboard_input: Res<Input<KeyCode>>,
-        mut atom_render_state: ResMut<RenderState>,
-    ) {
-        let mut paddle_transform = query.single_mut();
-        let mut direction = 0.0;
-
-        if keyboard_input.pressed(KeyCode::Left) {
-            println!("A");
-            direction -= 1.0;
-        }
-
-        if keyboard_input.pressed(KeyCode::Right) {
-            println!("B");
-            direction += 1.0;
-        }
-
-        if keyboard_input.pressed(KeyCode::Up) {
-            println!("C");
-            direction += 1.0;
-        }
-
-        // Calculate the new horizontal paddle position based on player input
-        let new_paddle_position =
-            paddle_transform.translation.x + direction * ROTATION_SPEED * TIME_STEP;
-
-        let left_bound = 0.;
-        let right_bound = 0.;
-
-
-        paddle_transform.translation.x = new_paddle_position.clamp(left_bound, right_bound);
-    }
-
-    App::new()
-        .insert_resource(Msaa { samples: 4 })
-        .init_resource::<RenderState>()
-        .add_plugins(DefaultPlugins)
-        .add_startup_system(render::setup_render)
-        // .add_state(SomeEnum?)
-        .add_system(change_dihedral_angle)
-        // .insert_resource(Scoreboard { score: 0 })
-        .insert_resource(ClearColor(render::BACKGROUND_COLOR))
-        // .add_event::<CollisionEvent>()
-        .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(render::TIME_STEP as f64))
-                // .with_system(move_paddle.before(check_for_collisions))
-                .with_system(change_angles), // .with_system(check_for_collisions)
-                                             // .with_system(move_paddle.before(check_for_collisions))
-                                             // .with_system(apply_velocity.before(check_for_collisions))
-                                             // .with_system(play_collision_sound.after(check_for_collisions)),
-        )
-        // .add_system(update_scoreboard)
-        .add_system(bevy::input::system::exit_on_esc_system)
-        .run();
+fn main() {
+    render::run();
 }

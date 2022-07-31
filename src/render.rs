@@ -1,42 +1,84 @@
 use bevy::prelude::*;
 use bevy::render::primitives::Sphere;
 
-use crate::lin_alg::{Vec3, Quaternion};
+use crate::{
+    // Don't import `Vec3` here since Bevy has its own
+    lin_alg::{self, Quaternion},
+    ROTATION_SPEED,
+};
 
 // Reference: https://bevyengine.org/examples/games/alien-cake-addict/
 
 // use gdnative::prelude::*;
 
-pub const BACKGROUND_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
+const BACKGROUND_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
-pub const TIME_STEP: f32 = 1.0 / 60.0;
+const TIME_STEP: f32 = 1.0 / 60.0;
+
+#[derive(Default)]
+struct AaRender {
+    pub atom_cα: AtomRender,
+    pub atom_cp: AtomRender,
+    pub atom_n_next: AtomRender,
+}
+
+#[derive(Default, Component)]
+struct AtomRender {
+    // pub type_: crate::AtomType,
+    pub entity: Option<Entity>, // todo: Do we want this?
+    pub position: lin_alg::Vec3,
+    pub orientation: Quaternion,
+}
+
+/// Store our atom coordinates and orientations here, for use
+/// with the renderer.
+#[derive(Default)] // Bevy resources must implement `Default` or `FromWorld`.
+struct RenderState {
+    /// Descriptions of each amino acid, including its name, and bond angles.
+    pub amino_acids: Vec<crate::AaInProtein>,
+    /// Geometry of each atom, including position, and orientation. Updated whenever
+    /// any bond angle in the protein changes.
+    pub aa_renders: Vec<AaRender>,
+}
 
 /// set up a simple 3D scene
-pub fn setup_render(
+fn setup_render(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut render_state: Res<crate::RenderState>
+    mut render_state: ResMut<RenderState>,
 ) {
-    // todo: Unsafe - temp for using static mut pts
-    unsafe {
-        // sphere
+    // Initialize the render state here.
+    render_state.amino_acids = crate::init_protein();
+    // render_state.aa_renders = vec![
+    //     AaRender {
+    //         atom_cα: AtomRender,
+    //         atom_cp: AtomRender,
+    //         atom_n_next: AtomRender,
+    //     }
+    // ];
 
-        for atom in render_state.atoms {
-            commands.spawn_bundle(PbrBundle {
+    // Render our atoms.
+    for aa in render_state.aa_renders {
+        for atom in &mut [aa.atom_cα, aa.atom_cp, aa.atom_n_next] {
+            *atom.entity = commands.spawn_bundle(PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
                 material: materials.add(Color::rgb(1., 0., 0.).into()),
                 transform: Transform::from_xyz(
-                    atom.0.x as f32,
-                    atom.0.y as f32,
-                    atom.0.z as f32,
+                    atom.position.x as f32,
+                    atom.position.y as f32,
+                    atom.position.z as f32,
                 ),
-                ..default()
+                // transform: Transform::Rotation(Quat::from_xyzw(
+                //     orientation.x as f32,
+                //     orientation.y as f32,
+                //     orientation.z as f32,
+                //     orientation.w as f32,
+                //))
+                ..Default::default()
             });
-
-            // todo: Also render bonds, perhaps as a cylinder or line for now.
-
         }
+        // todo: Also render bonds, perhaps as a cylinder or line for now.
     }
 
     // light
@@ -58,24 +100,63 @@ pub fn setup_render(
     });
 }
 
-// #[derive(NativeClass)]
-// #[inherit(Node)]
-// pub struct HelloWorld;
-//
-// #[methods]
-// impl HelloWorld {
-//     fn new(_owner: &Node) -> Self {
-//         HelloWorld
-//     }
-//
-//     #[export]
-//     fn _ready(&self, _owner: &Node) {
-//         godot_print!("Hello, world.");
-//     }
-// }
-//
-// fn init(handle: InitHandle) {
-//     handle.add_class::<HelloWorld>();
-// }
-//
-// godot_init!(init);
+fn change_dihedral_angle(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut query: Query<&mut Transform, With<AtomRender>>,
+    mut render_state: Res<RenderState>,
+) {
+    // Update ω
+    if keyboard_input.pressed(KeyCode::Left) {
+        println!("Changing ω");
+        render_state.amino_acids[0].ω += ROTATION_SPEED;
+    }
+
+    // todo: Dry here with init
+    // Recalculate coordinates now that we've updated our bond angles
+    let coords = render_state.amino_acids[0]
+        .backbone_cart_coords(lin_alg::Vec3::new(0., 0., 0.), Quaternion::new_identity());
+
+    // We've now recalculated the positions and orientations. Will this trigger a re-render
+    // by updating the state as a resource here?
+    render_state.aa_renders[0].atom_cα.position = coords.cα;
+    // render_state.aa_renders[0].position = coords.cp;
+    // render_state.aa_renders[0].position = coords.n_next;
+
+    render_state.aa_renders[0].atom_cα.orientation = coords.cα_orientation;
+    // render_state.aa_renders[0].orientation = coords.cp_orientation;
+    // render_state.aa_renders[0].orientation = coords.n_next_orientation;
+
+    for aa in render_state.aa_renders {
+        for atom in &[aa.atom_cα, aa.atom_cp, aa.atom_n_next] {
+            // let mut atom = aa.atom_cα; // todo temp.
+            if let Ok(mut transform) = query.get(atom.entity.unwrap()) {
+                transform.translation = Vec3::new(
+                    atom.position.x as f32,
+                    atom.position.y as f32,
+                    atom.position.z as f32,
+                );
+                transform.rotation = Quat::from_xyzw(
+                    atom.orientation.x as f32,
+                    atom.orientation.y as f32,
+                    atom.orientation.z as f32,
+                    atom.orientation.w as f32,
+                );
+            }
+        }
+    }
+}
+
+pub fn run() {
+    App::new()
+        .insert_resource(Msaa { samples: 4 })
+        .init_resource::<RenderState>()
+        .add_plugins(DefaultPlugins)
+        .add_startup_system(setup_render)
+        .add_system(change_dihedral_angle)
+        .insert_resource(ClearColor(BACKGROUND_COLOR))
+        // .add_system_set(
+        //     SystemSet::new()
+        //         .with_run_criteria(FixedTimestep::step(render::TIME_STEP as f64))
+        // )
+        .run();
+}
