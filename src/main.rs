@@ -11,11 +11,10 @@
 
 use std::f64::consts::TAU;
 
-// use graphics;
-// use gdnative::prelude::*;
-
 mod lin_alg;
+
 mod render;
+// use graphics;
 
 use lin_alg::{Quaternion, Vec3};
 
@@ -61,6 +60,7 @@ enum CarbonBond {
 //     }
 // }
 
+#[allow(unused)]
 #[derive(Clone, Copy, Debug)]
 enum AtomType {
     C,
@@ -307,9 +307,10 @@ fn init_protein() -> Vec<AaInProtein> {
         ψ: 0. * TAU,
     };
 
-    vec![a]
+    vec![a, b, c]
 }
 
 fn main() {
     render::run();
+    // graphics::run();
 }
