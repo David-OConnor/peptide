@@ -15,11 +15,11 @@ mod lin_alg;
 
 mod chem_definitions;
 mod coord_gen;
-mod render;
+// mod render;
 // use graphics;
 
 use chem_definitions::AminoAcidType;
-use coord_gen::{AminoAcid, ProteinDescription};
+use coord_gen::{AminoAcid, ProteinCoords, ProteinDescription};
 
 const ROTATION_SPEED: f64 = 1.; // radians/s
 
@@ -55,10 +55,17 @@ fn init_protein() -> ProteinDescription {
         ψ: 0. * TAU,
     };
 
-    ProteinDescription { aas: vec![a, b, c] }
+    let a = ProteinDescription { aas: vec![a, b, c] };
+
+    println!("COORSD: {:?}",
+        ProteinCoords::from_descrip(a)
+    );
+
+    a
 }
 
 fn main() {
-    render::run();
+    init_protein(); // todo temp
+    // render::run();
     // graphics::run();
 }
