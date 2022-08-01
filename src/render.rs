@@ -2,11 +2,12 @@ use bevy::prelude::*;
 use bevy::render::primitives::Sphere;
 
 use crate::{
+    chem_definitions::{AtomType, BackboneRole},
+    coord_gen::{ProteinCoords, ProteinDescription},
     // Don't import `Vec3` here since Bevy has its own
     lin_alg::{self, Quaternion},
     ROTATION_SPEED,
 };
-
 // Reference: https://bevyengine.org/examples/games/alien-cake-addict/
 
 // use gdnative::prelude::*;
@@ -15,30 +16,62 @@ const BACKGROUND_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
 const TIME_STEP: f32 = 1.0 / 60.0;
 
-#[derive(Default, Component, Debug)]
-struct AaRender {
-    pub atom_cα: AtomRender,
-    pub atom_cp: AtomRender,
-    pub atom_n_next: AtomRender,
-}
+// #[derive(Default, Component, Debug)]
+// struct AaRender {
+//     pub atom_cα: AtomRender,
+//     pub atom_cp: AtomRender,
+//     pub atom_n_next: AtomRender,
+// }
 
-#[derive(Default, Component, Debug)]
+#[derive(Component, Debug)]
 struct AtomRender {
-    // pub type_: crate::AtomType,
     pub entity: Option<Entity>, // todo: Do we want this?
+    pub role: BackboneRole,
     pub position: lin_alg::Vec3,
     pub orientation: Quaternion,
 }
 
+impl Default for AtomRender {
+    // Required for Bevy init
+    fn default() -> Self {
+        Self {
+            entity: None,
+            role: BackboneRole::N,
+            position: Default::default(),
+            orientation: Quaternion::new_identity(),
+        }
+    }
+}
+
+impl BackboneRole {
+    pub fn render_color(&self) -> Color {
+        match self {
+            Self::Cα => Color::rgb(1., 0., 1.),
+            Self::Cp => Color::rgb(0., 1., 1.),
+            Self::N => Color::rgb(0., 0., 1.),
+        }
+    }
+}
+
 /// Store our atom coordinates and orientations here, for use
 /// with the renderer.
-#[derive(Default, Component)] // Bevy resources must implement `Default` or `FromWorld`.
+#[derive(Component)] // Bevy resources must implement `Default` or `FromWorld`.
 struct RenderState {
     /// Descriptions of each amino acid, including its name, and bond angles.
-    pub amino_acids: Vec<crate::AminoAcid>,
+    pub protein_descrip: ProteinDescription,
     /// Geometry of each atom, including position, and orientation. Updated whenever
     /// any bond angle in the protein changes.
-    pub aa_renders: Vec<AaRender>,
+    pub atom_renders: Vec<AtomRender>,
+}
+
+impl Default for RenderState {
+    // Required for Bevy init
+    fn default() -> Self {
+        Self {
+            protein_descrip: ProteinDescription { aas: Vec::new() },
+            atom_renders: Vec::new(),
+        }
+    }
 }
 
 /// set up a simple 3D scene
@@ -49,82 +82,24 @@ fn setup_render(
     mut render_state: ResMut<RenderState>,
 ) {
     // Initialize the render state here.
-    render_state.amino_acids = crate::init_protein();
+    render_state.protein_descrip = crate::init_protein();
 
-    let mut aas = Vec::new();
+    let coords = ProteinCoords::from_descrip(&render_state.protein_descrip);
 
-    for aa in &render_state.amino_acids {
-        let coords =
-            aa.backbone_cart_coords(lin_alg::Vec3::new(0., 0., 0.), Quaternion::new_identity());
-
-        aas.push(AaRender {
-            atom_cα: AtomRender {
-                entity: Some(commands.spawn().id()),
-                position: coords.cα,
-                orientation: coords.cα_orientation,
-            },
-            atom_cp: AtomRender {
-                entity: Some(commands.spawn().id()),
-                position: coords.cp,
-                orientation: coords.cp_orientation,
-            },
-            atom_n_next: AtomRender {
-                entity: Some(commands.spawn().id()),
-                position: coords.n_next,
-                orientation: coords.n_next_orientation,
-            },
+    for atom in coords.atoms_backbone {
+        render_state.atom_renders.push(AtomRender {
+            entity: Some(commands.spawn().id()),
+            role: atom.role,
+            position: atom.position,
+            orientation: atom.orientation,
         });
     }
 
-    render_state.aa_renders = aas;
-
     // Render our atoms.
-    for aa in &render_state.aa_renders {
-        let atom = &aa.atom_cα; // todo temp
-
-        println!("atom {:?}", atom);
-
+    for atom in &render_state.atom_renders {
         commands.spawn_bundle(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
-            material: materials.add(Color::rgb(1., 0., 0.).into()),
-            transform: Transform::from_xyz(
-                atom.position.x as f32,
-                atom.position.y as f32,
-                atom.position.z as f32,
-            )
-            .with_rotation(Quat::from_xyzw(
-                atom.orientation.x as f32,
-                atom.orientation.y as f32,
-                atom.orientation.z as f32,
-                atom.orientation.w as f32,
-            )),
-            ..Default::default()
-        });
-
-        let atom = &aa.atom_cp; // todo temp
-
-        commands.spawn_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
-            material: materials.add(Color::rgb(0., 1., 0.).into()),
-            transform: Transform::from_xyz(
-                atom.position.x as f32,
-                atom.position.y as f32,
-                atom.position.z as f32,
-            )
-            .with_rotation(Quat::from_xyzw(
-                atom.orientation.x as f32,
-                atom.orientation.y as f32,
-                atom.orientation.z as f32,
-                atom.orientation.w as f32,
-            )),
-            ..Default::default()
-        });
-
-        let atom = &aa.atom_n_next; // todo temp
-
-        commands.spawn_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
-            material: materials.add(Color::rgb(0., 0., 1.).into()),
+            material: materials.add(atom.role.render_color().into()),
             transform: Transform::from_xyz(
                 atom.position.x as f32,
                 atom.position.y as f32,
@@ -169,42 +144,12 @@ fn change_dihedral_angle(
     // Update ω
     if keyboard_input.pressed(KeyCode::Left) {
         println!("Changing ω");
-        render_state.amino_acids[0].ω += ROTATION_SPEED;
+        render_state.protein_descrip.aas[0].ω += ROTATION_SPEED;
     }
 
     // todo: Dry here with init
     // Recalculate coordinates now that we've updated our bond angles
-    let coords = render_state.amino_acids[0]
-        .backbone_cart_coords(lin_alg::Vec3::new(0., 0., 0.), Quaternion::new_identity());
-
-    // We've now recalculated the positions and orientations. Will this trigger a re-render
-    // by updating the state as a resource here?
-    // render_state.aa_renders.push(atom_cα.position = coords.cα);
-    // render_state.aa_renders[0].position = coords.cp;
-    // render_state.aa_renders[0].position = coords.n_next;
-
-    // render_state.aa_renders.push(atom_cα.orientation = coords.cα_orientation);
-    // render_state.aa_renders[0].orientation = coords.cp_orientation;
-    // render_state.aa_renders[0].orientation = coords.n_next_orientation;
-
-    for aa in &render_state.aa_renders {
-        // for atom in &[aa.atom_cα, aa.atom_cp, aa.atom_n_next] {
-        let mut atom = &aa.atom_cα; // todo temp.
-        if let Ok(mut transform) = query.get(atom.entity.unwrap()) {
-            // transform.translation = Vec3::new(
-            //     atom.position.x as f32,
-            //     atom.position.y as f32,
-            //     atom.position.z as f32,
-            // );
-            // transform.rotation = Quat::from_xyzw(
-            //     atom.orientation.x as f32,
-            //     atom.orientation.y as f32,
-            //     atom.orientation.z as f32,
-            //     atom.orientation.w as f32,
-            // );
-        }
-        // }
-    }
+    let coords = ProteinCoords::from_descrip(&render_state.protein_descrip);
 }
 
 pub fn run() {

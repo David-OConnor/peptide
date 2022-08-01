@@ -38,7 +38,6 @@ impl ProteinCoords {
         let starting_n = AtomCoords {
             aa_id: id,
             role: BackboneRole::N,
-            // atom: AtomType::N,
             position: Vec3::new(0., 0., 0.),
             orientation: Quaternion::new_identity(),
         };
@@ -54,7 +53,6 @@ impl ProteinCoords {
             atoms_backbone.push(AtomCoords {
                 aa_id: id,
                 role: BackboneRole::Cα,
-                // atom: AtomType::C,
                 position: aa_coords.cα,
                 orientation: aa_coords.cα_orientation,
             });
@@ -63,7 +61,6 @@ impl ProteinCoords {
             atoms_backbone.push(AtomCoords {
                 aa_id: id,
                 role: BackboneRole::Cp,
-                // atom: AtomType::C,
                 position: aa_coords.cp,
                 orientation: aa_coords.cp_orientation,
             });
@@ -93,7 +90,6 @@ pub struct AtomCoords {
     /// id of the Amino Acid this atom is part of
     pub aa_id: usize, // todo: Do we want this id, or use an index?
     pub role: BackboneRole,
-    // pub atom: AtomType, // todo: This is likely redundant.
     pub position: Vec3,
     pub orientation: Quaternion,
 }

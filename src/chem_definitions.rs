@@ -84,3 +84,12 @@ pub enum BackboneRole {
     Cα,
     Cp,
 }
+
+impl BackboneRole {
+    pub fn atom_type(&self) -> AtomType {
+        match self {
+            Self::N => AtomType::N,
+            _ => AtomType::C,
+        }
+    }
+}
