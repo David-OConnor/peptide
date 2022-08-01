@@ -15,6 +15,9 @@ use crate::{
 const BACKGROUND_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
 const TIME_STEP: f32 = 1.0 / 60.0;
+const LIGHT_INTENSITY: f32 = 1500.0;
+
+const DT: f64 = 1. / 60.;
 
 // #[derive(Default, Component, Debug)]
 // struct AaRender {
@@ -25,7 +28,8 @@ const TIME_STEP: f32 = 1.0 / 60.0;
 
 #[derive(Component, Debug)]
 struct AtomRender {
-    pub entity: Option<Entity>, // todo: Do we want this?
+    // pub entity: Option<Entity>, // todo: Do we want this?
+    pub id: usize,
     pub role: BackboneRole,
     pub position: lin_alg::Vec3,
     pub orientation: Quaternion,
@@ -35,7 +39,8 @@ impl Default for AtomRender {
     // Required for Bevy init
     fn default() -> Self {
         Self {
-            entity: None,
+            // entity: None,
+            id: 0,
             role: BackboneRole::N,
             position: Default::default(),
             orientation: Quaternion::new_identity(),
@@ -59,9 +64,9 @@ impl BackboneRole {
 struct RenderState {
     /// Descriptions of each amino acid, including its name, and bond angles.
     pub protein_descrip: ProteinDescription,
-    /// Geometry of each atom, including position, and orientation. Updated whenever
-    /// any bond angle in the protein changes.
-    pub atom_renders: Vec<AtomRender>,
+    // /// Geometry of each atom, including position, and orientation. Updated whenever
+    // /// any bond angle in the protein changes.
+    // pub atom_renders: Vec<AtomRender>,
 }
 
 impl Default for RenderState {
@@ -69,7 +74,7 @@ impl Default for RenderState {
     fn default() -> Self {
         Self {
             protein_descrip: ProteinDescription { aas: Vec::new() },
-            atom_renders: Vec::new(),
+            // atom_renders: Vec::new(),
         }
     }
 }
@@ -83,20 +88,18 @@ fn setup_render(
 ) {
     // Initialize the render state here.
     render_state.protein_descrip = crate::init_protein();
-
     let coords = ProteinCoords::from_descrip(&render_state.protein_descrip);
 
-    for atom in coords.atoms_backbone {
-        render_state.atom_renders.push(AtomRender {
-            entity: Some(commands.spawn().id()),
-            role: atom.role,
-            position: atom.position,
-            orientation: atom.orientation,
-        });
-    }
-
     // Render our atoms.
-    for atom in &render_state.atom_renders {
+    for (id, coords) in coords.atoms_backbone.iter().enumerate() {
+        let atom = AtomRender {
+            // entity: Some(commands.spawn().id()),
+            id,
+            role: coords.role,
+            position: coords.position,
+            orientation: coords.orientation,
+        };
+
         commands.spawn_bundle(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
             material: materials.add(atom.role.render_color().into()),
@@ -115,12 +118,41 @@ fn setup_render(
         });
     }
 
+    // for atom in coords.atoms_backbone {
+    //     render_state.atom_renders.push(AtomRender {
+    //         entity: Some(commands.spawn().id()),
+    //         role: atom.role,
+    //         position: atom.position,
+    //         orientation: atom.orientation,
+    //     });
+    // }
+    //
+    // // Render our atoms.
+    // for atom in &render_state.atom_renders {
+    //     commands.spawn_bundle(PbrBundle {
+    //         mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
+    //         material: materials.add(atom.role.render_color().into()),
+    //         transform: Transform::from_xyz(
+    //             atom.position.x as f32,
+    //             atom.position.y as f32,
+    //             atom.position.z as f32,
+    //         )
+    //         .with_rotation(Quat::from_xyzw(
+    //             atom.orientation.x as f32,
+    //             atom.orientation.y as f32,
+    //             atom.orientation.z as f32,
+    //             atom.orientation.w as f32,
+    //         )),
+    //         ..Default::default()
+    //     });
+    // }
+
     // todo: Also render bonds, perhaps as a cylinder or line for now.
 
     // light
     commands.spawn_bundle(PointLightBundle {
         point_light: PointLight {
-            intensity: 1500.0,
+            intensity: LIGHT_INTENSITY,
             shadows_enabled: true,
             ..default()
         },
@@ -143,13 +175,29 @@ fn change_dihedral_angle(
 ) {
     // Update ω
     if keyboard_input.pressed(KeyCode::Left) {
-        println!("Changing ω");
-        render_state.protein_descrip.aas[0].ω += ROTATION_SPEED;
-    }
+        render_state.protein_descrip.aas[0].ω += ROTATION_SPEED * DT;
+        println!("Changing ω: {:?}", render_state.protein_descrip.aas[0].ω);
 
-    // todo: Dry here with init
-    // Recalculate coordinates now that we've updated our bond angles
-    let coords = ProteinCoords::from_descrip(&render_state.protein_descrip);
+        // Recalculate coordinates now that we've updated our bond angles
+        let coords = ProteinCoords::from_descrip(&render_state.protein_descrip).atoms_backbone;
+
+        // for (id, (atom, mut transform)) in query.iter().enumerate() {
+        for (id, mut transform) in query.iter().enumerate() {
+            let atom = &coords[id];
+
+            transform = &Transform::from_xyz(
+                atom.position.x as f32,
+                atom.position.y as f32,
+                atom.position.z as f32,
+            )
+                .with_rotation(Quat::from_xyzw(
+                    atom.orientation.x as f32,
+                    atom.orientation.y as f32,
+                    atom.orientation.z as f32,
+                    atom.orientation.w as f32,
+                ));
+        }
+    }
 }
 
 pub fn run() {
