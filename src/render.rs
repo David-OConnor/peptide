@@ -35,7 +35,7 @@ struct AtomRender {
 #[derive(Default, Component)] // Bevy resources must implement `Default` or `FromWorld`.
 struct RenderState {
     /// Descriptions of each amino acid, including its name, and bond angles.
-    pub amino_acids: Vec<crate::AaDihedralAngles>,
+    pub amino_acids: Vec<crate::AminoAcid>,
     /// Geometry of each atom, including position, and orientation. Updated whenever
     /// any bond angle in the protein changes.
     pub aa_renders: Vec<AaRender>,

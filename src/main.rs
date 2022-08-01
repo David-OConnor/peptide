@@ -13,31 +13,15 @@ use std::f64::consts::TAU;
 
 mod lin_alg;
 
-mod render;
 mod chem_definitions;
+mod coord_gen;
+mod render;
 // use graphics;
 
-use lin_alg::{Quaternion, Vec3};
-use chem_definitions::{AtomType, AminoAcidType, BackboneRole};
-
-// todo temp while we figure out how to pass val to bevy
-
-// Double bond len of C' to N.
-// todo: 1.089000
-const LEN_CP_N: f64 = 1.32; // angstrom
-const LEN_N_CALPHA: f64 = 1.; // angstrom // todo
-const LEN_CALPHA_CP: f64 = 1.; // angstrom // todo
-
-// todo: These may change under diff circumstances, and be diff for the diff atoms
-// and diff things on the atom.
-const BACKBONE_BOND_ANGLES: f64 = 1.911; // radians
+use chem_definitions::AminoAcidType;
+use coord_gen::{AminoAcid, ProteinDescription};
 
 const ROTATION_SPEED: f64 = 1.; // radians/s
-
-#[derive(Debug)]
-struct _Protein {
-    pub aas: Vec<AaDihedralAngles>,
-}
 
 // #[derive(Clone, Copy)]
 // enum CarbonBond {
@@ -48,32 +32,30 @@ struct _Protein {
 //     D,
 // }
 
-
-
 /// Set up our protein; passed to our initial render state.
-fn init_protein() -> Vec<AaDihedralAngles> {
-    let a = AaDihedralAngles {
+fn init_protein() -> ProteinDescription {
+    let a = AminoAcid {
         aa: AminoAcidType::A,
         ω: TAU / 2., // ω Assumed to be TAU/2 for most cases
         φ: 0.6 * TAU,
         ψ: 0.6 * TAU,
     };
 
-    let b = AaDihedralAngles {
+    let b = AminoAcid {
         aa: AminoAcidType::A,
         ω: TAU / 2., // ω Assumed to be TAU/2 for most cases
         φ: 0.75 * TAU,
         ψ: 0.25 * TAU,
     };
 
-    let c = AaDihedralAngles {
+    let c = AminoAcid {
         aa: AminoAcidType::A,
         ω: TAU / 2., // ω Assumed to be TAU/2 for most cases
         φ: 0.2 * TAU,
         ψ: 0. * TAU,
     };
 
-    vec![a, b, c]
+    ProteinDescription { aas: vec![a, b, c] }
 }
 
 fn main() {

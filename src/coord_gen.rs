@@ -1,20 +1,105 @@
 //! This module contains code for calculating atom coordinates.
 
+use crate::{
+    chem_definitions::{AminoAcidType, BackboneRole},
+    lin_alg::{Quaternion, Vec3},
+};
 
-/// Location of an atom in 3d space, using the AA it's part of's
-/// coordinate system. Pt 0 is defined as the α atom.
+// Double bond len of C' to N.
+// todo: 1.089000
+const LEN_CP_N: f64 = 1.32; // angstrom
+const LEN_N_CALPHA: f64 = 1.; // angstrom // todo
+const LEN_CALPHA_CP: f64 = 1.; // angstrom // todo
+
+// todo: These may change under diff circumstances, and be diff for the diff atoms
+// and diff things on the atom.
+const BACKBONE_BOND_ANGLES: f64 = 1.911; // radians
+
 #[derive(Debug)]
-struct AtomCoords {
+/// A protein defined by AminoAcids: Name and bond angle.
+pub struct ProteinDescription {
+    pub aas: Vec<AminoAcid>,
+}
+
+#[derive(Debug)]
+/// Describes the sequence of atoms that make up a protein backbone, with worldspace coordinates.
+/// this is what is needed for the render, and spacial manipulations.
+pub struct ProteinCoords {
+    pub atoms_backbone: Vec<AtomCoords>,
+}
+
+impl ProteinCoords {
+    pub fn from_descrip(descrip: &ProteinDescription) -> Self {
+        let mut atoms_backbone = Vec::new();
+
+        let mut id = 0;
+
+        // N-terminus nitrogen, at the *start* of our chain.
+        let starting_n = AtomCoords {
+            aa_id: id,
+            role: BackboneRole::N,
+            // atom: AtomType::N,
+            position: Vec3::new(0., 0., 0.),
+            orientation: Quaternion::new_identity(),
+        };
+
+        let mut prev_n = starting_n.clone();
+
+        atoms_backbone.push(starting_n);
+        id += 1;
+
+        for aa in &descrip.aas {
+            let aa_coords = aa.backbone_cart_coords(prev_n.position, prev_n.orientation);
+
+            atoms_backbone.push(AtomCoords {
+                aa_id: id,
+                role: BackboneRole::Cα,
+                // atom: AtomType::C,
+                position: aa_coords.cα,
+                orientation: aa_coords.cα_orientation,
+            });
+            id += 1;
+
+            atoms_backbone.push(AtomCoords {
+                aa_id: id,
+                role: BackboneRole::Cp,
+                // atom: AtomType::C,
+                position: aa_coords.cp,
+                orientation: aa_coords.cp_orientation,
+            });
+            id += 1;
+
+            let n = AtomCoords {
+                aa_id: id,
+                role: BackboneRole::N,
+                // atom: AtomType::N,
+                position: aa_coords.n_next,
+                orientation: aa_coords.n_next_orientation,
+            };
+
+            prev_n = n.clone();
+
+            atoms_backbone.push(n);
+            id += 1;
+        }
+
+        Self { atoms_backbone }
+    }
+}
+
+/// Location of an atom, in the worldspace coordinate system.
+#[derive(Clone, Debug)]
+pub struct AtomCoords {
     /// id of the Amino Acid this atom is part of
-    pub aa_id: usize,
+    pub aa_id: usize, // todo: Do we want this id, or use an index?
     pub role: BackboneRole,
-    pub atom: Atom,
+    // pub atom: AtomType, // todo: This is likely redundant.
     pub position: Vec3,
     pub orientation: Quaternion,
 }
 
 /// Holds backbone atom coordinates and orientations, relative to the alpha carbon, for
-/// a single amino acid.
+/// a single amino acid. Generated from an AA's bond angles.
 ///
 /// We will use the convention of the chain starting at NH2 (amine) end (N terminus), and ending in
 /// COOH (carboxyl) (C terminus).
@@ -37,17 +122,9 @@ pub struct BackboneCoordsAa {
     pub n_next_orientation: Quaternion,
 }
 
-/// Used to represent one atom in a system built of atoms.
-pub struct _ZmatrixItem {
-    atomic_number: u8,
-    bond_len: f64,       // Angstrom
-    bond_angle: f64,     // radians
-    dihedral_angle: f64, // radians
-}
-
 /// An amino acid in a protein structure, including position information.
 #[derive(Debug)]
-pub struct AaDihedralAngles {
+pub struct AminoAcid {
     pub aa: AminoAcidType,
     /// Dihedral angle between C' and N
     /// Tor (Cα, C, N, Cα) is the ω torsion angle
@@ -62,7 +139,7 @@ pub struct AaDihedralAngles {
     // todo: Include bond lengths here if they're not constant.
 }
 
-impl AaDihedralAngles {
+impl AminoAcid {
     /// Generate cartesian coordinates of points from diahedral angles and bond lengths. Starts with
     /// N, and ends with C'.
     /// Accepts position, and orientation of the N atom that starts this segment.
@@ -144,4 +221,12 @@ pub fn find_backbone_atom_orientation(
     // current_atom_orientation * dihedral_angle
 
     current_atom_orientation
+}
+
+/// Used to represent one atom in a system built of atoms.
+pub struct _ZmatrixItem {
+    atomic_number: u8,
+    bond_len: f64,       // Angstrom
+    bond_angle: f64,     // radians
+    dihedral_angle: f64, // radians
 }
