@@ -34,6 +34,26 @@ const ROTATION_SPEED: f64 = 1.; // radians/s
 //     D,
 // }
 
+/// Store our atom descriptions here, for global state the renderer can access.
+struct State {
+    /// Descriptions of each amino acid, including its name, and bond angles.
+    pub protein_descrip: ProteinDescription,
+    /// Residue id that's selected for rotation.
+    pub active_residue: usize,
+}
+
+impl Default for State {
+    // Required for Bevy init
+    fn default() -> Self {
+        Self {
+            protein_descrip: ProteinDescription {
+                residues: Vec::new(),
+            },
+            active_residue: 0,
+        }
+    }
+}
+
 /// Set up our protein; passed to our initial render state.
 fn init_protein() -> ProteinDescription {
     let a = Residue {
@@ -57,13 +77,9 @@ fn init_protein() -> ProteinDescription {
         ψ: 0. * TAU,
     };
 
-    let a = ProteinDescription { aas: vec![a, b, c] };
-
-    // println!("COORSD: {:?}",
-    //     ProteinCoords::from_descrip(&a)
-    // );
-
-    a
+    ProteinDescription {
+        residues: vec![a, b, c],
+    }
 }
 
 fn main() {

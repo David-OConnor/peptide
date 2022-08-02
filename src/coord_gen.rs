@@ -7,9 +7,9 @@ use crate::{
 
 // Double bond len of C' to N.
 // todo: 1.089000
-const LEN_CP_N: f64 = 1.32; // angstrom
-const LEN_N_CALPHA: f64 = 1.; // angstrom // todo
-const LEN_CALPHA_CP: f64 = 1.; // angstrom // todo
+pub const LEN_CP_N: f64 = 1.32; // angstrom
+pub const LEN_N_CALPHA: f64 = 1.; // angstrom // todo
+pub const LEN_CALPHA_CP: f64 = 1.; // angstrom // todo
 
 // todo: These may change under diff circumstances, and be diff for the diff atoms
 // and diff things on the atom.
@@ -18,7 +18,7 @@ const BACKBONE_BOND_ANGLES: f64 = 1.911; // radians
 #[derive(Debug)]
 /// A protein defined by AminoAcids: Name and bond angle.
 pub struct ProteinDescription {
-    pub aas: Vec<Residue>,
+    pub residues: Vec<Residue>,
 }
 
 #[derive(Debug)]
@@ -30,36 +30,37 @@ pub struct ProteinCoords {
 
 impl ProteinCoords {
     pub fn from_descrip(descrip: &ProteinDescription) -> Self {
-        let mut atoms_backbone = Vec::new();
+        let mut backbone = Vec::new();
 
         let mut id = 0;
 
         // N-terminus nitrogen, at the *start* of our chain.
         let starting_n = AtomCoords {
-            aa_id: id,
+            residue_id: id,
             role: BackboneRole::N,
             position: Vec3::new(0., 0., 0.),
             orientation: Quaternion::new_identity(),
         };
 
-        let mut prev_n = starting_n.clone();
+        let mut prev_position = starting_n.position;
+        let mut prev_orientation = starting_n.orientation;
 
-        atoms_backbone.push(starting_n);
+        backbone.push(starting_n);
         id += 1;
 
-        for aa in &descrip.aas {
-            let aa_coords = aa.backbone_cart_coords(prev_n.position, prev_n.orientation);
+        for aa in &descrip.residues {
+            let aa_coords = aa.backbone_cart_coords(prev_position, prev_orientation);
 
-            atoms_backbone.push(AtomCoords {
-                aa_id: id,
+            backbone.push(AtomCoords {
+                residue_id: id,
                 role: BackboneRole::Cα,
                 position: aa_coords.cα,
                 orientation: aa_coords.cα_orientation,
             });
             id += 1;
 
-            atoms_backbone.push(AtomCoords {
-                aa_id: id,
+            backbone.push(AtomCoords {
+                residue_id: id,
                 role: BackboneRole::Cp,
                 position: aa_coords.cp,
                 orientation: aa_coords.cp_orientation,
@@ -67,28 +68,30 @@ impl ProteinCoords {
             id += 1;
 
             let n = AtomCoords {
-                aa_id: id,
+                residue_id: id,
                 role: BackboneRole::N,
-                // atom: AtomType::N,
                 position: aa_coords.n_next,
                 orientation: aa_coords.n_next_orientation,
             };
 
-            prev_n = n.clone();
+            prev_position = n.position;
+            prev_orientation = n.orientation;
 
-            atoms_backbone.push(n);
+            backbone.push(n);
             id += 1;
         }
 
-        Self { atoms_backbone }
+        Self {
+            atoms_backbone: backbone,
+        }
     }
 }
 
 /// Location of an atom, in the worldspace coordinate system.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct AtomCoords {
     /// id of the Amino Acid this atom is part of
-    pub aa_id: usize, // todo: Do we want this id, or use an index?
+    pub residue_id: usize, // todo: Do we want this id, or use an index?
     pub role: BackboneRole,
     pub position: Vec3,
     pub orientation: Quaternion,
@@ -116,6 +119,39 @@ pub struct BackboneCoordsAa {
     pub cα_orientation: Quaternion,
     pub cp_orientation: Quaternion,
     pub n_next_orientation: Quaternion,
+}
+
+/// Calculate the orientation, as a quaternion, of a backbone atom, given the orientation of the
+/// previous atom, and the bond angle. `bond_angle` is the vector representing the bond to
+/// this atom from the previous atom's orientation.
+pub fn find_backbone_atom_orientation(
+    q_prev: Quaternion,
+    bond_prev: Vec3,
+    dihedral_angle: f64,
+) -> Quaternion {
+    // We split up determining the orientation of each backbone atom into 3 steps:
+
+    // #1: Find the bond axis. This is the world-space vector of the backbone bond by rotating the
+    // bond angle with the previous atom's orientation quaternion.
+    let bond_axis = q_prev.rotate_vec(bond_prev);
+
+    // todo: Rotate from prev bond to next bond.
+
+    // #2: Calculate the orientation quaternion of the current atom so its bond to the previous atom
+    // is aligned with the bond axis found above, and rotated per the dihedral angle.
+    let current_atom_orientation = Quaternion::from_axis_angle(bond_axis, dihedral_angle);
+
+    // #3: Rotate the current atom's orientation by the dihedral angle between the two atoms. (eg φ, or ψ).
+
+    // todo: Instead of actual dihedral angles, we are using a somewhat arbitrary rotation. todo: Change
+    // todo this later to be actual dihedral angle. To do so, you probably need to pass the plane formed.
+    // todo: Consider changing this variable name to `bond_rotation` in the meanwhile.
+
+    // by the prev 2 angles, and subtract it from the plane formed by this and the next.
+
+    // current_atom_orientation * dihedral_angle
+
+    current_atom_orientation
 }
 
 /// An amino acid in a protein structure, including position information.
@@ -184,39 +220,6 @@ impl Residue {
             n_next_orientation,
         }
     }
-}
-
-/// Calculate the orientation, as a quaternion, of a backbone atom, given the orientation of the
-/// previous atom, and the bond angle. `bond_angle` is the vector representing the bond to
-/// this atom from the previous atom's orientation.
-pub fn find_backbone_atom_orientation(
-    q_prev: Quaternion,
-    bond_prev: Vec3,
-    dihedral_angle: f64,
-) -> Quaternion {
-    // We split up determining the orientation of each backbone atom into 3 steps:
-
-    // #1: Find the bond axis. This is the world-space vector of the backbone bond by rotating the
-    // bond angle with the previous atom's orientation quaternion.
-    let bond_axis = q_prev.rotate_vec(bond_prev);
-
-    // todo: Rotate from prev bond to next bond.
-
-    // #2: Calculate the orientation quaternion of the current atom so its bond to the previous atom
-    // is aligned with the bond axis found above, and rotated per the dihedral angle.
-    let current_atom_orientation = Quaternion::from_axis_angle(bond_axis, dihedral_angle);
-
-    // #3: Rotate the current atom's orientation by the dihedral angle between the two atoms. (eg φ, or ψ).
-
-    // todo: Instead of actual dihedral angles, we are using a somewhat arbitrary rotation. todo: Change
-    // todo this later to be actual dihedral angle. To do so, you probably need to pass the plane formed.
-    // todo: Consider changing this variable name to `bond_rotation` in the meanwhile.
-
-    // by the prev 2 angles, and subtract it from the plane formed by this and the next.
-
-    // current_atom_orientation * dihedral_angle
-
-    current_atom_orientation
 }
 
 /// Used to represent one atom in a system built of atoms.
