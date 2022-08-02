@@ -133,7 +133,7 @@ fn setup(
 fn change_dihedral_angle(
     keyboard_input: Res<Input<KeyCode>>,
     // mut query: Query<&mut Transform, With<AtomRender>>,
-    mut query: Query<(&mut Transform, AtomRender)>,
+    mut query: Query<(&mut AtomRender, &mut Transform), With<AtomRender>>,
     mut state: ResMut<RenderState>,
 ) {
     // Update ω
@@ -144,11 +144,12 @@ fn change_dihedral_angle(
         // Recalculate coordinates now that we've updated our bond angles
         let coords = ProteinCoords::from_descrip(&state.protein_descrip).atoms_backbone;
 
-        for (id, mut transform) in query.iter_mut().enumerate() {
+        for (_id, (mut atom_render, mut transform)) in query.iter_mut().enumerate() {
+            // Note: We are using an id field on `AtomRender`, but from initial tests, this
+            // appears to be in sync with enumerating the query. (But isn't guaranteed
+            // to be by Bevy?)
 
-
-            let atom = &coords[id];
-            println!("query ID: {id} tom id: atom");
+            let atom = &coords[atom_render.id];
 
             // Convert from our vector and quaternion types to Bevy's.
             let position = Vec3::new(
