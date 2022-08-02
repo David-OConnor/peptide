@@ -1,10 +1,9 @@
-//! Render, using Bevy. Bevy's API is a mess; ideally transition to a different
+//! Render, using Bevy. Bevy's API and docs are a mess; ideally transition to a different
 //! engine, or a custom one using a Vulkan API like WGPU or Ash. It works for
 //! now as a quick+dirty solution.
 
 use bevy::prelude::*;
-use bevy::render::primitives::Sphere;
-
+use bevy::{core::FixedTimestep, render::primitives::Sphere};
 
 use crate::{
     chem_definitions::{AtomType, BackboneRole},
@@ -15,34 +14,21 @@ use crate::{
 };
 // Reference: https://bevyengine.org/examples/games/alien-cake-addict/
 
-// use gdnative::prelude::*;
-
 const BACKGROUND_COLOR: Color = Color::rgb(0.9, 0.9, 0.9);
 
-const TIME_STEP: f32 = 1.0 / 60.0;
 const LIGHT_INTENSITY: f32 = 1500.0;
 
 const DT: f64 = 1. / 60.;
 
 #[derive(Clone, Component, Debug)]
 struct AtomRender {
-    // pub entity: Option<Entity>, // todo: Do we want this?
     pub id: usize,
-    pub role: BackboneRole,
-    pub position: lin_alg::Vec3,
-    pub orientation: Quaternion,
 }
 
 impl Default for AtomRender {
-    // Required for Bevy init
+    // `Default` is required for Bevy init
     fn default() -> Self {
-        Self {
-            // entity: None,
-            id: 0,
-            role: BackboneRole::N,
-            position: Default::default(),
-            orientation: Quaternion::new_identity(),
-        }
+        Self { id: 0 }
     }
 }
 
@@ -57,8 +43,7 @@ impl BackboneRole {
     }
 }
 
-/// Store our atom coordinates and orientations here, for use
-/// with the renderer.
+/// Store our atom descriptions here, for global state the renderer can access.
 #[derive(Component)] // Bevy resources must implement `Default` or `FromWorld`.
 struct RenderState {
     /// Descriptions of each amino acid, including its name, and bond angles.
@@ -86,16 +71,11 @@ fn setup(
     let coords = ProteinCoords::from_descrip(&render_state.protein_descrip);
 
     // Render our atoms.
-    for (id, coords) in coords.atoms_backbone.iter().enumerate() {
-        let atom = AtomRender {
-            id,
-            role: coords.role,
-            position: coords.position,
-            orientation: coords.orientation,
-        };
+    for (id, atom) in coords.atoms_backbone.iter().enumerate() {
+        let atom_render = AtomRender { id };
         commands
             .spawn()
-            .insert(atom.clone())
+            .insert(atom_render.clone())
             .insert_bundle(PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
                 material: materials.add(atom.role.render_color().into()),
@@ -104,12 +84,12 @@ fn setup(
                     atom.position.y as f32,
                     atom.position.z as f32,
                 )
-                    .with_rotation(Quat::from_xyzw(
-                        atom.orientation.x as f32,
-                        atom.orientation.y as f32,
-                        atom.orientation.z as f32,
-                        atom.orientation.w as f32,
-                    )),
+                .with_rotation(Quat::from_xyzw(
+                    atom.orientation.x as f32,
+                    atom.orientation.y as f32,
+                    atom.orientation.z as f32,
+                    atom.orientation.w as f32,
+                )),
                 ..Default::default()
             });
     }
@@ -156,6 +136,8 @@ fn change_dihedral_angle(
 
             let atom = &coords[atom_render.id];
 
+            println!("Atom: {:?}\n\n", atom);
+
             // Convert from our vector and quaternion types to Bevy's.
             let position = Vec3::new(
                 atom.position.x as f32,
@@ -184,9 +166,6 @@ pub fn run() {
         .add_startup_system(setup)
         .add_system(change_dihedral_angle)
         .insert_resource(ClearColor(BACKGROUND_COLOR))
-        .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(render::TIME_STEP as f64))
-        )
+        .add_system_set(SystemSet::new().with_run_criteria(FixedTimestep::step(DT as f64)))
         .run();
 }
