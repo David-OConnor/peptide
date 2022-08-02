@@ -1,5 +1,10 @@
+//! Render, using Bevy. Bevy's API is a mess; ideally transition to a different
+//! engine, or a custom one using a Vulkan API like WGPU or Ash. It works for
+//! now as a quick+dirty solution.
+
 use bevy::prelude::*;
 use bevy::render::primitives::Sphere;
+
 
 use crate::{
     chem_definitions::{AtomType, BackboneRole},
