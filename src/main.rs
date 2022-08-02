@@ -19,7 +19,9 @@ mod render;
 // use graphics;
 
 use chem_definitions::AminoAcidType;
-use coord_gen::{AminoAcid, ProteinDescription};
+use coord_gen::{ProteinDescription, Residue};
+
+// todo: model the oxygen double-bounded to Cp next.
 
 const ROTATION_SPEED: f64 = 1.; // radians/s
 
@@ -34,21 +36,21 @@ const ROTATION_SPEED: f64 = 1.; // radians/s
 
 /// Set up our protein; passed to our initial render state.
 fn init_protein() -> ProteinDescription {
-    let a = AminoAcid {
+    let a = Residue {
         aa: AminoAcidType::A,
         ω: TAU / 2., // ω Assumed to be TAU/2 for most cases
         φ: 0.6 * TAU,
         ψ: 0.6 * TAU,
     };
 
-    let b = AminoAcid {
+    let b = Residue {
         aa: AminoAcidType::A,
         ω: TAU / 2., // ω Assumed to be TAU/2 for most cases
         φ: 0.75 * TAU,
         ψ: 0.25 * TAU,
     };
 
-    let c = AminoAcid {
+    let c = Residue {
         aa: AminoAcidType::A,
         ω: TAU / 2., // ω Assumed to be TAU/2 for most cases
         φ: 0.2 * TAU,

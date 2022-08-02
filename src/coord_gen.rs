@@ -18,7 +18,7 @@ const BACKBONE_BOND_ANGLES: f64 = 1.911; // radians
 #[derive(Debug)]
 /// A protein defined by AminoAcids: Name and bond angle.
 pub struct ProteinDescription {
-    pub aas: Vec<AminoAcid>,
+    pub aas: Vec<Residue>,
 }
 
 #[derive(Debug)]
@@ -120,7 +120,7 @@ pub struct BackboneCoordsAa {
 
 /// An amino acid in a protein structure, including position information.
 #[derive(Debug)]
-pub struct AminoAcid {
+pub struct Residue {
     pub aa: AminoAcidType,
     /// Dihedral angle between C' and N
     /// Tor (Cα, C, N, Cα) is the ω torsion angle
@@ -135,7 +135,7 @@ pub struct AminoAcid {
     // todo: Include bond lengths here if they're not constant.
 }
 
-impl AminoAcid {
+impl Residue {
     /// Generate cartesian coordinates of points from diahedral angles and bond lengths. Starts with
     /// N, and ends with C'.
     /// Accepts position, and orientation of the N atom that starts this segment.

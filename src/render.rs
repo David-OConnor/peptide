@@ -19,14 +19,7 @@ const LIGHT_INTENSITY: f32 = 1500.0;
 
 const DT: f64 = 1. / 60.;
 
-// #[derive(Default, Component, Debug)]
-// struct AaRender {
-//     pub atom_cα: AtomRender,
-//     pub atom_cp: AtomRender,
-//     pub atom_n_next: AtomRender,
-// }
-
-#[derive(Component, Debug)]
+#[derive(Clone, Component, Debug)]
 struct AtomRender {
     // pub entity: Option<Entity>, // todo: Do we want this?
     pub id: usize,
@@ -54,6 +47,7 @@ impl BackboneRole {
             Self::Cα => Color::rgb(1., 0., 1.),
             Self::Cp => Color::rgb(0., 1., 1.),
             Self::N => Color::rgb(0., 0., 1.),
+            Self::O => Color::rgb(1., 0., 0.),
         }
     }
 }
@@ -64,9 +58,6 @@ impl BackboneRole {
 struct RenderState {
     /// Descriptions of each amino acid, including its name, and bond angles.
     pub protein_descrip: ProteinDescription,
-    // /// Geometry of each atom, including position, and orientation. Updated whenever
-    // /// any bond angle in the protein changes.
-    // pub atom_renders: Vec<AtomRender>,
 }
 
 impl Default for RenderState {
@@ -74,13 +65,12 @@ impl Default for RenderState {
     fn default() -> Self {
         Self {
             protein_descrip: ProteinDescription { aas: Vec::new() },
-            // atom_renders: Vec::new(),
         }
     }
 }
 
 /// set up a simple 3D scene
-fn setup_render(
+fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -93,59 +83,31 @@ fn setup_render(
     // Render our atoms.
     for (id, coords) in coords.atoms_backbone.iter().enumerate() {
         let atom = AtomRender {
-            // entity: Some(commands.spawn().id()),
             id,
             role: coords.role,
             position: coords.position,
             orientation: coords.orientation,
         };
-
-        commands.spawn_bundle(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
-            material: materials.add(atom.role.render_color().into()),
-            transform: Transform::from_xyz(
-                atom.position.x as f32,
-                atom.position.y as f32,
-                atom.position.z as f32,
-            )
-            .with_rotation(Quat::from_xyzw(
-                atom.orientation.x as f32,
-                atom.orientation.y as f32,
-                atom.orientation.z as f32,
-                atom.orientation.w as f32,
-            )),
-            ..Default::default()
-        });
+        commands
+            .spawn()
+            .insert(atom.clone())
+            .insert_bundle(PbrBundle {
+                mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
+                material: materials.add(atom.role.render_color().into()),
+                transform: Transform::from_xyz(
+                    atom.position.x as f32,
+                    atom.position.y as f32,
+                    atom.position.z as f32,
+                )
+                    .with_rotation(Quat::from_xyzw(
+                        atom.orientation.x as f32,
+                        atom.orientation.y as f32,
+                        atom.orientation.z as f32,
+                        atom.orientation.w as f32,
+                    )),
+                ..Default::default()
+            });
     }
-
-    // for atom in coords.atoms_backbone {
-    //     render_state.atom_renders.push(AtomRender {
-    //         entity: Some(commands.spawn().id()),
-    //         role: atom.role,
-    //         position: atom.position,
-    //         orientation: atom.orientation,
-    //     });
-    // }
-    //
-    // // Render our atoms.
-    // for atom in &render_state.atom_renders {
-    //     commands.spawn_bundle(PbrBundle {
-    //         mesh: meshes.add(Mesh::from(shape::Cube { size: 0.2 })),
-    //         material: materials.add(atom.role.render_color().into()),
-    //         transform: Transform::from_xyz(
-    //             atom.position.x as f32,
-    //             atom.position.y as f32,
-    //             atom.position.z as f32,
-    //         )
-    //         .with_rotation(Quat::from_xyzw(
-    //             atom.orientation.x as f32,
-    //             atom.orientation.y as f32,
-    //             atom.orientation.z as f32,
-    //             atom.orientation.w as f32,
-    //         )),
-    //         ..Default::default()
-    //     });
-    // }
 
     // todo: Also render bonds, perhaps as a cylinder or line for now.
 
@@ -170,32 +132,40 @@ fn setup_render(
 
 fn change_dihedral_angle(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<&mut Transform, With<RenderState>>,
-    mut render_state: ResMut<RenderState>,
+    // mut query: Query<&mut Transform, With<AtomRender>>,
+    mut query: Query<(&mut Transform, AtomRender)>,
+    mut state: ResMut<RenderState>,
 ) {
     // Update ω
     if keyboard_input.pressed(KeyCode::Left) {
-        render_state.protein_descrip.aas[0].ω += ROTATION_SPEED * DT;
-        println!("Changing ω: {:?}", render_state.protein_descrip.aas[0].ω);
+        state.protein_descrip.aas[0].ω += ROTATION_SPEED * DT;
+        println!("Changing ω: {:?}", state.protein_descrip.aas[0].ω);
 
         // Recalculate coordinates now that we've updated our bond angles
-        let coords = ProteinCoords::from_descrip(&render_state.protein_descrip).atoms_backbone;
+        let coords = ProteinCoords::from_descrip(&state.protein_descrip).atoms_backbone;
 
-        // for (id, (atom, mut transform)) in query.iter().enumerate() {
-        for (id, mut transform) in query.iter().enumerate() {
+        for (id, mut transform) in query.iter_mut().enumerate() {
+
+
             let atom = &coords[id];
+            println!("query ID: {id} tom id: atom");
 
-            transform = &Transform::from_xyz(
+            // Convert from our vector and quaternion types to Bevy's.
+            let position = Vec3::new(
                 atom.position.x as f32,
                 atom.position.y as f32,
                 atom.position.z as f32,
-            )
-                .with_rotation(Quat::from_xyzw(
-                    atom.orientation.x as f32,
-                    atom.orientation.y as f32,
-                    atom.orientation.z as f32,
-                    atom.orientation.w as f32,
-                ));
+            );
+
+            let orientation = Quat::from_xyzw(
+                atom.orientation.x as f32,
+                atom.orientation.y as f32,
+                atom.orientation.z as f32,
+                atom.orientation.w as f32,
+            );
+
+            transform.translation = position;
+            transform.rotation = orientation;
         }
     }
 }
@@ -205,7 +175,7 @@ pub fn run() {
         .insert_resource(Msaa { samples: 4 })
         .init_resource::<RenderState>()
         .add_plugins(DefaultPlugins)
-        .add_startup_system(setup_render)
+        .add_startup_system(setup)
         .add_system(change_dihedral_angle)
         .insert_resource(ClearColor(BACKGROUND_COLOR))
         // .add_system_set(

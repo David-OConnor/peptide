@@ -81,8 +81,11 @@ impl AminoAcidType {
 /// The positional role of an atom in an amino acid
 pub enum BackboneRole {
     N,
+    /// The carbon attom that attaches to the side chain.
     Cα,
     Cp,
+    /// Oxygen double-bonded to C'
+    O,
 }
 
 impl BackboneRole {
