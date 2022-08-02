@@ -179,9 +179,9 @@ pub fn run() {
         .add_startup_system(setup)
         .add_system(change_dihedral_angle)
         .insert_resource(ClearColor(BACKGROUND_COLOR))
-        // .add_system_set(
-        //     SystemSet::new()
-        //         .with_run_criteria(FixedTimestep::step(render::TIME_STEP as f64))
-        // )
+        .add_system_set(
+            SystemSet::new()
+                .with_run_criteria(FixedTimestep::step(render::TIME_STEP as f64))
+        )
         .run();
 }
