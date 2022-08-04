@@ -1,5 +1,7 @@
 //! This module contains code for calculating atom coordinates.
 
+// todo: QC quaternion error creep, and re-normalize A/R
+
 use crate::{
     chem_definitions::{AminoAcidType, BackboneRole},
     lin_alg::{Quaternion, Vec3},
@@ -43,13 +45,16 @@ impl ProteinCoords {
         };
 
         let mut prev_position = starting_n.position;
+        // todo: This may need adjustment. to match physical reality.
+        let mut prev_2_position = Vec3::new(1., 0., 0.);
         let mut prev_orientation = starting_n.orientation;
 
         backbone.push(starting_n);
         id += 1;
 
         for aa in &descrip.residues {
-            let aa_coords = aa.backbone_cart_coords(prev_position, prev_orientation);
+            let aa_coords =
+                aa.backbone_cart_coords(prev_position, prev_orientation, prev_2_position);
 
             backbone.push(AtomCoords {
                 residue_id: id,
@@ -108,8 +113,6 @@ pub struct AtomCoords {
 /// todo: To start, convention is the previous C' to this AA's starting A is on the positive X axis.
 #[derive(Debug)]
 pub struct BackboneCoordsAa {
-    // ///Nitrogen atom bonded to C_alpha // defined as 0.
-    // pub n: f64,
     /// Cα
     pub cα: Vec3,
     /// Carbon' atom bound to C_alpha
@@ -123,35 +126,49 @@ pub struct BackboneCoordsAa {
 
 /// Calculate the orientation, as a quaternion, of a backbone atom, given the orientation of the
 /// previous atom, and the bond angle. `bond_angle` is the vector representing the bond to
-/// this atom from the previous atom's orientation.
+/// this atom from the previous atom's orientation. `bond_prev` and `bond_next` are in the atom's
+/// coordinates; not worldspace.
 pub fn find_backbone_atom_orientation(
     q_prev: Quaternion,
-    bond_prev: Vec3,
+    bond_to_prev: Vec3,     // Local space
+    bond_to_next: Vec3,     // Local space
+    vec_prev_2_atoms: Vec3, // World space
     dihedral_angle: f64,
 ) -> Quaternion {
-    // We split up determining the orientation of each backbone atom into 3 steps:
+    // #1: Align the prev atom's bond vector to world space based on the prev atom's orientation.
+    let bond_to_this_worldspace = q_prev.rotate_vec(bond_to_next);
 
-    // #1: Find the bond axis. This is the world-space vector of the backbone bond by rotating the
-    // bond angle with the previous atom's orientation quaternion.
-    let bond_axis = q_prev.rotate_vec(bond_prev);
+    // #2: Find the rotation quaternion that aligns the (inverse of) the local-space bond to
+    // the prev atom with the world-space "to" bond of the previous atom. This is also the
+    // orientation of our atom, without applying the dihedral angle.
+    let bond_alignment_rotation =
+        Quaternion::from_unit_vecs(bond_to_prev * -1., bond_to_this_worldspace);
 
-    // todo: Rotate from prev bond to next bond.
+    // #3: Rotate the orientation along the dihedral angle.
+    // let dihedral_rotation = Quaternion::from_axis_angle(bond_to_this_worldspace, dihedral_angle);
+    // let orientation = dihedral_rotation * bond_alignment_rotation;
+    let orientation = bond_alignment_rotation;
 
-    // #2: Calculate the orientation quaternion of the current atom so its bond to the previous atom
-    // is aligned with the bond axis found above, and rotated per the dihedral angle.
-    let current_atom_orientation = Quaternion::from_axis_angle(bond_axis, dihedral_angle);
+    // #4: Adjust the dihedral angle to be in reference to the previous 2 atoms, per the convention.
+    let bond_to_next_worldspace = orientation.rotate_vec(bond_to_next);
 
-    // #3: Rotate the current atom's orientation by the dihedral angle between the two atoms. (eg φ, or ψ).
+    // Change the basis so that one axis (we choose z) is aligned with the bond we're rotating.
+    // Then remove the z component of the two flanking vectors. Their angle is the dihedral angle.
+    let basis_change = Quaternion::from_unit_vecs(Vec3::new(0., 0., 1.), bond_to_this_worldspace); // todo: Negate?
 
-    // todo: Instead of actual dihedral angles, we are using a somewhat arbitrary rotation. todo: Change
-    // todo this later to be actual dihedral angle. To do so, you probably need to pass the plane formed.
-    // todo: Consider changing this variable name to `bond_rotation` in the meanwhile.
+    let next_bond_2d = basis_change.rotate_vec(bond_to_next_worldspace);
+    let prev_bond_2d = basis_change.rotate_vec(vec_prev_2_atoms);
 
-    // by the prev 2 angles, and subtract it from the plane formed by this and the next.
+    // todo: Even if your logic is right here, there's a lot of room for sign, order etc errors.
+    let dihedral_angle_current = (prev_bond_2d.dot(next_bond_2d)).acos();
 
-    // current_atom_orientation * dihedral_angle
+    let dihedral_rotation = Quaternion::from_axis_angle(
+        bond_to_this_worldspace,
+        dihedral_angle - dihedral_angle_current,
+    );
 
-    current_atom_orientation
+    // dihedral_rotation * orientation // todo
+    orientation
 }
 
 /// An amino acid in a protein structure, including position information.
@@ -177,37 +194,64 @@ impl Residue {
     /// Accepts position, and orientation of the N atom that starts this segment.
     /// Also returns orientation of the N atom, for use when calculating coordinates for the next
     /// AA in the chain.
-    pub fn backbone_cart_coords(&self, pos_n: Vec3, n_orientation: Quaternion) -> BackboneCoordsAa {
+    /// `prev_cp_pos` is usd to anchor the dihedral angle properly, since it's defined by planes
+    ///  of 3 atoms.
+    pub fn backbone_cart_coords(
+        &self,
+        n_pos: Vec3,
+        n_orientation: Quaternion,
+        prev_cp_pos: Vec3,
+    ) -> BackboneCoordsAa {
         // These are the angles between each of 2 4 equally-spaced atoms on a tetrahedron,
         // with center of (0., 0., 0.). They are the angle formed between 3 atoms.
         // We have chosen the two angles to describe the backbone. We have chosen these arbitrarily.
-        let bond_prev = Vec3::new(-1., 1., 1.).to_normalized();
-        let bond_next = Vec3::new(1., 1., -1.).to_normalized();
+        let bond_to_prev = Vec3::new(-1., 1., 1.).to_normalized();
+        let bond_to_next = Vec3::new(1., 1., -1.).to_normalized();
 
         // The other bonds, ie 2xH for C' and N, and H + side chain for Cα.
         let _bond_a = Vec3::new(1., -1., 1.).to_normalized();
         let _bond_b = Vec3::new(-1., -1., -1.).to_normalized();
 
+        // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+        // (world space)
+        let vec_prev_2_atoms = prev_cp_pos - n_pos; // todo: Direction?
+
         // todo: You must anchor the dihedral angle in terms of the plane formed by the atom pairs
         // todo on each side of the angle; that's how it's defined.
-        let cα_orientation = find_backbone_atom_orientation(n_orientation, bond_prev, self.ψ);
-        let cp_orientation = find_backbone_atom_orientation(cα_orientation, bond_prev, self.φ);
-        let n_next_orientation = find_backbone_atom_orientation(cp_orientation, bond_prev, self.ω);
-
-        // Orientations for the various atoms, Z up. todo ?
+        let cα_orientation = find_backbone_atom_orientation(
+            n_orientation,
+            bond_to_prev,
+            bond_to_next,
+            vec_prev_2_atoms,
+            self.φ,
+        );
+        let cp_orientation = find_backbone_atom_orientation(
+            cα_orientation,
+            bond_to_prev,
+            bond_to_next,
+            vec_prev_2_atoms,
+            self.ψ,
+        );
+        let n_next_orientation = find_backbone_atom_orientation(
+            cp_orientation,
+            bond_to_prev,
+            bond_to_next,
+            vec_prev_2_atoms,
+            self.ω,
+        );
 
         // Calculate the orientation of each atom from the orientation, the angle of the
         // bond from the previous atom, and the dihedral angle between the two.
 
         // Set up atom-oriented vectors encoding the angle and len of each bond.
-        let bond_n_cα = bond_next * LEN_N_CALPHA;
-        let bond_cα_cp = bond_next * LEN_CALPHA_CP;
-        let bond_cp_n = bond_next * LEN_CP_N;
+        let bond_n_cα = bond_to_next * LEN_N_CALPHA;
+        let bond_cα_cp = bond_to_next * LEN_CALPHA_CP;
+        let bond_cp_n = bond_to_next * LEN_CP_N;
 
         // Calculate the position of each atom from the position, orientation and bond angle
         // from the previous atom.
         // todo: Start by describing each term in terms of its dependencies.
-        let cα = pos_n + n_orientation.rotate_vec(bond_n_cα);
+        let cα = n_pos + n_orientation.rotate_vec(bond_n_cα);
         let cp = cα + cα_orientation.rotate_vec(bond_cα_cp);
         let n_next = cp + cp_orientation.rotate_vec(bond_cp_n);
 

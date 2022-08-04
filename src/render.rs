@@ -13,7 +13,7 @@ use bevy::{
 use crate::{
     chem_definitions::BackboneRole,
     coord_gen::{ProteinCoords, LEN_CP_N},
-    lin_alg, State, ROTATION_SPEED,
+    lin_alg::{self, Quaternion}, State, ROTATION_SPEED,
 };
 // Reference: https://bevyengine.org/examples/games/alien-cake-addict/
 
@@ -28,12 +28,29 @@ const BOND_COLOR: Color = Color::rgb(0.2, 0.2, 0.2);
 
 const DT: f64 = 1. / 60.;
 
-#[derive(Clone, Component, Debug)]
+impl lin_alg::Vec3 {
+    pub fn to_bevy(self) -> Vec3 {
+        Vec3 { x: self.x as f32, y: self.y as f32, z: self.z as f32 }
+    }
+}
+
+impl Quaternion {
+    pub fn to_bevy(self) -> Quat {
+        Quat::from_xyzw(
+            self.x as f32,
+            self.y as f32,
+            self.z as f32,
+            self.w as f32,
+        )
+    }
+}
+
+#[derive(Clone, Component)]
 struct AtomRender {
     pub id: usize,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component)]
 struct BondRender {
     pub id: usize,
 }
@@ -63,6 +80,26 @@ fn setup(
     for (id, atom) in coords.atoms_backbone.iter().enumerate() {
         let atom_render = AtomRender { id };
 
+        commands
+            .spawn()
+            .insert(atom_render.clone())
+            .insert_bundle(PbrBundle {
+                //UVSphere {
+                //     radius: f32,
+                //     sectors: usize,
+                //     stacks: usize,
+                // }
+                mesh: meshes.add(Mesh::from(shape::Cube { size: 0.3 })),
+                material: materials.add(atom.role.render_color().into()),
+                transform: Transform::from_xyz(
+                    atom.position.x as f32,
+                    atom.position.y as f32,
+                    atom.position.z as f32,
+                )
+                    .with_rotation(atom.orientation.to_bevy()),
+                ..Default::default()
+            });
+
         let bond_renders = [
             BondRender { id: id * 4 },
             BondRender { id: id * 4 + 1 },
@@ -78,33 +115,10 @@ fn setup(
             lin_alg::Vec3::new(-1., -1., -1.).to_normalized(),
         ];
 
-        commands
-            .spawn()
-            .insert(atom_render.clone())
-            .insert_bundle(PbrBundle {
-                //UVSphere {
-                //     radius: f32,
-                //     sectors: usize,
-                //     stacks: usize,
-                // }
-                mesh: meshes.add(Mesh::from(shape::Cube { size: 0.25 })),
-                material: materials.add(atom.role.render_color().into()),
-                transform: Transform::from_xyz(
-                    atom.position.x as f32,
-                    atom.position.y as f32,
-                    atom.position.z as f32,
-                )
-                .with_rotation(Quat::from_xyzw(
-                    atom.orientation.x as f32,
-                    atom.orientation.y as f32,
-                    atom.orientation.z as f32,
-                    atom.orientation.w as f32,
-                )),
-                ..Default::default()
-            });
-
         for (i, bond_render) in bond_renders.into_iter().enumerate() {
-            let bond_orientation = atom.orientation.rotate_vec(bond_vecs[i]);
+            let bond_worldspace = atom.orientation.rotate_vec(bond_vecs[i]);
+            // Angle doesn't matter, since it's radially symetric.
+            let bond_orientation = Quaternion::from_axis_angle(bond_worldspace, 0.);
 
             commands
                 .spawn()
@@ -114,7 +128,7 @@ fn setup(
                         radius: BOND_RADIUS,
                         rings: 1,
                         depth: LEN_CP_N as f32,
-                        latitudes: 6, // todo what is this?
+                        latitudes: 4,
                         longitudes: BOND_SIDES,
                         uv_profile: CapsuleUvProfile::Uniform, // todo
                     })),
@@ -124,12 +138,12 @@ fn setup(
                         atom.position.y as f32,
                         atom.position.z as f32,
                     )
-                    .with_rotation(Quat::from_xyzw(
-                        bond_orientation.x as f32,
-                        atom.orientation.y as f32,
-                        atom.orientation.z as f32,
-                        atom.orientation.w as f32,
-                    )),
+                        .with_rotation(Quat::from_xyzw(
+                            bond_orientation.x as f32,
+                            bond_orientation.y as f32,
+                            bond_orientation.z as f32,
+                            bond_orientation.w as f32,
+                        )),
                     ..Default::default()
                 });
         }
@@ -150,15 +164,15 @@ fn setup(
     });
 
     commands.spawn_bundle(Camera3dBundle {
-        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(-2.0, 2.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
 }
 
 fn change_dihedral_angle(
     keyboard_input: Res<Input<KeyCode>>,
-    // mut query: Query<&mut Transform, With<AtomRender>>,
     mut query: Query<(&mut AtomRender, &mut Transform), With<AtomRender>>,
+    mut query_bond: Query<(&mut BondRender, &mut Transform), With<BondRender>>,
     mut state: ResMut<State>,
 ) {
     // Update dihedral angles.
@@ -204,20 +218,19 @@ fn change_dihedral_angle(
     let ar = state.active_residue; // code shortener.
 
     if keyboard_input.pressed(KeyCode::Q) {
-        state.protein_descrip.residues[ar].ω += rotation_amt;
-    } else if keyboard_input.pressed(KeyCode::A) {
-        state.protein_descrip.residues[ar].ω -= rotation_amt;
-    }
-    if keyboard_input.pressed(KeyCode::W) {
         state.protein_descrip.residues[ar].φ += rotation_amt;
-    } else if keyboard_input.pressed(KeyCode::S) {
+    } else if keyboard_input.pressed(KeyCode::A) {
         state.protein_descrip.residues[ar].φ -= rotation_amt;
     }
-    if keyboard_input.pressed(KeyCode::E) {
+    if keyboard_input.pressed(KeyCode::W) {
         state.protein_descrip.residues[ar].ψ += rotation_amt;
-    } else if keyboard_input.pressed(KeyCode::D) {
+    } else if keyboard_input.pressed(KeyCode::S) {
         state.protein_descrip.residues[ar].ψ -= rotation_amt;
-        // println!("Changing ψ: {:?}", state.protein_descrip.residues[0].ψ);
+    }
+    if keyboard_input.pressed(KeyCode::E) {
+        state.protein_descrip.residues[ar].ω += rotation_amt;
+    } else if keyboard_input.pressed(KeyCode::D) {
+        state.protein_descrip.residues[ar].ω -= rotation_amt;
     }
 
     // todo: return if no key is pressed, so as not to update coordinates
@@ -236,8 +249,6 @@ fn change_dihedral_angle(
 
         let atom = &coords[atom_render.id];
 
-        // println!("Atom: {:?}\n\n", atom);
-
         // Convert from our vector and quaternion types to Bevy's.
         let position = Vec3::new(
             atom.position.x as f32,
@@ -254,7 +265,33 @@ fn change_dihedral_angle(
 
         transform.translation = position;
         transform.rotation = orientation;
-        // }
+
+        // todo: DRY from coord_gen and `setup`.
+        let bond_renders = [
+            BondRender { id: atom_render.id * 4 },
+            BondRender { id: atom_render.id * 4 + 1 },
+            BondRender { id: atom_render.id * 4 + 2 },
+            BondRender { id: atom_render.id * 4 + 3 },
+        ];
+
+        // todo: DRY from coord_gen
+        let bond_vecs = [
+            lin_alg::Vec3::new(-1., 1., 1.).to_normalized(),
+            lin_alg::Vec3::new(1., 1., -1.).to_normalized(),
+            lin_alg::Vec3::new(1., -1., 1.).to_normalized(),
+            lin_alg::Vec3::new(-1., -1., -1.).to_normalized(),
+        ];
+
+        for (i, bond_render_) in bond_renders.into_iter().enumerate() {
+            if let Ok((_bond_render, mut transform_bond)) = query.get_mut(bond_render_) {
+                let bond_worldspace = atom.orientation.rotate_vec(bond_vecs[i]);
+                // Angle doesn't matter, since it's radially symetric.
+                let bond_orientation = Quaternion::from_axis_angle(bond_worldspace, 0.);
+
+                transform_bond.translation = atom.position.to_bevy();
+                transform_bond.rotation = bond_orientation.to_bevy();
+            }
+        }
     }
 }
 

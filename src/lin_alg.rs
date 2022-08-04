@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use core::ops::{Add, Mul};
+use core::ops::{Add, Mul, Sub};
 
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Vec3 {
@@ -33,6 +33,18 @@ impl Add<Self> for Vec3 {
     }
 }
 
+impl Sub<Self> for Vec3 {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
+}
+
 impl Vec3 {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Self { x, y, z }
@@ -48,6 +60,20 @@ impl Vec3 {
         let mag_recip = 1. / self.magnitude();
         self * mag_recip
     }
+
+    /// Calculate the dot product
+    pub fn dot(&self, rhs: Self) -> f64 {
+        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
+    }
+
+    /// Calculate the cross product.
+    pub fn cross(&self, rhs: Self) -> Self {
+        Self {
+            x: self.y * rhs.z - self.z * rhs.y,
+            y: self.z * rhs.x - self.x * rhs.z,
+            z: self.x * rhs.y - self.y * rhs.x,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Default, Debug)]
@@ -61,6 +87,7 @@ pub struct Quaternion {
 impl Mul<Self> for Quaternion {
     type Output = Self;
 
+    /// Multiply a quaternion by another quaternion. This can be used to... todo
     fn mul(self, rhs: Self) -> Self::Output {
         Self {
             w: self.w * rhs.w - self.x * rhs.x - self.y * rhs.y - self.z * rhs.z,
@@ -75,8 +102,8 @@ impl Mul<Vec3> for Quaternion {
     type Output = Self;
 
     /// Returns the multiplication of a Quaternion with a vector.  This is a
-    /// normal Quaternion multiplication where the vector is treated a
-    /// Quaternion with a W element value of zero.  The Quaternion is post-
+    /// normal Quaternion multiplication where the vector is treated as a
+    /// Quaternion with a W element value of zero. The Quaternion is post-
     /// multiplied by the vector.
     fn mul(self, rhs: Vec3) -> Self::Output {
         Self {
@@ -84,6 +111,19 @@ impl Mul<Vec3> for Quaternion {
             x: self.w * rhs.x + self.y * rhs.z - self.z * rhs.y,
             y: self.w * rhs.y - self.x * rhs.z + self.z * rhs.x,
             z: self.w * rhs.z + self.x * rhs.y - self.y * rhs.x,
+        }
+    }
+}
+
+impl Mul<f64> for Quaternion {
+    type Output = Self;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Self {
+            w: self.w * rhs,
+            x: self.x * rhs,
+            y: self.y * rhs,
+            z: self.z * rhs,
         }
     }
 }
@@ -98,6 +138,23 @@ impl Quaternion {
         }
     }
 
+    /// Create the quaternion that creates the shortest (great circle?) rotation from vec0
+    /// to vec1.
+    pub fn from_unit_vecs(v0: Vec3, v1: Vec3) -> Self {
+        // todo
+
+        let w = 1. + v0.dot(v1);
+        let v = v0.cross(v1).to_normalized(); // todo: Is this required? Probably not
+
+        (Self {
+            w,
+            x: v.x,
+            y: v.y,
+            z: v.z,
+        })
+        .to_normalized()
+    }
+
     pub fn inverse(self) -> Self {
         Self {
             w: self.w,
@@ -107,9 +164,12 @@ impl Quaternion {
         }
     }
 
-    /// Rotate a vector using this quaternion.
+    /// Rotate a vector using this quaternion. Note that our multiplication Q * v
+    /// operation is effectively quaternion multiplication, with a quaternion
+    /// created by a vec with w=0.
     pub fn rotate_vec(self, vec: Vec3) -> Vec3 {
-        (self * vec * self.inverse()).to_vec()
+        // todo: Do we need the parens specifying Q*v operation is first?
+        ((self * vec) * self.inverse()).to_vec()
     }
 
     /// Create a rotation quaternion from an axis and angle.
@@ -135,22 +195,15 @@ impl Quaternion {
             z: self.z,
         }
     }
+
+    /// Returns the vector magnitude.
+    pub fn magnitude(&self) -> f64 {
+        (self.w.powi(2) + self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
+    }
+
+    /// Returns the normalised version of the vector
+    pub fn to_normalized(self) -> Self {
+        let mag_recip = 1. / self.magnitude();
+        self * mag_recip
+    }
 }
-//
-// /// A point in cartesian coordinates
-// #[derive(Clone, Copy, Debug)]
-// pub struct Vec3 {
-//     pub x: f64,
-//     pub y: f64,
-//     pub z: f64,
-// }
-//
-//
-//
-//
-// impl Vec3 {
-//     pub fn new(x: f64, y: f64, z: f64) -> Self {
-//         Self { x, y, z }
-//     }
-// }
-//

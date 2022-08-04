@@ -78,7 +78,8 @@ fn init_protein() -> ProteinDescription {
     };
 
     ProteinDescription {
-        residues: vec![a, b, c],
+        // residues: vec![a, b, c],
+        residues: vec![a, b],
     }
 }
 
