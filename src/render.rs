@@ -96,30 +96,25 @@ fn setup(
             });
 
         let bond_renders = [
-            // BondRender { id: id * 4, atom_id: id },
-            // BondRender { id: id, atom_id: id },
-            // BondRender { id: id, atom_id: id },
-            // BondRender { id: id, atom_id: id },
-
-            BondRender { bond_id: 0, atom_id: id },
-            BondRender { bond_id: 1, atom_id: id },
-            BondRender { bond_id: 2, atom_id: id },
-            BondRender { bond_id: 3, atom_id: id },
-        ];
-
-        // todo: DRY from coord_gen
-        let bond_vecs = [
-            lin_alg::Vec3::new(-1., 1., 1.).to_normalized(),
-            lin_alg::Vec3::new(1., 1., -1.).to_normalized(),
-            lin_alg::Vec3::new(1., -1., 1.).to_normalized(),
-            lin_alg::Vec3::new(-1., -1., -1.).to_normalized(),
+            BondRender {
+                bond_id: 0,
+                atom_id: id,
+            },
+            BondRender {
+                bond_id: 1,
+                atom_id: id,
+            },
+            BondRender {
+                bond_id: 2,
+                atom_id: id,
+            },
+            BondRender {
+                bond_id: 3,
+                atom_id: id,
+            },
         ];
 
         for (i, bond_render) in bond_renders.into_iter().enumerate() {
-            let bond_worldspace = atom.orientation.rotate_vec(bond_vecs[i]);
-            // Angle doesn't matter, since it's radially symetric.
-            let bond_orientation = Quaternion::from_axis_angle(bond_worldspace, 0.);
-
             commands
                 .spawn()
                 .insert(bond_render)
@@ -153,7 +148,7 @@ fn setup(
     });
 
     commands.spawn_bundle(Camera3dBundle {
-        transform: Transform::from_xyz(-2.0, 2.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+        transform: Transform::from_xyz(0.0, 0.0, -7.0).looking_at(Vec3::Z, Vec3::Y),
         ..default()
     });
 }
@@ -237,14 +232,15 @@ fn render_atoms(
     mut query: Query<(&mut AtomRender, &mut Transform), With<AtomRender>>,
     state: Res<State>,
 ) {
+    if state.protein_coords.atoms_backbone.len() == 0 {
+        return; // This occurs once on init.
+    }
+
     for (atom_render, mut transform) in query.iter_mut() {
         // Note: We are using an id field on `AtomRender`, but from initial tests, this
         // appears to be in sync with enumerating the query. (But isn't guaranteed
         // to be by Bevy?)
 
-        if state.protein_coords.atoms_backbone.len() == 0 {
-            return; // This occurs once on init.
-        }
         let atom = &state.protein_coords.atoms_backbone[atom_render.id];
 
         // Convert from our vector and quaternion types to Bevy's.
@@ -271,6 +267,10 @@ fn render_bonds(
     mut query: Query<(&mut BondRender, &mut Transform), With<BondRender>>,
     state: Res<State>,
 ) {
+    if state.protein_coords.atoms_backbone.len() == 0 {
+        return; // This occurs once on init.
+    }
+
     // todo: DRY from coord_gen
     let bond_vecs = [
         lin_alg::Vec3::new(-1., 1., 1.).to_normalized(),
@@ -279,34 +279,42 @@ fn render_bonds(
         lin_alg::Vec3::new(-1., -1., -1.).to_normalized(),
     ];
 
-    // for (atom_id, atom) in state.protein_coords.atoms_backbone.iter().enumerate() {
-    //     let bond_ids = [
-    //         atom_id * 4,
-    //         atom_id * 4 + 1,
-    //         atom_id * 4 + 2,
-    //         atom_id * 4 + 3,
-    //     ];
-
-    // for (i, id) in bond_ids.into_iter().enumerate() {
-    //     if let Ok((bond_render, mut transform)) =
-    //         query.get_mut(Entity::from_raw(id as u32))
-    //     {
     for (bond_render, mut transform) in query.iter_mut() {
-            let atom = &state.protein_coords.atoms_backbone[bond_render.atom_id];
+        let atom = &state.protein_coords.atoms_backbone[bond_render.atom_id];
 
-            let bond_worldspace = atom.orientation.rotate_vec(bond_vecs[bond_render.bond_id]);
-            // Angle doesn't matter, since it's radially symetric.
-            let bond_orientation = Quaternion::from_axis_angle(bond_worldspace, 0.);
+        let bond_worldspace = atom.orientation.rotate_vec(bond_vecs[bond_render.bond_id]);
 
-            transform.translation = atom.position.to_bevy();
-            transform.rotation = bond_orientation.to_bevy();
+        // Angle doesn't matter, since it's radially symetric.
+        // let bond_orientation = Quaternion::from_axis_angle(bond_worldspace, 0.);
 
-        //     println!("YEP {}", i);
-        // } else {
-        //     println!("Nope {}", i);
+        // todo: Figure this out.
+        // let a = Quaternion::from_unit_vecs(lin_alg::Vec3::new(0., 0., 1.), bond_worldspace);
+        // let b = Quaternion::new_identity().rotate_vec(bond_worldspace);
+
+        // in: Vec, and Q_I. Out: Q
+
+        // let bond_orientation = a * atom.orientation;
+        // let bond_orientation = atom.orientation;
+        // let bond_orientation = Quaternion::from_axis_angle(bond_worldspace, 0.);
+
+        //
+        // let objectRay = atom_
+        // normalize3(objectRay);
+        // angleDif = acos(dotProduct(targetRay,objectRay));
+        // if (angleDif!=0) {
+        //     orthoRay = crossProduct(objectRay,targetRay);
+        //     normalize3(orthoRay);
+        //     deltaQ = quaternionFromAxisAngle(orthoRay,angleDif);
+        //     rotationQuaternion = deltaQ*rotationQuaternion;
+        //     normalize4(rotationQuaternion);
         // }
+
+        let bond_orientation =
+            Quaternion::from_euler(bond_worldspace.x, bond_worldspace.y, bond_worldspace.z);
+
+        transform.translation = atom.position.to_bevy();
+        transform.rotation = bond_orientation.to_bevy();
     }
-    // }
 }
 
 pub fn run() {

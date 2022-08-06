@@ -154,7 +154,7 @@ impl Quaternion {
     pub fn from_unit_vecs(v0: Vec3, v1: Vec3) -> Self {
         const ONE_MINUS_EPS: f64 = 1.0 - 2.0 * EPS;
 
-        let mut dot = v0.dot(v1);
+        let dot = v0.dot(v1);
         if dot > ONE_MINUS_EPS {
             return Self::new_identity();
         } else if dot < -ONE_MINUS_EPS {
@@ -173,6 +173,22 @@ impl Quaternion {
             z: v.z,
         })
         .to_normalized()
+    }
+
+    pub fn from_euler(phi: f64, psi: f64, theta: f64) -> Self {
+        let cy = (theta * 0.5).cos();
+        let sy = (theta * 0.5).sin();
+        let cp = (psi * 0.5).cos();
+        let sp = (psi * 0.5).sin();
+        let cr = (phi * 0.5).cos();
+        let sr = (phi * 0.5).sin();
+
+        Self {
+            w: cr * cp * cy + sr * sp * sy,
+            x: sr * cp * cy - cr * sp * sy,
+            y: cr * sp * cy + sr * cp * sy,
+            z: cr * cp * sy - sr * sp * cy,
+        }
     }
 
     pub fn inverse(self) -> Self {
