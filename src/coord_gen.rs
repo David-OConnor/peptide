@@ -130,9 +130,9 @@ pub struct BackboneCoordsAa {
 /// coordinates; not worldspace.
 pub fn find_backbone_atom_orientation(
     q_prev: Quaternion,
-    bond_to_prev: Vec3,     // Local space
-    bond_to_next: Vec3,     // Local space
-    vec_prev_2_atoms: Vec3, // World space
+    bond_to_prev: Vec3,         // Local space
+    bond_to_next: Vec3,         // Local space
+    prev_bond_worldspace: Vec3, // World space
     dihedral_angle: f64,
 ) -> Quaternion {
     // #1: Align the prev atom's bond vector to world space based on the prev atom's orientation.
@@ -150,25 +150,32 @@ pub fn find_backbone_atom_orientation(
     let orientation = bond_alignment_rotation;
 
     // #4: Adjust the dihedral angle to be in reference to the previous 2 atoms, per the convention.
-    let bond_to_next_worldspace = orientation.rotate_vec(bond_to_next);
+    let next_bond_worldspace = orientation.rotate_vec(bond_to_next);
 
     // Change the basis so that one axis (we choose z) is aligned with the bond we're rotating.
     // Then remove the z component of the two flanking vectors. Their angle is the dihedral angle.
-    let basis_change = Quaternion::from_unit_vecs(Vec3::new(0., 0., 1.), bond_to_this_worldspace); // todo: Negate?
+    // let basis_change = Quaternion::from_unit_vecs(Vec3::new(0., 0., 1.), bond_to_this_worldspace); // todo: Negate?
+    //
+    // let next_bond_2d = basis_change.rotate_vec(bond_to_next_worldspace);
+    // let prev_bond_2d = basis_change.rotate_vec(vec_prev_2_atoms);
+    //
 
-    let next_bond_2d = basis_change.rotate_vec(bond_to_next_worldspace);
-    let prev_bond_2d = basis_change.rotate_vec(vec_prev_2_atoms);
+    // Project the next and previous bonds onto the plane that has this
+    // bond as its normal.
+    let prev_bond_on_plane = prev_bond_worldspace.project_to_plane(bond_to_this_worldspace);
+    // todo: Do we want to/need to reverse the plane axis to make the angles work correctly? Consider an
+    // todo experiment in python.
+    let next_bond_on_plane = next_bond_worldspace.project_to_plane(bond_to_this_worldspace * -1.);
 
-    // todo: Even if your logic is right here, there's a lot of room for sign, order etc errors.
-    let dihedral_angle_current = (prev_bond_2d.dot(next_bond_2d)).acos();
+    // // todo: There's a lot of room for sign, order etc errors.
+    let dihedral_angle_current = (next_bond_on_plane.dot(prev_bond_on_plane)).acos();
 
     let dihedral_rotation = Quaternion::from_axis_angle(
         bond_to_this_worldspace,
         dihedral_angle - dihedral_angle_current,
     );
 
-    // dihedral_rotation * orientation // todo
-    orientation
+    dihedral_rotation * orientation
 }
 
 /// An amino acid in a protein structure, including position information.
@@ -214,7 +221,7 @@ impl Residue {
 
         // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
         // (world space)
-        let vec_prev_2_atoms = prev_cp_pos - n_pos; // todo: Direction?
+        let bond_prev_worldspace = n_pos - prev_cp_pos; // todo: Direction?
 
         // todo: You must anchor the dihedral angle in terms of the plane formed by the atom pairs
         // todo on each side of the angle; that's how it's defined.
@@ -222,21 +229,21 @@ impl Residue {
             n_orientation,
             bond_to_prev,
             bond_to_next,
-            vec_prev_2_atoms,
+            bond_prev_worldspace,
             self.φ,
         );
         let cp_orientation = find_backbone_atom_orientation(
             cα_orientation,
             bond_to_prev,
             bond_to_next,
-            vec_prev_2_atoms,
+            bond_prev_worldspace,
             self.ψ,
         );
         let n_next_orientation = find_backbone_atom_orientation(
             cp_orientation,
             bond_to_prev,
             bond_to_next,
-            vec_prev_2_atoms,
+            bond_prev_worldspace,
             self.ω,
         );
 

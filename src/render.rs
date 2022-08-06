@@ -13,7 +13,8 @@ use bevy::{
 use crate::{
     chem_definitions::BackboneRole,
     coord_gen::{ProteinCoords, LEN_CP_N},
-    lin_alg::{self, Quaternion}, State, ROTATION_SPEED,
+    lin_alg::{self, Quaternion},
+    State, ROTATION_SPEED,
 };
 // Reference: https://bevyengine.org/examples/games/alien-cake-addict/
 
@@ -30,18 +31,17 @@ const DT: f64 = 1. / 60.;
 
 impl lin_alg::Vec3 {
     pub fn to_bevy(self) -> Vec3 {
-        Vec3 { x: self.x as f32, y: self.y as f32, z: self.z as f32 }
+        Vec3 {
+            x: self.x as f32,
+            y: self.y as f32,
+            z: self.z as f32,
+        }
     }
 }
 
 impl Quaternion {
     pub fn to_bevy(self) -> Quat {
-        Quat::from_xyzw(
-            self.x as f32,
-            self.y as f32,
-            self.z as f32,
-            self.w as f32,
-        )
+        Quat::from_xyzw(self.x as f32, self.y as f32, self.z as f32, self.w as f32)
     }
 }
 
@@ -52,7 +52,8 @@ struct AtomRender {
 
 #[derive(Component)]
 struct BondRender {
-    pub id: usize,
+    pub bond_id: usize, // Note: Currently not a unique ID; only unique per atom.
+    pub atom_id: usize,
 }
 impl BackboneRole {
     pub fn render_color(&self) -> Color {
@@ -91,20 +92,19 @@ fn setup(
                 // }
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 0.3 })),
                 material: materials.add(atom.role.render_color().into()),
-                transform: Transform::from_xyz(
-                    atom.position.x as f32,
-                    atom.position.y as f32,
-                    atom.position.z as f32,
-                )
-                    .with_rotation(atom.orientation.to_bevy()),
                 ..Default::default()
             });
 
         let bond_renders = [
-            BondRender { id: id * 4 },
-            BondRender { id: id * 4 + 1 },
-            BondRender { id: id * 4 + 2 },
-            BondRender { id: id * 4 + 3 },
+            // BondRender { id: id * 4, atom_id: id },
+            // BondRender { id: id, atom_id: id },
+            // BondRender { id: id, atom_id: id },
+            // BondRender { id: id, atom_id: id },
+
+            BondRender { bond_id: 0, atom_id: id },
+            BondRender { bond_id: 1, atom_id: id },
+            BondRender { bond_id: 2, atom_id: id },
+            BondRender { bond_id: 3, atom_id: id },
         ];
 
         // todo: DRY from coord_gen
@@ -133,17 +133,6 @@ fn setup(
                         uv_profile: CapsuleUvProfile::Uniform, // todo
                     })),
                     material: materials.add(BOND_COLOR.into()),
-                    transform: Transform::from_xyz(
-                        atom.position.x as f32,
-                        atom.position.y as f32,
-                        atom.position.z as f32,
-                    )
-                        .with_rotation(Quat::from_xyzw(
-                            bond_orientation.x as f32,
-                            bond_orientation.y as f32,
-                            bond_orientation.z as f32,
-                            bond_orientation.w as f32,
-                        )),
                     ..Default::default()
                 });
         }
@@ -171,8 +160,8 @@ fn setup(
 
 fn change_dihedral_angle(
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut AtomRender, &mut Transform), With<AtomRender>>,
-    mut query_bond: Query<(&mut BondRender, &mut Transform), With<BondRender>>,
+    // mut query: Query<(&mut AtomRender, &mut Transform), With<AtomRender>>,
+    // mut query_bond: Query<(&mut BondRender, &mut Transform), With<BondRender>>,
     mut state: ResMut<State>,
 ) {
     // Update dihedral angles.
@@ -239,15 +228,24 @@ fn change_dihedral_angle(
     //     return // Exit if no key changed
     // }
 
+    // Recalculate coordinates now that we've updated our bond angles
+    state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
+}
+
+/// Re-render all atoms, based on the latest calculated positions and orientations.
+fn render_atoms(
+    mut query: Query<(&mut AtomRender, &mut Transform), With<AtomRender>>,
+    state: Res<State>,
+) {
     for (atom_render, mut transform) in query.iter_mut() {
         // Note: We are using an id field on `AtomRender`, but from initial tests, this
         // appears to be in sync with enumerating the query. (But isn't guaranteed
         // to be by Bevy?)
 
-        // Recalculate coordinates now that we've updated our bond angles
-        let coords = ProteinCoords::from_descrip(&state.protein_descrip).atoms_backbone;
-
-        let atom = &coords[atom_render.id];
+        if state.protein_coords.atoms_backbone.len() == 0 {
+            return; // This occurs once on init.
+        }
+        let atom = &state.protein_coords.atoms_backbone[atom_render.id];
 
         // Convert from our vector and quaternion types to Bevy's.
         let position = Vec3::new(
@@ -265,34 +263,50 @@ fn change_dihedral_angle(
 
         transform.translation = position;
         transform.rotation = orientation;
-
-        // todo: DRY from coord_gen and `setup`.
-        let bond_renders = [
-            BondRender { id: atom_render.id * 4 },
-            BondRender { id: atom_render.id * 4 + 1 },
-            BondRender { id: atom_render.id * 4 + 2 },
-            BondRender { id: atom_render.id * 4 + 3 },
-        ];
-
-        // todo: DRY from coord_gen
-        let bond_vecs = [
-            lin_alg::Vec3::new(-1., 1., 1.).to_normalized(),
-            lin_alg::Vec3::new(1., 1., -1.).to_normalized(),
-            lin_alg::Vec3::new(1., -1., 1.).to_normalized(),
-            lin_alg::Vec3::new(-1., -1., -1.).to_normalized(),
-        ];
-
-        for (i, bond_render_) in bond_renders.into_iter().enumerate() {
-            if let Ok((_bond_render, mut transform_bond)) = query.get_mut(bond_render_) {
-                let bond_worldspace = atom.orientation.rotate_vec(bond_vecs[i]);
-                // Angle doesn't matter, since it's radially symetric.
-                let bond_orientation = Quaternion::from_axis_angle(bond_worldspace, 0.);
-
-                transform_bond.translation = atom.position.to_bevy();
-                transform_bond.rotation = bond_orientation.to_bevy();
-            }
-        }
     }
+}
+
+/// Re-render all bonds, based on the latest calculated positions and orientations.
+fn render_bonds(
+    mut query: Query<(&mut BondRender, &mut Transform), With<BondRender>>,
+    state: Res<State>,
+) {
+    // todo: DRY from coord_gen
+    let bond_vecs = [
+        lin_alg::Vec3::new(-1., 1., 1.).to_normalized(),
+        lin_alg::Vec3::new(1., 1., -1.).to_normalized(),
+        lin_alg::Vec3::new(1., -1., 1.).to_normalized(),
+        lin_alg::Vec3::new(-1., -1., -1.).to_normalized(),
+    ];
+
+    // for (atom_id, atom) in state.protein_coords.atoms_backbone.iter().enumerate() {
+    //     let bond_ids = [
+    //         atom_id * 4,
+    //         atom_id * 4 + 1,
+    //         atom_id * 4 + 2,
+    //         atom_id * 4 + 3,
+    //     ];
+
+    // for (i, id) in bond_ids.into_iter().enumerate() {
+    //     if let Ok((bond_render, mut transform)) =
+    //         query.get_mut(Entity::from_raw(id as u32))
+    //     {
+    for (bond_render, mut transform) in query.iter_mut() {
+            let atom = &state.protein_coords.atoms_backbone[bond_render.atom_id];
+
+            let bond_worldspace = atom.orientation.rotate_vec(bond_vecs[bond_render.bond_id]);
+            // Angle doesn't matter, since it's radially symetric.
+            let bond_orientation = Quaternion::from_axis_angle(bond_worldspace, 0.);
+
+            transform.translation = atom.position.to_bevy();
+            transform.rotation = bond_orientation.to_bevy();
+
+        //     println!("YEP {}", i);
+        // } else {
+        //     println!("Nope {}", i);
+        // }
+    }
+    // }
 }
 
 pub fn run() {
@@ -302,6 +316,8 @@ pub fn run() {
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup)
         .add_system(change_dihedral_angle)
+        .add_system(render_atoms)
+        .add_system(render_bonds)
         .insert_resource(ClearColor(BACKGROUND_COLOR))
         .add_system_set(SystemSet::new().with_run_criteria(FixedTimestep::step(DT as f64)))
         .run();

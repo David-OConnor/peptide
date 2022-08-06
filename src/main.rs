@@ -19,7 +19,7 @@ mod render;
 // use graphics;
 
 use chem_definitions::AminoAcidType;
-use coord_gen::{ProteinDescription, Residue};
+use coord_gen::{ProteinCoords, ProteinDescription, Residue};
 
 // todo: model the oxygen double-bounded to Cp next.
 
@@ -38,6 +38,8 @@ const ROTATION_SPEED: f64 = 1.; // radians/s
 struct State {
     /// Descriptions of each amino acid, including its name, and bond angles.
     pub protein_descrip: ProteinDescription,
+    /// Stored coordinates, calculated in `coord_gen`.
+    pub protein_coords: ProteinCoords,
     /// Residue id that's selected for rotation.
     pub active_residue: usize,
 }
@@ -48,6 +50,9 @@ impl Default for State {
         Self {
             protein_descrip: ProteinDescription {
                 residues: Vec::new(),
+            },
+            protein_coords: ProteinCoords {
+                atoms_backbone: Vec::new(),
             },
             active_residue: 0,
         }

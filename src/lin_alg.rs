@@ -1,6 +1,11 @@
 #![allow(dead_code)]
 
-use core::ops::{Add, Mul, Sub};
+use core::{
+    f64::consts::TAU,
+    ops::{Add, Mul, Sub},
+};
+
+const EPS: f64 = 0.0000001;
 
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Vec3 {
@@ -74,6 +79,12 @@ impl Vec3 {
             z: self.x * rhs.y - self.y * rhs.x,
         }
     }
+
+    /// Project a vector onto a plane defined by its normal vector.
+    pub fn project_to_plane(&self, plane_norm: Self) -> Self {
+        // todo: Do we want self - ? Some guides don't have it.
+        *self - plane_norm * (self.dot(plane_norm) / plane_norm.magnitude().powf(2.))
+    }
 }
 
 #[derive(Clone, Copy, Default, Debug)]
@@ -138,13 +149,22 @@ impl Quaternion {
         }
     }
 
-    /// Create the quaternion that creates the shortest (great circle?) rotation from vec0
+    /// Create the quaternion that creates the shortest (great circle) rotation from vec0
     /// to vec1.
     pub fn from_unit_vecs(v0: Vec3, v1: Vec3) -> Self {
-        // todo
+        const ONE_MINUS_EPS: f64 = 1.0 - 2.0 * EPS;
 
-        let w = 1. + v0.dot(v1);
-        let v = v0.cross(v1).to_normalized(); // todo: Is this required? Probably not
+        let mut dot = v0.dot(v1);
+        if dot > ONE_MINUS_EPS {
+            return Self::new_identity();
+        } else if dot < -ONE_MINUS_EPS {
+            // Rotate along any orthonormal vec to vec1 or vec2 as the axis.
+            let dummy_vec = Vec3::new(1., 1., 1.).to_normalized();
+            return Self::from_axis_angle(dummy_vec.project_to_plane(v0), TAU / 2.);
+        }
+
+        let w = dot;
+        let v = v0.cross(v1);
 
         (Self {
             w,
@@ -169,7 +189,7 @@ impl Quaternion {
     /// created by a vec with w=0.
     pub fn rotate_vec(self, vec: Vec3) -> Vec3 {
         // todo: Do we need the parens specifying Q*v operation is first?
-        ((self * vec) * self.inverse()).to_vec()
+        (self * vec * self.inverse()).to_vec()
     }
 
     /// Create a rotation quaternion from an axis and angle.
