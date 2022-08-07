@@ -27,6 +27,7 @@ const BOND_SIDES: usize = 10;
 
 const BOND_COLOR: Color = Color::rgb(0.2, 0.2, 0.2);
 
+const CAM_MOVE_AMT: f64 = 1.;
 const DT: f64 = 1. / 60.;
 
 impl lin_alg::Vec3 {
@@ -44,6 +45,9 @@ impl Quaternion {
         Quat::from_xyzw(self.x as f32, self.y as f32, self.z as f32, self.w as f32)
     }
 }
+
+#[derive(Component)]
+struct Cam;
 
 #[derive(Clone, Component)]
 struct AtomRender {
@@ -150,7 +154,8 @@ fn setup(
     commands.spawn_bundle(Camera3dBundle {
         transform: Transform::from_xyz(0.0, 0.0, -7.0).looking_at(Vec3::Z, Vec3::Y),
         ..default()
-    });
+    })
+        .insert(Cam);
 }
 
 fn change_dihedral_angle(
@@ -309,11 +314,32 @@ fn render_bonds(
         //     normalize4(rotationQuaternion);
         // }
 
-        let bond_orientation =
-            Quaternion::from_euler(bond_worldspace.x, bond_worldspace.y, bond_worldspace.z);
+        // let bond_orientation =
+        //     Quaternion::from_euler(bond_worldspace.x, bond_worldspace.y, bond_worldspace.z);
+
+        let bond_orientation = Quaternion::from_vec_direction(bond_worldspace, lin_alg::Vec3::new(0., 1., 0.));
 
         transform.translation = atom.position.to_bevy();
         transform.rotation = bond_orientation.to_bevy();
+    }
+}
+
+/// Re-render all bonds, based on the latest calculated positions and orientations.
+fn adjust_camera(
+    mut query: Query<(&Cam, &mut Transform)>,
+    keyboard_input: Res<Input<KeyCode>>,
+) {
+
+    let mut translation_y = 0.;
+    if keyboard_input.pressed(KeyCode::Up) {
+        translation_y += CAM_MOVE_AMT * DT;
+    } else if keyboard_input.pressed(Dn) {
+        translation_y -= CAM_MOVE_AMT * DT;
+    }
+
+    for (_camera, mut transform) in query.iter_mut() {
+        transform.translation = // ...;
+        // transform.rotation = // ...;
     }
 }
 
@@ -323,6 +349,7 @@ pub fn run() {
         .init_resource::<State>()
         .add_plugins(DefaultPlugins)
         .add_startup_system(setup)
+        .add_system(adjust_camera)
         .add_system(change_dihedral_angle)
         .add_system(render_atoms)
         .add_system(render_bonds)

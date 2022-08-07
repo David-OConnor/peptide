@@ -7,8 +7,4 @@ edition = "2021"
 
 [dependencies]
 bevy = "^0.8.0"
-
-# Git so we can use the official examples.
-#bevy = { git = "https://github.com/bevyengine/bevy" }
-#gdnative = "0.10.0"
 #graphics = { path = "../graphics_wgpu" }
