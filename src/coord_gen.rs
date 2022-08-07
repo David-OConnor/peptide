@@ -233,7 +233,6 @@ impl Residue {
             cα_orientation,
             bond_to_prev,
             bond_to_next,
-            bond_prev_worldspace,
             cα - n_pos,
             self.ψ,
         );
@@ -244,7 +243,6 @@ impl Residue {
             cp_orientation,
             bond_to_prev,
             bond_to_next,
-            bond_prev_worldspace,
             cp - cα,
             self.ω,
         );
