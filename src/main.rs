@@ -11,15 +11,18 @@
 
 use std::f64::consts::TAU;
 
-mod lin_alg::{Vec3, Quaternion};
+mod lin_alg;
 
 mod chem_definitions;
 mod coord_gen;
 mod render;
-// use graphics;
+mod render_bevy;
+// mod graphics_wgpu;
 
 use chem_definitions::AminoAcidType;
 use coord_gen::{ProteinCoords, ProteinDescription, Residue};
+use lin_alg::{Quaternion, Vec3};
+use render::Camera;
 
 // todo: model the oxygen double-bounded to Cp next.
 
@@ -34,11 +37,6 @@ const ROTATION_SPEED: f64 = 1.; // radians/s
 //     D,
 // }
 
-pub struct Camera {
-    pub position: Vec3,
-    pub orientation: Quaternion,
-}
-
 /// Store our atom descriptions here, for global state the renderer can access.
 struct State {
     /// Descriptions of each amino acid, including its name, and bond angles.
@@ -48,7 +46,7 @@ struct State {
     /// Residue id that's selected for rotation.
     pub active_residue: usize,
     /// Camera position and orientation
-    pub camera: Camera,
+    pub cam: Camera,
 }
 
 impl Default for State {
@@ -62,10 +60,10 @@ impl Default for State {
                 atoms_backbone: Vec::new(),
             },
             active_residue: 0,
-            camera: Camera {
+            cam: Camera {
                 position: Vec3::new(0., 0., -7.),
                 orientation: Quaternion::new_identity(),
-            }
+            },
         }
     }
 }
@@ -74,16 +72,16 @@ impl Default for State {
 fn init_protein() -> ProteinDescription {
     let a = Residue {
         aa: AminoAcidType::A,
-        ω: 1./2. * TAU, // ω Assumed to be TAU/2 for most cases
-        φ: 1./2. * TAU,
-        ψ: 1./2. * TAU,
+        ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+        φ: 1. / 2. * TAU,
+        ψ: 1. / 2. * TAU,
     };
 
     let b = Residue {
         aa: AminoAcidType::A,
-        ω: 1./2. * TAU, // ω Assumed to be TAU/2 for most cases
-        φ: 1./2. * TAU,
-        ψ: 1./2. * TAU,
+        ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+        φ: 1. / 2. * TAU,
+        ψ: 1. / 2. * TAU,
     };
 
     let c = Residue {
@@ -101,6 +99,6 @@ fn init_protein() -> ProteinDescription {
 
 fn main() {
     // init_protein(); // todo temp
-    render::run();
+    render_bevy::run();
     // graphics::run();
 }

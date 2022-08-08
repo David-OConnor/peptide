@@ -193,7 +193,6 @@ impl Quaternion {
 
     /// Creates an orientation that point towards a vector, with a given up direction defined.
     pub fn from_vec_direction(dir: Vec3, up: Vec3) -> Self {
-
         let forward_vector = dir;
 
         let forward = Vec3::new(0., 0., 1.);
