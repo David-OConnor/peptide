@@ -32,15 +32,17 @@ const BOND_ANGLE_CP_O_N: f64 = 122.7 * 360. / TAU;
 
 // todo
 const CALPHA_N_BOND: Vec3 = Vec3 {
-    x: 0.,
+    x: 1.,
     y: 0.,
     z: 0.,
 };
+
 const CALPHA_CP_BOND: Vec3 = Vec3 {
     x: 0.,
     y: 0.,
     z: 0.,
 };
+
 const CALPHA_R_BOND: Vec3 = Vec3 {
     x: 0.,
     y: 0.,
@@ -48,15 +50,17 @@ const CALPHA_R_BOND: Vec3 = Vec3 {
 };
 
 const CP_CALPHA_BOND: Vec3 = Vec3 {
-    x: 0.,
+    x: 1.,
     y: 0.,
     z: 0.,
 };
+
 const CP_N_BOND: Vec3 = Vec3 {
-    x: 0.,
+    x: 1.,
     y: 0.,
     z: 0.,
 };
+
 const CP_O_BOND: Vec3 = Vec3 {
     x: 0.,
     y: 0.,
