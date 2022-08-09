@@ -2,9 +2,11 @@
 //! engine, or a custom one using a Vulkan API like WGPU or Ash. It works for
 //! now as a quick+dirty solution.
 
+use core::f32::consts::TAU;
+
 use bevy::{
     input::mouse::MouseMotion,
-    prelude::shape::{Capsule, CapsuleUvProfile, UVSphere},
+    prelude::shape::{Box as Box_, Capsule, CapsuleUvProfile, UVSphere},
     prelude::*,
     time::FixedTimestep,
 };
@@ -16,7 +18,7 @@ use crate::{
     coord_gen::{ProteinCoords, LEN_CP_N},
     lin_alg::{self, Quaternion},
     render::{
-        BACKGROUND_COLOR, BOND_COLOR, BOND_N_SIDES, BOND_RADIUS, CAM_MOVE_SENS,
+        self, BACKGROUND_COLOR, BOND_COLOR, BOND_N_SIDES, BOND_RADIUS, CAM_MOVE_SENS,
         CAM_ROTATE_KEY_SENS, CAM_ROTATE_SENS, DT, FWD_VEC, LIGHT_INTENSITY, RIGHT_VEC, UP_VEC,
     },
     State, ROTATION_SPEED,
@@ -53,11 +55,17 @@ struct BondRender {
 }
 impl BackboneRole {
     pub fn render_color(&self) -> Color {
+        let cα = render::CALPHA_COLOR;
+        let cp = render::CP_COLOR;
+        let n = render::N_COLOR;
+        let o = render::O_COLOR;
+        // let c_other = render::CALPHA_COLOR;
         match self {
-            Self::Cα => Color::rgb(1., 0., 1.),
-            Self::Cp => Color::rgb(0., 1., 1.),
-            Self::N => Color::rgb(0., 0., 1.),
-            Self::O => Color::rgb(1., 0., 0.),
+            Self::Cα => Color::rgb(cα.0, cα.1, cα.2),
+            Self::Cp => Color::rgb(cp.0, cp.1, cp.2),
+            Self::N => Color::rgb(n.0, n.1, n.2),
+            Self::O => Color::rgb(o.0, o.1, o.2),
+            // Self::C_OTHER => Color::rgb(c_other.0, c_other.1, c_other.2),
         }
     }
 }
@@ -111,26 +119,70 @@ fn setup(
         ];
 
         for (i, bond_render) in bond_renders.into_iter().enumerate() {
-            commands
-                .spawn()
-                .insert(bond_render)
-                .insert_bundle(PbrBundle {
-                    mesh: meshes.add(Mesh::from(Capsule {
-                        radius: BOND_RADIUS,
-                        rings: 1,
-                        depth: LEN_CP_N as f32,
-                        latitudes: 4,
-                        longitudes: BOND_N_SIDES,
-                        uv_profile: CapsuleUvProfile::Uniform, // todo
-                    })),
-                    material: materials
-                        .add(Color::rgb(BOND_COLOR.0, BOND_COLOR.1, BOND_COLOR.2).into()),
-                    ..Default::default()
-                });
+            // commands
+            //     .spawn()
+            //     .insert(bond_render)
+            //     .insert_bundle(PbrBundle {
+            //         mesh: meshes.add(Mesh::from(Capsule {
+            //             radius: BOND_RADIUS,
+            //             rings: 1,
+            //             depth: LEN_CP_N as f32 * 2., // todo temp!!
+            //             latitudes: 4,
+            //             longitudes: BOND_N_SIDES,
+            //             uv_profile: CapsuleUvProfile::Uniform, // todo
+            //         })),
+            //         material: materials
+            //             .add(Color::rgb(BOND_COLOR.0, BOND_COLOR.1, BOND_COLOR.2).into()),
+            //         ..Default::default()
+            //     });
         }
     }
 
-    // todo: Also render bonds, perhaps as a cylinder or line for now.
+    // Render cylinders defining the origin and axes
+
+    let mut axes_transform = Transform::from_xyz(0., 0., 0.);
+
+    commands.spawn().insert_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(Box_ {
+            min_x: 0.,
+            max_x: 1.,
+            min_y: -0.02,
+            max_y: 0.02,
+            min_z: -0.02,
+            max_z: 0.02,
+        })),
+        transform: axes_transform,
+        material: materials.add(Color::rgb(1., 0., 0.).into()),
+        ..Default::default()
+    });
+
+    commands.spawn().insert_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(Box_ {
+            min_x: -0.02,
+            max_x: 0.02,
+            min_y: 0.,
+            max_y: 1.,
+            min_z: -0.02,
+            max_z: 0.02,
+        })),
+        transform: axes_transform,
+        material: materials.add(Color::rgb(0., 1., 0.).into()),
+        ..Default::default()
+    });
+
+    commands.spawn().insert_bundle(PbrBundle {
+        mesh: meshes.add(Mesh::from(Box_ {
+            min_x: -0.02,
+            max_x: 0.02,
+            min_y: -0.02,
+            max_y: 0.02,
+            min_z: 0.,
+            max_z: 1.,
+        })),
+        transform: axes_transform,
+        material: materials.add(Color::rgb(0., 0., 1.).into()),
+        ..Default::default()
+    });
 
     // light
     commands.spawn_bundle(PointLightBundle {
@@ -141,6 +193,16 @@ fn setup(
         },
 
         transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        ..default()
+    });
+    commands.spawn_bundle(PointLightBundle {
+        point_light: PointLight {
+            intensity: LIGHT_INTENSITY,
+            shadows_enabled: true,
+            ..default()
+        },
+
+        transform: Transform::from_xyz(-4.0, -8.0, -4.0),
         ..default()
     });
 
@@ -299,40 +361,21 @@ fn render_bonds(
     for (bond_render, mut transform) in query.iter_mut() {
         let atom = &state.protein_coords.atoms_backbone[bond_render.atom_id];
 
-        let bond_worldspace = atom.orientation.rotate_vec(bond_vecs[bond_render.bond_id]);
+        let bond_local = bond_vecs[bond_render.bond_id];
 
-        // Angle doesn't matter, since it's radially symetric.
-        // let bond_orientation = Quaternion::from_axis_angle(bond_worldspace, 0.);
+        // Anchor the orientation.
+        let bond_model_orientation = Quaternion::from_unit_vecs(UP_VEC, bond_local);
+        // let bond_model_orientation = Quaternion::from_unit_vecs(RIGHT_VEC, bond_local);
 
-        // todo: Figure this out.
-        // let a = Quaternion::from_unit_vecs(lin_alg::Vec3::new(0., 0., 1.), bond_worldspace);
-        // let b = Quaternion::new_identity().rotate_vec(bond_worldspace);
+        let bond_orientation = atom.orientation * bond_model_orientation;
 
-        // in: Vec, and Q_I. Out: Q
+        // The bevy capule coordinates are its center; shift to the *starting* edge.
+        let bond_worldspace = atom.orientation.rotate_vec(bond_local);
+        let bond_worldspace = bond_local;
 
-        // let bond_orientation = a * atom.orientation;
-        // let bond_orientation = atom.orientation;
-        // let bond_orientation = Quaternion::from_axis_angle(bond_worldspace, 0.);
+        let bond_center_position = atom.position + (bond_worldspace * 0.);
 
-        //
-        // let objectRay = atom_
-        // normalize3(objectRay);
-        // angleDif = acos(dotProduct(targetRay,objectRay));
-        // if (angleDif!=0) {
-        //     orthoRay = crossProduct(objectRay,targetRay);
-        //     normalize3(orthoRay);
-        //     deltaQ = quaternionFromAxisAngle(orthoRay,angleDif);
-        //     rotationQuaternion = deltaQ*rotationQuaternion;
-        //     normalize4(rotationQuaternion);
-        // }
-
-        // let bond_orientation =
-        //     Quaternion::from_euler(bond_worldspace.x, bond_worldspace.y, bond_worldspace.z);
-
-        let bond_orientation =
-            Quaternion::from_vec_direction(bond_worldspace, lin_alg::Vec3::new(0., 1., 0.));
-
-        transform.translation = atom.position.to_bevy();
+        transform.translation = bond_center_position.to_bevy();
         transform.rotation = bond_orientation.to_bevy();
     }
 }
@@ -351,44 +394,64 @@ fn adjust_camera(
     let mut cam_moved = false;
     let mut cam_rotated = false;
 
+    let mut movement_vec = lin_alg::Vec3::zero();
+
     if keyboard_input.pressed(KeyCode::W) {
-        state.cam.position.z += MOVE_AMT;
+        movement_vec.z -= MOVE_AMT; // todo: Backwards; why?
         cam_moved = true;
     } else if keyboard_input.pressed(KeyCode::S) {
-        state.cam.position.z -= MOVE_AMT;
+        movement_vec.z += MOVE_AMT;
         cam_moved = true;
     }
 
     if keyboard_input.pressed(KeyCode::D) {
-        state.cam.position.x += MOVE_AMT;
+        movement_vec.x += MOVE_AMT;
         cam_moved = true;
     } else if keyboard_input.pressed(KeyCode::A) {
-        state.cam.position.x -= MOVE_AMT;
+        movement_vec.x -= MOVE_AMT;
+        cam_moved = true;
+    }
+
+    if keyboard_input.pressed(KeyCode::Space) {
+        movement_vec.y += MOVE_AMT;
+        cam_moved = true;
+    } else if keyboard_input.pressed(KeyCode::C) {
+        movement_vec.y -= MOVE_AMT;
         cam_moved = true;
     }
 
     let mut rotation = lin_alg::Quaternion::new_identity();
 
+    let fwd = state.cam.orientation.rotate_vec(FWD_VEC);
+    // todo: Why do we need to reverse these?
+    let up = state.cam.orientation.rotate_vec(UP_VEC * -1.);
+    let right = state.cam.orientation.rotate_vec(RIGHT_VEC * -1.);
+
+    // todo: Why isn't this working?
     if keyboard_input.pressed(KeyCode::E) {
-        rotation = Quaternion::from_axis_angle(FWD_VEC, ROTATE_KEY_AMT);
+        rotation = Quaternion::from_axis_angle(fwd, ROTATE_KEY_AMT);
         cam_rotated = true;
     } else if keyboard_input.pressed(KeyCode::Q) {
-        rotation = Quaternion::from_axis_angle(FWD_VEC, -ROTATE_KEY_AMT);
+        rotation = Quaternion::from_axis_angle(fwd, -ROTATE_KEY_AMT);
         cam_rotated = true;
     }
 
+    // println!("FD: {:?} DN: {:?} RT {:?}", fwd, up, right);
+
     // len 1, but Bevy requires iter.
     for mouse_motion in mouse_motion_events.iter() {
-        let rotation =
-            Quaternion::from_axis_angle(UP_VEC, mouse_motion.delta.x as f64 * ROTATE_AMT)
-                * Quaternion::from_axis_angle(RIGHT_VEC, mouse_motion.delta.y as f64 * ROTATE_AMT)
-                * rotation;
+        rotation = Quaternion::from_axis_angle(up, mouse_motion.delta.x as f64 * ROTATE_AMT)
+            * Quaternion::from_axis_angle(right, mouse_motion.delta.y as f64 * ROTATE_AMT)
+            * rotation;
 
         state.cam.orientation = rotation * state.cam.orientation;
         cam_rotated = true;
     }
 
     if cam_moved {
+        // Move the camera in relation to where it's pointed.
+        state.cam.position = state.cam.position + state.cam.orientation.rotate_vec(movement_vec);
+
         for (_camera, mut transform) in query.iter_mut() {
             transform.translation = state.cam.position.to_bevy();
         }
@@ -411,7 +474,7 @@ pub fn run() {
         .add_system(adjust_camera)
         .add_system(change_dihedral_angle)
         .add_system(render_atoms)
-        .add_system(render_bonds)
+        // .add_system(render_bonds)
         .insert_resource(ClearColor(
             Color::rgb(BACKGROUND_COLOR.0, BACKGROUND_COLOR.1, BACKGROUND_COLOR.2).into(),
         ))

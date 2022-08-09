@@ -2,6 +2,8 @@
 
 // todo: QC quaternion error creep, and re-normalize A/R
 
+use core::f64::consts::TAU;
+
 use crate::{
     chem_definitions::{AminoAcidType, BackboneRole},
     lin_alg::{Quaternion, Vec3},
@@ -9,13 +11,71 @@ use crate::{
 
 // Double bond len of C' to N.
 // todo: 1.089000
-pub const LEN_CP_N: f64 = 1.32; // angstrom
-pub const LEN_N_CALPHA: f64 = 1.; // angstrom // todo
-pub const LEN_CALPHA_CP: f64 = 1.; // angstrom // todo
+pub const LEN_CP_N: f64 = 1.33; // angstrom
+pub const LEN_N_CALPHA: f64 = 1.46; // angstrom
+pub const LEN_CALPHA_CP: f64 = 1.53; // angstrom
 
-// todo: These may change under diff circumstances, and be diff for the diff atoms
-// and diff things on the atom.
-const BACKBONE_BOND_ANGLES: f64 = 1.911; // radians
+// Ideal bond angles. There are an approximation; from averages. Consider replacing with something
+// more robust later. All angles are in radians. We use degrees with math to match common sources.
+// R indicates the side chain.
+const BOND_ANGLE_N: f64 = 121.7 * 360. / TAU; // This is to Calpha and C'.
+
+// Bond from the Calpha atom
+const BOND_ANGLE_CALPHA_N_R: f64 = 110.6 * 360. / TAU;
+const BOND_ANGLE_CALPHA_R_CP: f64 = 110.6 * 360. / TAU;
+const BOND_ANGLE_CALPHA_N_CP: f64 = 111.0 * 360. / TAU;
+
+// Bonds from the C' atom
+const BOND_ANGLE_CP_CALPHA_O: f64 = 120.1 * 360. / TAU;
+const BOND_ANGLE_CP_CALPHA_N: f64 = 117.2 * 360. / TAU;
+const BOND_ANGLE_CP_O_N: f64 = 122.7 * 360. / TAU;
+
+// todo
+const CALPHA_N_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+const CALPHA_CP_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+const CALPHA_R_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+const CP_CALPHA_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+const CP_N_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+const CP_O_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+const N_CALPHA_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+const N_CP_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+// 360 degrees in tau rad
+// rad = 360 /tau degrees
 
 #[derive(Debug)]
 /// A protein defined by AminoAcids: Name and bond angle.
@@ -160,10 +220,13 @@ pub fn find_backbone_atom_orientation(
 
     // todo: Consider reversing this order as required.
     let dihedral_angle_current = (next_bond_on_plane.dot(prev_bond_on_plane)).acos();
+    // let dihedral_angle_current = (prev_bond_on_plane.dot(next_bond_on_plane)).acos();
 
     let dihedral_rotation = Quaternion::from_axis_angle(
         bond_to_this_worldspace,
         dihedral_angle - dihedral_angle_current,
+        // dihedral_angle, // todo: Temp while TS.
+        // dihedral_angle_current - dihedral_angle,
     );
 
     dihedral_rotation * bond_alignment_rotation

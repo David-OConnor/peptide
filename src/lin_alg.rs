@@ -55,6 +55,14 @@ impl Vec3 {
         Self { x, y, z }
     }
 
+    pub fn zero() -> Self {
+        Self {
+            x: 0.,
+            y: 0.,
+            z: 0.,
+        }
+    }
+
     /// Returns the vector magnitude.
     pub fn magnitude(&self) -> f64 {
         (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
