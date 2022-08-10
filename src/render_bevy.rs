@@ -427,16 +427,16 @@ fn adjust_camera(
     let up = state.cam.orientation.rotate_vec(UP_VEC * -1.);
     let right = state.cam.orientation.rotate_vec(RIGHT_VEC * -1.);
 
-    // todo: Why isn't this working?
+    let mut rotation = Quaternion::new_identity();
+
+    // todo: Why do we need to reverse these?
     if keyboard_input.pressed(KeyCode::E) {
-        rotation = Quaternion::from_axis_angle(fwd, ROTATE_KEY_AMT);
-        cam_rotated = true;
-    } else if keyboard_input.pressed(KeyCode::Q) {
         rotation = Quaternion::from_axis_angle(fwd, -ROTATE_KEY_AMT);
         cam_rotated = true;
+    } else if keyboard_input.pressed(KeyCode::Q) {
+        rotation = Quaternion::from_axis_angle(fwd, ROTATE_KEY_AMT);
+        cam_rotated = true;
     }
-
-    // println!("FD: {:?} DN: {:?} RT {:?}", fwd, up, right);
 
     // len 1, but Bevy requires iter.
     for mouse_motion in mouse_motion_events.iter() {
@@ -444,7 +444,6 @@ fn adjust_camera(
             * Quaternion::from_axis_angle(right, mouse_motion.delta.y as f64 * ROTATE_AMT)
             * rotation;
 
-        state.cam.orientation = rotation * state.cam.orientation;
         cam_rotated = true;
     }
 
@@ -458,6 +457,11 @@ fn adjust_camera(
     }
 
     if cam_rotated {
+        let euler = state.cam.orientation.to_euler();
+        println!("Cam angles: X:{}, Y:{}, Z:{}", euler.0, euler.1, euler.2);
+
+        state.cam.orientation = rotation * state.cam.orientation;
+
         for (_camera, mut transform) in query.iter_mut() {
             transform.rotation = state.cam.orientation.to_bevy();
         }

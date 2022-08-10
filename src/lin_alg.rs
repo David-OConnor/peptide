@@ -92,6 +92,7 @@ impl Vec3 {
     pub fn project_to_plane(&self, plane_norm: Self) -> Self {
         // todo: Do we want self - ? Some guides don't have it.
         *self - plane_norm * (self.dot(plane_norm) / plane_norm.magnitude().powf(2.))
+        // plane_norm * (self.dot(plane_norm) / plane_norm.magnitude().powf(2.))
     }
 }
 
@@ -197,6 +198,32 @@ impl Quaternion {
             y: cr * sp * cy + sr * cp * sy,
             z: cr * cp * sy - sr * sp * cy,
         }
+    }
+
+    /// Convert this quaternion to Euler angles.
+    /// https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+    pub fn to_euler(&self) -> (f64, f64, f64) {
+        // roll, pitch, yaw, (x, y, z axes)
+        // roll (x-axis rotation)
+        let sinr_cosp = 2. * (self.w * self.x + self.y * self.z);
+        let cosr_cosp = 1. - 2. * (self.x * self.x + self.y * self.y);
+
+        let roll = sinr_cosp.atan2(cosr_cosp);
+
+        // pitch (y-axis rotation)
+        let sinp = 2. * (self.w * self.y - self.z * self.x);
+        let pitch = if sinp.abs() >= 1. {
+            (TAU / 4.).copysign(sinp) // use 90 degrees if out of range
+        } else {
+            sinp.asin()
+        };
+
+        // yaw (z-axis rotation)
+        let siny_cosp = 2. * (self.w * self.z + self.x * self.y);
+        let cosy_cosp = 1. - 2. * (self.y * self.y + self.z * self.z);
+        let yaw = siny_cosp.atan2(cosy_cosp);
+
+        (roll, pitch, yaw)
     }
 
     /// Creates an orientation that point towards a vector, with a given up direction defined.

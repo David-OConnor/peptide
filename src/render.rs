@@ -18,9 +18,10 @@ pub const LIGHT_INTENSITY: f32 = 1500.0;
 pub const BOND_RADIUS: f32 = 0.03;
 pub const BOND_N_SIDES: usize = 10;
 
+// These sensitivities are in units (position), or radians (orientation) per second.
 pub const CAM_MOVE_SENS: f64 = 1.1;
 pub const CAM_ROTATE_SENS: f64 = 0.3;
-pub const CAM_ROTATE_KEY_SENS: f64 = 0.1;
+pub const CAM_ROTATE_KEY_SENS: f64 = 0.5;
 
 pub const DT: f64 = 1. / 60.;
 
