@@ -458,7 +458,7 @@ fn adjust_camera(
 
     if cam_rotated {
         let euler = state.cam.orientation.to_euler();
-        println!("Cam angles: X:{}, Y:{}, Z:{}", euler.0, euler.1, euler.2);
+        // println!("Cam angles: X:{}, Y:{}, Z:{}", euler.0, euler.1, euler.2);
 
         state.cam.orientation = rotation * state.cam.orientation;
 

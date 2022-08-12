@@ -90,9 +90,7 @@ impl Vec3 {
 
     /// Project a vector onto a plane defined by its normal vector.
     pub fn project_to_plane(&self, plane_norm: Self) -> Self {
-        // todo: Do we want self - ? Some guides don't have it.
         *self - plane_norm * (self.dot(plane_norm) / plane_norm.magnitude().powf(2.))
-        // plane_norm * (self.dot(plane_norm) / plane_norm.magnitude().powf(2.))
     }
 }
 
@@ -172,7 +170,7 @@ impl Quaternion {
             return Self::from_axis_angle(dummy_vec.project_to_plane(v0), TAU / 2.);
         }
 
-        let w = dot;
+        let w = 1. + dot;
         let v = v0.cross(v1);
 
         (Self {
@@ -266,6 +264,7 @@ impl Quaternion {
     }
 
     /// Create a rotation quaternion from an axis and angle.
+    /// `axis` mus be normalized.
     pub fn from_axis_angle(axis: Vec3, angle: f64) -> Self {
         // Here we calculate the sin( theta / 2) once for optimization
         let factor = (angle / 2.).sin();

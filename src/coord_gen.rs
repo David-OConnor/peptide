@@ -48,10 +48,10 @@ const CP_CALPHA_BOND: Vec3 = Vec3 { x: V, y: -V, z: -V };
 
 const CP_N_BOND: Vec3 = Vec3 { x: V, y: V, z: V };
 
-const CP_O_BOND: Vec3 = Vec3 {
-    x: 0.,
-    y: 0.,
-    z: 0.,
+const CP_O_BOND: Vec3 = Vec3 { // todo: These are arbitrary values
+    x: -V,
+    y: -V,
+    z: V,
 };
 
 const N_CALPHA_BOND: Vec3 = Vec3 { x: V, y: V, z: V };
@@ -87,33 +87,40 @@ impl ProteinCoords {
             orientation: Quaternion::new_identity(),
         };
 
-        let mut prev_position = starting_n.position;
+        // Store these values, to anchor each successive residue to the previous.
+        let mut prev_n_position = starting_n.position;
+        let mut prev_n_orientation = starting_n.orientation;
         // todo: This may need adjustment. to match physical reality.
         // this position affects the first dihedral angle.
-        let prev_2_position = Vec3::new(1., 0., 0.);
-        let mut prev_orientation = starting_n.orientation;
+        let mut prev_cp_position = Vec3::new(1., 0., 0.);
 
         backbone.push(starting_n);
         id += 1;
 
         for aa in &descrip.residues {
             let aa_coords =
-                aa.backbone_cart_coords(prev_position, prev_orientation, prev_2_position);
+                aa.backbone_cart_coords(prev_n_position, prev_n_orientation, prev_cp_position);
 
-            backbone.push(AtomCoords {
+            let c_alpha = AtomCoords {
                 residue_id: id,
                 role: BackboneRole::Cα,
                 position: aa_coords.cα,
                 orientation: aa_coords.cα_orientation,
-            });
+            };
+
+            backbone.push(c_alpha);
             id += 1;
 
-            backbone.push(AtomCoords {
+            let cp = AtomCoords {
                 residue_id: id,
                 role: BackboneRole::Cp,
                 position: aa_coords.cp,
                 orientation: aa_coords.cp_orientation,
-            });
+            };
+
+            prev_cp_position = cp.position;
+
+            backbone.push(cp);
             id += 1;
 
             let n = AtomCoords {
@@ -123,8 +130,8 @@ impl ProteinCoords {
                 orientation: aa_coords.n_next_orientation,
             };
 
-            prev_position = n.position;
-            prev_orientation = n.orientation;
+            prev_n_position = n.position;
+            prev_n_orientation = n.orientation;
 
             backbone.push(n);
             id += 1;
@@ -138,6 +145,7 @@ impl ProteinCoords {
 
             backbone.push(o);
             id += 1;
+
         }
 
         Self {
@@ -183,15 +191,12 @@ pub struct BackboneCoordsAa {
 /// Calculate the dihedral angle between 4 atoms.
 fn calc_dihedral_angle(bond_middle: Vec3, bond_adjacent1: Vec3, bond_adjacent2: Vec3) -> f64 {
     // Project the next and previous bonds onto the plane that has this bond as its normal.
+    // Re-normalize after projecting.
     let bond1_on_plane = bond_adjacent1.project_to_plane(bond_middle).to_normalized();
-    let bond2_on_plane = bond_adjacent2.project_to_plane(bond_middle).to_normalized();
+    // -1 is todo temp
+    let bond2_on_plane = bond_adjacent2.project_to_plane(bond_middle).to_normalized(); // * -1.;
 
-    println!(
-        "\nPlane: {:?}\n1: {:?}, \n2: {:?}\n",
-        bond_middle, bond_adjacent1, bond_adjacent2
-    );
-
-    (bond1_on_plane.dot(bond2_on_plane)).acos();
+    (bond1_on_plane.dot(bond2_on_plane)).acos()
 }
 
 /// Calculate the orientation, as a quaternion, of a backbone atom, given the orientation of the
@@ -229,62 +234,83 @@ pub fn find_backbone_atom_orientation(
         next_bond_worldspace,
     );
 
-    let dihedral_rotation = Quaternion::from_axis_angle(
-        bond_to_this_worldspace,
-        // dihedral_angle - dihedral_angle_current,
-        // dihedral_angle, // todo: Temp while TS.
-        dihedral_angle_current - dihedral_angle,
+    let mut angle_dif = dihedral_angle - dihedral_angle_current;
+
+    // let mut t = bond_to_this_worldspace;
+    // if (dihedral_angle % TAU) > TAU/2. { // todo probably wrong.
+    //     // angle_dif *= -1.;
+    //     // t = t * -1.;
+    //     angle_dif = -angle_dif + TAU/2. * 0.9;
+    // }
+    println!("ANGLE DIF: {angle_dif}");
+
+    let mut rotate_axis = bond_to_this_worldspace;
+
+    if angle_dif > 0. {
+        angle_dif = -angle_dif;// - TAU;
+        // println!("ANGLE DIF new: {angle_dif}");
+        // bond_to_this_worldspace = bond_to_this_worldspace * -1.;
+        // rotate_axis = rotate_axis * -1.;
+     }
+
+    let mut dihedral_rotation = Quaternion::from_axis_angle(
+        rotate_axis,
+        angle_dif,
     );
 
-    let result = dihedral_rotation * bond_alignment_rotation;
+    let dihedral_angle_current2 = calc_dihedral_angle(
+        // bond_to_this_worldspace,
+        bond_to_this_worldspace,
+        prev_bond_worldspace,
+        (dihedral_rotation * bond_alignment_rotation).rotate_vec(bond_to_next),
+    );
+
+    // todo: Quick and dirty approach here. You can perhaps come up with something
+    // todo more efficient, ie in one shot.
+    if (dihedral_angle - dihedral_angle_current2).abs() > 0.0001 {
+        dihedral_rotation = Quaternion::from_axis_angle(
+            rotate_axis,
+            -angle_dif + TAU/1.,
+        );
+    }
 
     // todo start checking diihedral angle
+    // println!("Prev dih expected: {:.4}, Actual: {:.4}", dihedral_angle, dihedral_angle_current);
 
-    let prev_bond_worldspace = result.rotate_vec(bond_to_prev);
-    let next_bond_worldspace = result.rotate_vec(bond_to_next);
-
-    let prev_bond_on_plane = prev_bond_worldspace
-        .project_to_plane(bond_to_this_worldspace)
-        .to_normalized();
-    let next_bond_on_plane = next_bond_worldspace
-        .project_to_plane(bond_to_this_worldspace)
-        .to_normalized();
-    let dihedral_angle_current = (next_bond_on_plane.dot(prev_bond_on_plane)).acos(); // todo temp for testing if our algo worked
-
-    println!("Dihedral angle expected: {dihedral_angle}, Actual: {dihedral_angle_current}");
+    // println!("Post dih after: {:.4}", dihedral_angle_current2);
     // todo end checking dihedral angle
 
-    result
+    dihedral_rotation * bond_alignment_rotation
 }
 
-/// In this approach we model atoms with a vector indicating their position, and we model
-/// each bond as a quaternion.
-pub fn find_backbone_atom_orientation2(
-    bond_to_this: Quaternion,
-    // bond_to_this_worldspace: Vec3,
-    bond_angle: f64, // The angle between the incoming and outgoing bond.
-    dihedral_angle: f64,
-) -> Quaternion {
-    let to_this_vec = bond_to_this.to_vec().to_normalized();
-
-    let v = Vec3::new(1., 0., 0.); // todo: Arbitrary, fornow.
-    let normal_to_bond = to_this_vec.cross(v);
-    let rotation_to_next_bond = Quaternion::from_axis_angle(normal_to_bond, bond_angle);
-
-    println!("BTT: {:?}, This to vec: {:?}", bond_to_this, to_this_vec);
-
-    let angle = dihedral_angle; // todo
-    let bond_to_this_worldspace = to_this_vec; // todo is this right?
-
-    let rotation_around_axis = Quaternion::from_axis_angle(bond_to_this_worldspace, angle);
-
-    println!(
-        "TEST {:?}, {:?}, {:?}",
-        rotation_around_axis, rotation_to_next_bond, bond_to_this
-    );
-
-    rotation_around_axis * rotation_to_next_bond * bond_to_this
-}
+// /// In this approach we model atoms with a vector indicating their position, and we model
+// /// each bond as a quaternion.
+// pub fn find_backbone_atom_orientation2(
+//     bond_to_this: Quaternion,
+//     // bond_to_this_worldspace: Vec3,
+//     bond_angle: f64, // The angle between the incoming and outgoing bond.
+//     dihedral_angle: f64,
+// ) -> Quaternion {
+//     let to_this_vec = bond_to_this.to_vec().to_normalized();
+//
+//     let v = Vec3::new(1., 0., 0.); // todo: Arbitrary, fornow.
+//     let normal_to_bond = to_this_vec.cross(v);
+//     let rotation_to_next_bond = Quaternion::from_axis_angle(normal_to_bond, bond_angle);
+//
+//     println!("BTT: {:?}, This to vec: {:?}", bond_to_this, to_this_vec);
+//
+//     let angle = dihedral_angle; // todo
+//     let bond_to_this_worldspace = to_this_vec; // todo is this right?
+//
+//     let rotation_around_axis = Quaternion::from_axis_angle(bond_to_this_worldspace, angle);
+//
+//     println!(
+//         "TEST {:?}, {:?}, {:?}",
+//         rotation_around_axis, rotation_to_next_bond, bond_to_this
+//     );
+//
+//     rotation_around_axis * rotation_to_next_bond * bond_to_this
+// }
 
 /// An amino acid in a protein structure, including position information.
 #[derive(Debug)]
@@ -323,6 +349,7 @@ impl Residue {
 
         // todo: You must anchor the dihedral angle in terms of the plane formed by the atom pairs
         // todo on each side of the angle; that's how it's defined.
+        println!("\ncalpha:");
         let cα_orientation = find_backbone_atom_orientation(
             n_orientation,
             CALPHA_N_BOND,
@@ -335,6 +362,7 @@ impl Residue {
 
         let cα = n_pos + n_orientation.rotate_vec(N_CALPHA_BOND);
 
+        println!("\nc':");
         let cp_orientation = find_backbone_atom_orientation(
             cα_orientation,
             CP_CALPHA_BOND,
@@ -343,8 +371,9 @@ impl Residue {
             self.ψ,
         );
 
-        let cp = cα + cα_orientation.rotate_vec(CP_CALPHA_BOND);
+        let cp = cα + cα_orientation.rotate_vec(CALPHA_CP_BOND);
 
+        println!("\nn:");
         let n_next_orientation = find_backbone_atom_orientation(
             cp_orientation,
             N_CP_BOND,
@@ -353,7 +382,7 @@ impl Residue {
             self.ω,
         );
 
-        let n_next = cp + cp_orientation.rotate_vec(N_CP_BOND);
+        let n_next = cp + cp_orientation.rotate_vec(CP_N_BOND);
 
         let o = cp + cp_orientation.rotate_vec(CP_O_BOND);
 
@@ -362,7 +391,6 @@ impl Residue {
 
         // Calculate the position of each atom from the position, orientation and bond angle
         // from the previous atom.
-        // todo: Start by describing each term in terms of its dependencies.
 
         BackboneCoordsAa {
             cα,
@@ -374,42 +402,6 @@ impl Residue {
             n_next_orientation,
         }
     }
-
-    // pub fn backbone_cart_coords_(
-    //     &self,
-    //     n_pos: Vec3,
-    //     n_orientation: Quaternion,
-    //     prev_cp_pos: Vec3,
-    // ) -> BackboneCoordsAa {
-    //     // Set up atom-oriented vectors encoding the angle and len of each bond.
-    //     let bond_to_cα =
-    //         find_backbone_atom_orientation2(n_orientation, BOND_ANGLE_CALPHA_N_CP, self.φ);
-    //
-    //     let bond_to_cp =
-    //         find_backbone_atom_orientation2(bond_to_cα, BOND_ANGLE_CP_CALPHA_N, self.ψ);
-    //
-    //     let bond_to_n_next =
-    //         find_backbone_atom_orientation2(bond_to_cp, BOND_ANGLE_CALPHA_N_CP, self.ω);
-    //
-    //     let cα = n_pos + bond_to_cα.to_vec().to_normalized() * LEN_N_CALPHA;
-    //     let cp = cα + bond_to_cp.to_vec().to_normalized() * LEN_CALPHA_CP;
-    //     let n_next = cp + bond_to_n_next.to_vec().to_normalized() * LEN_CP_N;
-    //     let o = cp + bond_to_n_next.to_vec().to_normalized() * LEN_CP_O;
-    //
-    //     let cα_orientation = Quaternion::new_identity();
-    //     let cp_orientation = Quaternion::new_identity();
-    //     let n_next_orientation = Quaternion::new_identity();
-    //
-    //     BackboneCoordsAa {
-    //         cα,
-    //         cp,
-    //         n_next,
-    //         0,
-    //         cα_orientation,
-    //         cp_orientation,
-    //         n_next_orientation,
-    //     }
-    // }
 }
 
 /// Used to represent one atom in a system built of atoms.

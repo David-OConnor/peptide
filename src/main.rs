@@ -86,14 +86,14 @@ fn init_protein() -> ProteinDescription {
 
     let c = Residue {
         aa: AminoAcidType::A,
-        ω: TAU / 2., // ω Assumed to be TAU/2 for most cases
+        ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 0.2 * TAU,
         ψ: 0. * TAU,
     };
 
     ProteinDescription {
         // residues: vec![a, b, c],
-        residues: vec![a, b],
+        residues: vec![a],
     }
 }
 
