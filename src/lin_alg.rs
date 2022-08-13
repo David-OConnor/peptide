@@ -166,8 +166,7 @@ impl Quaternion {
             return Self::new_identity();
         } else if dot < -ONE_MINUS_EPS {
             // Rotate along any orthonormal vec to vec1 or vec2 as the axis.
-            let dummy_vec = Vec3::new(1., 1., 1.).to_normalized();
-            return Self::from_axis_angle(dummy_vec.project_to_plane(v0), TAU / 2.);
+            return Self::from_axis_angle(Vec3::new(1., 0., 0.).cross(v0), TAU / 2.);
         }
 
         let w = 1. + dot;
@@ -224,27 +223,28 @@ impl Quaternion {
         (roll, pitch, yaw)
     }
 
-    /// Creates an orientation that point towards a vector, with a given up direction defined.
-    pub fn from_vec_direction(dir: Vec3, up: Vec3) -> Self {
-        let forward_vector = dir;
-
-        let forward = Vec3::new(0., 0., 1.);
-
-        let dot = forward.dot(forward_vector);
-
-        if (dot - (-1.0)).abs() < 0.000001 {
-            // return Self: { x:  Quaternion(Vector3.up.x, Vector3.up.y, Vector3.up.z, 3.1415926535897932f);
-            Self::new_identity(); // todo! adapt the above.
-        }
-        if (dot - (1.0)).abs() < 0.000001 {
-            return Self::new_identity();
-        }
-
-        let rot_angle = dot.acos();
-        let rot_axis = forward.cross(forward_vector).to_normalized();
-
-        Self::from_axis_angle(rot_axis, rot_angle)
-    }
+    // /// Creates an orientation that point towards a vector, with a given up direction defined.
+    // pub fn from_vec_direction(dir: Vec3, up: Vec3) -> Self {
+    //     let forward_vector = dir;
+    //
+    //     let forward = Vec3::new(0., 0., 1.);
+    //
+    //     let dot = forward.dot(forward_vector);
+    //
+    //     if (dot - (-1.0)).abs() < 0.000001 {
+    //         // return Self: { x:  Quaternion(Vector3.up.x, Vector3.up.y, Vector3.up.z, 3.1415926535897932f);
+    //         Self::new_identity(); // todo! adapt the above.
+    //
+    //     }
+    //     if (dot - (1.0)).abs() < 0.000001 {
+    //         return Self::new_identity();
+    //     }
+    //
+    //     let rot_angle = dot.acos();
+    //     let rot_axis = forward.cross(forward_vector).to_normalized();
+    //
+    //     Self::from_axis_angle(rot_axis, rot_angle)
+    // }
 
     pub fn inverse(self) -> Self {
         Self {

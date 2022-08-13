@@ -93,12 +93,12 @@ fn init_protein() -> ProteinDescription {
 
     ProteinDescription {
         // residues: vec![a, b, c],
-        residues: vec![a],
+        residues: vec![a, b],
     }
 }
 
 fn main() {
-    // init_protein(); // todo temp
+    coord_gen::init_local_bond_vecs();
     render_bevy::run();
     // graphics::run();
 }

@@ -14,7 +14,7 @@ pub const LEN_CP_N: f64 = 1.33; // angstrom
 pub const LEN_N_CALPHA: f64 = 1.46; // angstrom
 pub const LEN_CALPHA_CP: f64 = 1.53; // angstrom
 
-pub const LEN_CP_O: f64 = 1.0; // angstrom // todo!
+pub const LEN_CP_O: f64 = 1.2; // angstrom // todo!
 
 // Ideal bond angles. There are an approximation; from averages. Consider replacing with something
 // more robust later. All angles are in radians. We use degrees with math to match common sources.
@@ -31,31 +31,84 @@ const BOND_ANGLE_CP_CALPHA_O: f64 = 120.1 * 360. / TAU;
 const BOND_ANGLE_CP_CALPHA_N: f64 = 117.2 * 360. / TAU;
 const BOND_ANGLE_CP_O_N: f64 = 122.7 * 360. / TAU;
 
-// todo temp
-const V: f64 = 0.57735027;
 
-const CALPHA_N_BOND: Vec3 = Vec3 { x: V, y: -V, z: -V };
+// An arbitrary vector that anchors the others
+const INIT_BOND_VEC: Vec3 = Vec3 { x: 1., y: 0., z: 0. };
 
-const CALPHA_CP_BOND: Vec3 = Vec3 { x: V, y: V, z: V };
+// These bonds are unit vecs populated by init_local_bond_vecs.
 
-const CALPHA_R_BOND: Vec3 = Vec3 {
+// We use `static mut` here instead of constant, since we need non-const fns (like sin and cos, and
+// the linear algebra operations that operate on them) in their construction.
+const CALPHA_CP_BOND: Vec3 = INIT_BOND_VEC;
+
+static mut CALPHA_N_BOND: Vec3 = Vec3 {
     x: 0.,
     y: 0.,
     z: 0.,
 };
 
-const CP_CALPHA_BOND: Vec3 = Vec3 { x: V, y: -V, z: -V };
-
-const CP_N_BOND: Vec3 = Vec3 { x: V, y: V, z: V };
-
-const CP_O_BOND: Vec3 = Vec3 { // todo: These are arbitrary values
-    x: -V,
-    y: -V,
-    z: V,
+static mut CALPHA_R_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
 };
 
-const N_CALPHA_BOND: Vec3 = Vec3 { x: V, y: V, z: V };
-const N_CP_BOND: Vec3 = Vec3 { x: V, y: -V, z: -V };
+const CP_N_BOND: Vec3 = INIT_BOND_VEC;
+
+static mut CP_CALPHA_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+static mut CP_O_BOND: Vec3 = Vec3 {
+    // todo: These are arbitrary values
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+const N_CALPHA_BOND: Vec3 = INIT_BOND_VEC;
+
+static mut N_CP_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+/// Calculate local bond vectors based on relative angles, and arbitrary constants.
+/// The absolute bonds used are arbitrary; their positions relative to each other are
+/// defined by the bond angles.
+/// As an arbitrary convention, we'll make the first vector the one to the next atom
+/// in the chain, and the second to the previous. The third is for C'oxygen, or Cα side chain.
+pub fn init_local_bond_vecs() {
+    // Calculate (arbitrary) vectors normal to the anchor vectors for each atom.
+    // Find the second bond vector by rotating the first around this by the angle
+    // between the two.
+    // todo: Given we're anchoring the initial vecs to a specific vector, we can
+    // todo skip this and use a known orthonormal vec to it like 0, 1, 0.
+    // let normal_cα = Vec3::new(0., 1., 0.).cross(CALPHA_CP_BOND);
+    let normal_cα = Vec3::new(0., 1., 0.);
+    let normal_cp = Vec3::new(0., 1., 0.);
+    let normal_n = Vec3::new(0., 1., 0.);
+
+    //
+    let rotation_cα = Quaternion::from_axis_angle(normal_cα, BOND_ANGLE_CALPHA_N_CP);
+    let rotation_cp = Quaternion::from_axis_angle(normal_cp, BOND_ANGLE_CP_CALPHA_N);
+    let rotation_n = Quaternion::from_axis_angle(normal_n, BOND_ANGLE_N);
+
+    unsafe {
+        CALPHA_N_BOND = rotation_cα.rotate_vec(CALPHA_CP_BOND);
+        CP_CALPHA_BOND = rotation_cp.rotate_vec(CP_N_BOND);
+        N_CP_BOND = rotation_n.rotate_vec(N_CALPHA_BOND);
+
+        // todo: Fix these!
+        CP_O_BOND = Vec3::new(0., 0., 1.);
+        CALPHA_R_BOND = Vec3::new(0., 0., 1.);
+    }
+
+    // Find vectors from C' to O, and Cα to R, given the previous 2 bonds for each.
+}
 
 // 360 degrees in tau rad
 // rad = 360 /tau degrees
@@ -92,7 +145,7 @@ impl ProteinCoords {
         let mut prev_n_orientation = starting_n.orientation;
         // todo: This may need adjustment. to match physical reality.
         // this position affects the first dihedral angle.
-        let mut prev_cp_position = Vec3::new(1., 0., 0.);
+        let mut prev_cp_position = Vec3::new(1., 1., 0.).to_normalized();
 
         backbone.push(starting_n);
         id += 1;
@@ -145,7 +198,6 @@ impl ProteinCoords {
 
             backbone.push(o);
             id += 1;
-
         }
 
         Self {
@@ -228,6 +280,7 @@ pub fn find_backbone_atom_orientation(
     // Adjust the dihedral angle to be in reference to the previous 2 atoms, per the convention.
     let next_bond_worldspace = bond_alignment_rotation.rotate_vec(bond_to_next);
 
+
     let dihedral_angle_current = calc_dihedral_angle(
         bond_to_this_worldspace,
         prev_bond_worldspace,
@@ -247,16 +300,13 @@ pub fn find_backbone_atom_orientation(
     let mut rotate_axis = bond_to_this_worldspace;
 
     if angle_dif > 0. {
-        angle_dif = -angle_dif;// - TAU;
+        angle_dif = -angle_dif; // - TAU;
         // println!("ANGLE DIF new: {angle_dif}");
         // bond_to_this_worldspace = bond_to_this_worldspace * -1.;
         // rotate_axis = rotate_axis * -1.;
-     }
+    }
 
-    let mut dihedral_rotation = Quaternion::from_axis_angle(
-        rotate_axis,
-        angle_dif,
-    );
+    let mut dihedral_rotation = Quaternion::from_axis_angle(rotate_axis, angle_dif);
 
     let dihedral_angle_current2 = calc_dihedral_angle(
         // bond_to_this_worldspace,
@@ -268,10 +318,7 @@ pub fn find_backbone_atom_orientation(
     // todo: Quick and dirty approach here. You can perhaps come up with something
     // todo more efficient, ie in one shot.
     if (dihedral_angle - dihedral_angle_current2).abs() > 0.0001 {
-        dihedral_rotation = Quaternion::from_axis_angle(
-            rotate_axis,
-            -angle_dif + TAU/1.,
-        );
+        dihedral_rotation = Quaternion::from_axis_angle(rotate_axis, -angle_dif + TAU / 1.);
     }
 
     // todo start checking diihedral angle
@@ -352,7 +399,7 @@ impl Residue {
         println!("\ncalpha:");
         let cα_orientation = find_backbone_atom_orientation(
             n_orientation,
-            CALPHA_N_BOND,
+            unsafe { CALPHA_N_BOND },
             CALPHA_CP_BOND,
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
@@ -360,31 +407,31 @@ impl Residue {
             self.φ,
         );
 
-        let cα = n_pos + n_orientation.rotate_vec(N_CALPHA_BOND);
+        let cα = n_pos + n_orientation.rotate_vec(N_CALPHA_BOND) * LEN_N_CALPHA;
 
         println!("\nc':");
         let cp_orientation = find_backbone_atom_orientation(
             cα_orientation,
-            CP_CALPHA_BOND,
+            unsafe { CP_CALPHA_BOND },
             CP_N_BOND,
             cα - n_pos,
             self.ψ,
         );
 
-        let cp = cα + cα_orientation.rotate_vec(CALPHA_CP_BOND);
+        let cp = cα + cα_orientation.rotate_vec(CALPHA_CP_BOND) * LEN_CALPHA_CP;
 
         println!("\nn:");
         let n_next_orientation = find_backbone_atom_orientation(
             cp_orientation,
-            N_CP_BOND,
+            unsafe { N_CP_BOND },
             N_CALPHA_BOND,
             cp - cα,
             self.ω,
         );
 
-        let n_next = cp + cp_orientation.rotate_vec(CP_N_BOND);
+        let n_next = cp + cp_orientation.rotate_vec(CP_N_BOND) * LEN_CP_N;
 
-        let o = cp + cp_orientation.rotate_vec(CP_O_BOND);
+        let o = cp + cp_orientation.rotate_vec(unsafe { CP_O_BOND } * LEN_CP_O);
 
         // Calculate the position of each atom from the orientation, the angle of the
         // bond from the previous atom, and the dihedral angle between the two.
