@@ -9,6 +9,8 @@ use crate::{
     lin_alg::{Quaternion, Vec3},
 };
 
+// https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2810841/
+
 // Double bond len of C' to N.
 pub const LEN_CP_N: f64 = 1.33; // angstrom
 pub const LEN_N_CALPHA: f64 = 1.46; // angstrom
@@ -19,21 +21,29 @@ pub const LEN_CP_O: f64 = 1.2; // angstrom // todo!
 // Ideal bond angles. There are an approximation; from averages. Consider replacing with something
 // more robust later. All angles are in radians. We use degrees with math to match common sources.
 // R indicates the side chain.
-const BOND_ANGLE_N: f64 = 121.7 * 360. / TAU; // This is to Calpha and C'.
+const BOND_ANGLE_N_CALPHA_CP: f64 = 121.7 * TAU / 360.; // This is to Calpha and C'.
+                                                        // todo: n hydrogen
 
 // Bond from the Calpha atom
-const BOND_ANGLE_CALPHA_N_R: f64 = 110.6 * 360. / TAU;
-const BOND_ANGLE_CALPHA_R_CP: f64 = 110.6 * 360. / TAU;
-const BOND_ANGLE_CALPHA_N_CP: f64 = 111.0 * 360. / TAU;
+const BOND_ANGLE_CALPHA_N_R: f64 = 110.6 * TAU / 360.;
+const BOND_ANGLE_CALPHA_R_CP: f64 = 110.6 * TAU / 360.;
+const BOND_ANGLE_CALPHA_N_CP: f64 = 111.0 * TAU / 360.;
+// todo: calpha hydrogen
 
 // Bonds from the C' atom
-const BOND_ANGLE_CP_CALPHA_O: f64 = 120.1 * 360. / TAU;
-const BOND_ANGLE_CP_CALPHA_N: f64 = 117.2 * 360. / TAU;
-const BOND_ANGLE_CP_O_N: f64 = 122.7 * 360. / TAU;
-
+// Note that these bonds add up to exactly 360, so these must be along
+// a circle (in the same plane).
+const BOND_ANGLE_CP_CALPHA_O: f64 = 120.1 * TAU / 360.;
+const BOND_ANGLE_CP_CALPHA_N: f64 = 117.2 * TAU / 360.;
+const BOND_ANGLE_CP_O_N: f64 = 122.7 * TAU / 360.;
+// todo: c' hydrogen
 
 // An arbitrary vector that anchors the others
-const INIT_BOND_VEC: Vec3 = Vec3 { x: 1., y: 0., z: 0. };
+const INIT_BOND_VEC: Vec3 = Vec3 {
+    x: 1.,
+    y: 0.,
+    z: 0.,
+};
 
 // These bonds are unit vecs populated by init_local_bond_vecs.
 
@@ -61,6 +71,8 @@ static mut CP_CALPHA_BOND: Vec3 = Vec3 {
     z: 0.,
 };
 
+// The O bond on CP turns out to be [-0.5402403204776551, 0, 0.841510781945306], given our calculated
+// anchors for the N and Calpha bonds on it.
 static mut CP_O_BOND: Vec3 = Vec3 {
     // todo: These are arbitrary values
     x: 0.,
@@ -95,16 +107,52 @@ pub fn init_local_bond_vecs() {
     //
     let rotation_cα = Quaternion::from_axis_angle(normal_cα, BOND_ANGLE_CALPHA_N_CP);
     let rotation_cp = Quaternion::from_axis_angle(normal_cp, BOND_ANGLE_CP_CALPHA_N);
-    let rotation_n = Quaternion::from_axis_angle(normal_n, BOND_ANGLE_N);
+    let rotation_n = Quaternion::from_axis_angle(normal_n, BOND_ANGLE_N_CALPHA_CP);
 
     unsafe {
         CALPHA_N_BOND = rotation_cα.rotate_vec(CALPHA_CP_BOND);
         CP_CALPHA_BOND = rotation_cp.rotate_vec(CP_N_BOND);
         N_CP_BOND = rotation_n.rotate_vec(N_CALPHA_BOND);
 
-        // todo: Fix these!
-        CP_O_BOND = Vec3::new(0., 0., 1.);
-        CALPHA_R_BOND = Vec3::new(0., 0., 1.);
+        // println!("cp_n: [{}, {}, {}]", CP_N_BOND.x, CP_N_BOND.y, CP_N_BOND.z);
+        // println!("cp_calpha: [{}, {}, {}]", CP_CALPHA_BOND.x, CP_CALPHA_BOND.y, CP_CALPHA_BOND.z);
+
+        // todo: To find the 3rd (and later 4th, ie hydrogen-to-atom) bonds, we we
+        // todo taking an iterative approach based on that above. Long-temr, you should
+        // todo be able to calculate one of 2 valid choices (for carbon).
+
+        // The CP ON angle must be within this (radians) to stop the process.
+        // The other 2 angles should be ~exactly.
+        const eps: f64 = 0.01;
+
+        // This approach performs a number of calculations at runtime, at init only. Correct
+        // solution for now, since axis=0 turns out to be correct, given the bond from the CP atom
+        // are in a circle.
+        for axis in 0..10 {
+            let r1 = Quaternion::from_axis_angle(CP_CALPHA_BOND, axis as f64 / 20.);
+            let normal = r1.rotate_vec(normal_cp);
+
+            // Set exactly to one vector; find the other through iterating the normal angles.
+            let r2 = Quaternion::from_axis_angle(normal, BOND_ANGLE_CP_CALPHA_O);
+
+            CP_O_BOND = r2.rotate_vec(CP_CALPHA_BOND);
+
+            // let angle_calpha_o = (CP_CALPHA_BOND.dot(CP_O_BOND)).acos();
+            // let angle_calpha_n = (CP_CALPHA_BOND.dot(CP_N_BOND)).acos();
+            let angle_n_o = (CP_N_BOND.dot(CP_O_BOND)).acos();
+
+            // Of note, our first value (axis = 0) seems to be the answer here?!
+            if (angle_n_o - BOND_ANGLE_CP_O_N).abs() < eps {
+                println!("cp_o: [{}, {}, {}]", CP_O_BOND.x, CP_O_BOND.y, CP_O_BOND.z);
+                println!("angle N O: {angle_n_o}");
+                break;
+            }
+            //
+            // println!("cp_o: [{}, {}, {}]", CP_O_BOND.x, CP_O_BOND.y, CP_O_BOND.z);
+            // // println!("angle calpha O: {angle_calpha_o}");
+            // // println!("angle calpha N: {angle_calpha_n}");
+            // println!("angle N O: {angle_n_o}");
+        }
     }
 
     // Find vectors from C' to O, and Cα to R, given the previous 2 bonds for each.
@@ -280,7 +328,6 @@ pub fn find_backbone_atom_orientation(
     // Adjust the dihedral angle to be in reference to the previous 2 atoms, per the convention.
     let next_bond_worldspace = bond_alignment_rotation.rotate_vec(bond_to_next);
 
-
     let dihedral_angle_current = calc_dihedral_angle(
         bond_to_this_worldspace,
         prev_bond_worldspace,
@@ -301,9 +348,9 @@ pub fn find_backbone_atom_orientation(
 
     if angle_dif > 0. {
         angle_dif = -angle_dif; // - TAU;
-        // println!("ANGLE DIF new: {angle_dif}");
-        // bond_to_this_worldspace = bond_to_this_worldspace * -1.;
-        // rotate_axis = rotate_axis * -1.;
+                                // println!("ANGLE DIF new: {angle_dif}");
+                                // bond_to_this_worldspace = bond_to_this_worldspace * -1.;
+                                // rotate_axis = rotate_axis * -1.;
     }
 
     let mut dihedral_rotation = Quaternion::from_axis_angle(rotate_axis, angle_dif);
