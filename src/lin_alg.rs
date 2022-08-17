@@ -88,9 +88,10 @@ impl Vec3 {
         }
     }
 
-    /// Project a vector onto a plane defined by its normal vector.
+    /// Project a vector onto a plane defined by its normal vector. Assumes self and `plane_norm`
+    /// are unit vectors.
     pub fn project_to_plane(&self, plane_norm: Self) -> Self {
-        *self - plane_norm * (self.dot(plane_norm) / plane_norm.magnitude().powf(2.))
+        *self - plane_norm * self.dot(plane_norm)
     }
 }
 
@@ -298,4 +299,16 @@ impl Quaternion {
         let mag_recip = 1. / self.magnitude();
         self * mag_recip
     }
+}
+
+/// Calculate the determinate of a matrix defined by its columns.
+/// We use this for determining the full 0 - tau angle between bonds.
+#[rustfmt::skip]
+pub fn det_from_cols(c0: Vec3, c1: Vec3, c2: Vec3) -> f64 {
+    c0.x * c1.y * c2.z +
+    c1.x * c2.y * c0.z +
+    c2.x * c0.y * c1.z -
+    c0.x * c2.y * c1.z -
+    c1.x * c0.y * c2.z -
+    c2.x * c1.y * c0.z
 }
