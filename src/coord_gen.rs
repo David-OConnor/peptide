@@ -5,7 +5,7 @@
 use core::f64::consts::TAU;
 
 use crate::{
-    chem_definitions::{AminoAcidType, BackboneRole},
+    chem_definitions::{AminoAcidType, AtomType, BackboneRole},
     lin_alg::{self, Quaternion, Vec3},
 };
 
@@ -124,7 +124,7 @@ pub fn init_local_bond_vecs() {
 
         // The CP ON angle must be within this (radians) to stop the process.
         // The other 2 angles should be ~exactly.
-        const eps: f64 = 0.01;
+        const EPS: f64 = 0.01;
 
         // This approach performs a number of calculations at runtime, at init only. Correct
         // solution for now, since axis=0 turns out to be correct, given the bond from the CP atom
@@ -143,7 +143,7 @@ pub fn init_local_bond_vecs() {
             let angle_n_o = (CP_N_BOND.dot(CP_O_BOND)).acos();
 
             // Of note, our first value (axis = 0) seems to be the answer here?!
-            if (angle_n_o - BOND_ANGLE_CP_O_N).abs() < eps {
+            if (angle_n_o - BOND_ANGLE_CP_O_N).abs() < EPS {
                 println!("cp_o: [{}, {}, {}]", CP_O_BOND.x, CP_O_BOND.y, CP_O_BOND.z);
                 println!("angle N O: {angle_n_o}");
                 break;
@@ -297,7 +297,7 @@ fn calc_dihedral_angle(bond_middle: Vec3, bond_adjacent1: Vec3, bond_adjacent2: 
     let bond1_on_plane = bond_adjacent1.project_to_plane(bond_middle).to_normalized();
     let bond2_on_plane = bond_adjacent2.project_to_plane(bond_middle).to_normalized();
 
-    let mut result = (bond1_on_plane.dot(bond2_on_plane)).acos();
+    let result = (bond1_on_plane.dot(bond2_on_plane)).acos();
 
     // The dot product approach to angles between vectors only covers half of possible
     // rotations; use a determinant of the 3 vectors as matrix columns to determine if we
@@ -312,47 +312,53 @@ fn calc_dihedral_angle(bond_middle: Vec3, bond_adjacent1: Vec3, bond_adjacent2: 
     }
 }
 
-/// Calculate the orientation, as a quaternion, of a backbone atom, given the orientation of the
+/// Calculate the orientation, as a quaternion, and position, as a vector, of an atom, given the orientation of a
 /// previous atom, and the bond angle. `bond_angle` is the vector representing the bond to
 /// this atom from the previous atom's orientation. `bond_prev` and `bond_next` are in the atom's
 /// coordinates; not worldspace.
-pub fn find_backbone_atom_orientation(
-    q_prev: Quaternion,
-    bond_to_prev: Vec3,         // Local space
-    bond_to_next: Vec3,         // Local space
-    prev_bond_worldspace: Vec3, // World space
+pub fn find_atom_placement(
+    o_prev: Quaternion,
+    bond_to_prev_local: Vec3, // Local space
+    bond_to_next_local: Vec3, // Local space
+    prev_bond_world: Vec3,    // World space
     dihedral_angle: f64,
-) -> Quaternion {
+    posit_prev: Vec3,
+    bond_to_this_local: Vec3, // direction-only unit vec
+    bond_to_this_len: f64,
+) -> (Vec3, Quaternion) {
+    // Find the position:
+    let position = posit_prev + o_prev.rotate_vec(bond_to_this_local) * bond_to_this_len;
+
     // #1: Align the prev atom's bond vector to world space based on the prev atom's orientation.
-    let bond_to_this_worldspace = q_prev.rotate_vec(bond_to_next);
+    let bond_to_this_worldspace = o_prev.rotate_vec(bond_to_next_local);
 
     // #2: Find the rotation quaternion that aligns the (inverse of) the local(world?)-space bond to
     // the prev atom with the world-space "to" bond of the previous atom. This is also the
     // orientation of our atom, without applying the dihedral angle.
     let bond_alignment_rotation =
-        Quaternion::from_unit_vecs(bond_to_prev * -1., bond_to_this_worldspace);
+        Quaternion::from_unit_vecs(bond_to_prev_local * -1., bond_to_this_worldspace);
 
     // #3: Rotate the orientation around the dihedral angle. We must do this so that our
     // dihedral angle is in relation to the previous and next bonds.
     // Adjust the dihedral angle to be in reference to the previous 2 atoms, per the convention.
-    let next_bond_worldspace = bond_alignment_rotation.rotate_vec(bond_to_next);
+    let next_bond_worldspace = bond_alignment_rotation.rotate_vec(bond_to_next_local);
 
     let dihedral_angle_current = calc_dihedral_angle(
         bond_to_this_worldspace,
-        prev_bond_worldspace,
+        prev_bond_world,
         next_bond_worldspace,
     );
 
     let mut angle_dif = dihedral_angle - dihedral_angle_current;
 
-    let mut rotate_axis = bond_to_this_worldspace;
+    let rotate_axis = bond_to_this_worldspace;
 
     let mut dihedral_rotation = Quaternion::from_axis_angle(rotate_axis, angle_dif);
 
     let dihedral_angle_current2 = calc_dihedral_angle(
         bond_to_this_worldspace,
-        prev_bond_worldspace,
-        (dihedral_rotation * bond_alignment_rotation).rotate_vec(bond_to_next),
+        prev_bond_world,
+        (dihedral_rotation * bond_alignment_rotation).rotate_vec(bond_to_next_local),
     );
 
     // todo: Quick and dirty approach here. You can perhaps come up with something
@@ -361,7 +367,7 @@ pub fn find_backbone_atom_orientation(
         dihedral_rotation = Quaternion::from_axis_angle(rotate_axis, -angle_dif + TAU / 1.);
     }
 
-    dihedral_rotation * bond_alignment_rotation
+    (position, dihedral_rotation * bond_alignment_rotation)
 }
 
 // /// In this approach we model atoms with a vector indicating their position, and we model
@@ -428,9 +434,7 @@ impl Residue {
         // with center of (0., 0., 0.). They are the angle formed between 3 atoms.
         // We have chosen the two angles to describe the backbone. We have chosen these arbitrarily.
 
-        // todo: You must anchor the dihedral angle in terms of the plane formed by the atom pairs
-        // todo on each side of the angle; that's how it's defined.
-        let cα_orientation = find_backbone_atom_orientation(
+        let (cα, cα_orientation) = find_atom_placement(
             n_orientation,
             unsafe { CALPHA_N_BOND },
             CALPHA_CP_BOND,
@@ -438,42 +442,46 @@ impl Residue {
             // (world space)
             n_pos - prev_cp_pos,
             self.φ,
+            n_pos,
+            N_CALPHA_BOND,
+            LEN_N_CALPHA,
         );
 
-        let cα = n_pos + n_orientation.rotate_vec(N_CALPHA_BOND) * LEN_N_CALPHA;
-
-        let cp_orientation = find_backbone_atom_orientation(
+        let (cp, cp_orientation) = find_atom_placement(
             cα_orientation,
             unsafe { CP_CALPHA_BOND },
             CP_N_BOND,
             cα - n_pos,
             self.ψ,
+            cα,
+            CALPHA_CP_BOND,
+            LEN_CALPHA_CP,
         );
 
-        let cp = cα + cα_orientation.rotate_vec(CALPHA_CP_BOND) * LEN_CALPHA_CP;
-
-        let n_next_orientation = find_backbone_atom_orientation(
+        let (n_next, n_next_orientation) = find_atom_placement(
             cp_orientation,
             unsafe { N_CP_BOND },
             N_CALPHA_BOND,
             cp - cα,
             self.ω,
+            cp,
+            CP_N_BOND,
+            LEN_CP_N,
         );
-
-        let n_next = cp + cp_orientation.rotate_vec(CP_N_BOND) * LEN_CP_N;
 
         // Oxygen isn't part of the backbone chain; it's attached to C' with a double-bond.
         // The vectors we use are fudged; we just need to keep the orientation conistent relative
         // tod c'.
-        let o_orientation = find_backbone_atom_orientation(
+        let (o, o_orientation) = find_atom_placement(
             cp_orientation,
             O_CP_BOND,
             Vec3::new(0., 1., 0.), // arbitrary, since O doesn't continue the chain
             cp - cα,
-            0.,
+            0., // arbitrary
+            cp,
+            unsafe { CP_O_BOND },
+            LEN_CP_O,
         );
-
-        let o = cp + cp_orientation.rotate_vec(unsafe { CP_O_BOND }) * LEN_CP_O;
 
         BackboneCoordsAa {
             cα,
@@ -494,4 +502,60 @@ pub struct _ZmatrixItem {
     bond_len: f64,       // Angstrom
     bond_angle: f64,     // radians
     dihedral_angle: f64, // radians
+}
+
+/// An atom, in a sidechain
+#[derive(Debug)]
+pub struct AtomSidechain {
+    /// type of Atom, eg Carbon, Oxygen etc
+    pub role: AtomType,
+    /// Local position, anchored to Calpha = 0, 0, 0
+    /// todo: Orientation of side chain rel to Calpha?
+    pub position: Vec3,
+}
+
+/// Describes the sidechain of a given amino acid
+#[derive(Debug)]
+pub struct Sidechain {
+    atoms: Vec<AtomSidechain>,
+}
+
+impl Sidechain {
+    pub fn from_aa(aa: AminoAcidType) -> Self {
+        let atoms = match aa {
+            AminoAcidType::A => Vec::new(),
+            AminoAcidType::R => Vec::new(),
+            AminoAcidType::N => Vec::new(),
+            AminoAcidType::D => Vec::new(),
+            AminoAcidType::C => Vec::new(),
+            AminoAcidType::Q => Vec::new(),
+            AminoAcidType::E => Vec::new(),
+            AminoAcidType::G => Vec::new(),
+            AminoAcidType::H => Vec::new(),
+            AminoAcidType::I => Vec::new(),
+            AminoAcidType::L => Vec::new(),
+            AminoAcidType::K => Vec::new(),
+            AminoAcidType::M => Vec::new(),
+            AminoAcidType::F => Vec::new(),
+            AminoAcidType::P => Vec::new(),
+            AminoAcidType::S => Vec::new(),
+            AminoAcidType::T => Vec::new(),
+            AminoAcidType::W => Vec::new(),
+            AminoAcidType::Y => Vec::new(),
+            AminoAcidType::V => Vec::new(),
+        };
+
+        Self { atoms }
+    }
+}
+
+/// Describes a water molecule. These aren't directly part of a protein, but may play a role in its
+/// folding, among other potential roles.
+#[derive(Debug)]
+// todo: Consider if you want this to be a struct, a const of some other struct etc.
+pub struct WaterMolecule {
+    /// Worldspace coordinates of the O atom.
+    position_o_world: Vec3,
+    /// Using the same orientation ref as protein atoms.
+    orientation: Quaternion,
 }

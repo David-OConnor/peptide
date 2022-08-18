@@ -260,7 +260,6 @@ impl Quaternion {
     /// operation is effectively quaternion multiplication, with a quaternion
     /// created by a vec with w=0.
     pub fn rotate_vec(self, vec: Vec3) -> Vec3 {
-        // todo: Do we need the parens specifying Q*v operation is first?
         (self * vec * self.inverse()).to_vec()
     }
 

@@ -61,7 +61,7 @@ impl Default for State {
             },
             active_residue: 0,
             cam: Camera {
-                position: Vec3::new(0., 0., -7.),
+                position: Vec3::new(0., 0., 7.),
                 orientation: Quaternion::new_identity(),
             },
         }
@@ -70,30 +70,100 @@ impl Default for State {
 
 /// Set up our protein; passed to our initial render state.
 fn init_protein() -> ProteinDescription {
-    let a = Residue {
+    let φ_helix = -0.715584993317675;
+    let ψ_helix = -0.715584993317675;
+
+    let mut residues = Vec::new();
+    for i in 0..10 {
+        residues.push(
+            Residue {
+                aa: AminoAcidType::A,
+                ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+                φ: φ_helix,
+                ψ: ψ_helix,
+            }
+        );
+    }
+
+    let r0 = Residue {
         aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
     };
 
-    let b = Residue {
+    let r1 = Residue {
         aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
     };
 
-    let c = Residue {
+    let r2 = Residue {
         aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
-        φ: 0.2 * TAU,
-        ψ: 0. * TAU,
+        φ: 1. / 2. * TAU,
+        ψ: 1. / 2. * TAU,
+    };
+
+    let r3 = Residue {
+        aa: AminoAcidType::A,
+        ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+        φ: 1. / 2. * TAU,
+        ψ: 1. / 2. * TAU,
+    };
+
+    let r4 = Residue {
+        aa: AminoAcidType::A,
+        ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+        φ: 1. / 2. * TAU,
+        ψ: 1. / 2. * TAU,
+    };
+
+    let r5 = Residue {
+        aa: AminoAcidType::A,
+        ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+        φ: 1. / 2. * TAU,
+        ψ: 1. / 2. * TAU,
+    };
+
+    let r6 = Residue {
+        aa: AminoAcidType::A,
+        ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+        φ: 1. / 2. * TAU,
+        ψ: 1. / 2. * TAU,
+    };
+
+    let r7 = Residue {
+        aa: AminoAcidType::A,
+        ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+        φ: 1. / 2. * TAU,
+        ψ: 1. / 2. * TAU,
+    };
+
+    let r8 = Residue {
+        aa: AminoAcidType::A,
+        ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+        φ: 1. / 2. * TAU,
+        ψ: 1. / 2. * TAU,
+    };
+
+    let r9 = Residue {
+        aa: AminoAcidType::A,
+        ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+        φ: 1. / 2. * TAU,
+        ψ: 1. / 2. * TAU,
+    };
+
+    let r10 = Residue {
+        aa: AminoAcidType::A,
+        ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+        φ: 1. / 2. * TAU,
+        ψ: 1. / 2. * TAU,
     };
 
     ProteinDescription {
-        // residues: vec![a, b, c],
-        residues: vec![a, b],
+        residues,
     }
 }
 
