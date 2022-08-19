@@ -454,7 +454,7 @@ pub fn run() {
         .add_system(adjust_camera)
         .add_system(change_dihedral_angle)
         .add_system(render_atoms)
-        // .add_system(render_bonds)
+        .add_system(render_bonds)
         .insert_resource(ClearColor(
             Color::rgb(BACKGROUND_COLOR.0, BACKGROUND_COLOR.1, BACKGROUND_COLOR.2),
         ))

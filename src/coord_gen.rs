@@ -159,9 +159,6 @@ pub fn init_local_bond_vecs() {
     // Find vectors from C' to O, and Cα to R, given the previous 2 bonds for each.
 }
 
-// 360 degrees in tau rad
-// rad = 360 /tau degrees
-
 #[derive(Debug)]
 /// A protein defined by AminoAcids: Name and bond angle.
 pub struct ProteinDescription {
@@ -176,7 +173,9 @@ pub struct ProteinCoords {
 }
 
 impl ProteinCoords {
+    /// Creates coordinates from bond angles etc.
     pub fn from_descrip(descrip: &ProteinDescription) -> Self {
+        // todo: Only update downstream atoms for a given rotation.
         let mut backbone = Vec::new();
 
         let mut id = 0;
@@ -514,40 +513,7 @@ pub struct AtomSidechain {
     pub position: Vec3,
 }
 
-/// Describes the sidechain of a given amino acid
-#[derive(Debug)]
-pub struct Sidechain {
-    atoms: Vec<AtomSidechain>,
-}
 
-impl Sidechain {
-    pub fn from_aa(aa: AminoAcidType) -> Self {
-        let atoms = match aa {
-            AminoAcidType::A => Vec::new(),
-            AminoAcidType::R => Vec::new(),
-            AminoAcidType::N => Vec::new(),
-            AminoAcidType::D => Vec::new(),
-            AminoAcidType::C => Vec::new(),
-            AminoAcidType::Q => Vec::new(),
-            AminoAcidType::E => Vec::new(),
-            AminoAcidType::G => Vec::new(),
-            AminoAcidType::H => Vec::new(),
-            AminoAcidType::I => Vec::new(),
-            AminoAcidType::L => Vec::new(),
-            AminoAcidType::K => Vec::new(),
-            AminoAcidType::M => Vec::new(),
-            AminoAcidType::F => Vec::new(),
-            AminoAcidType::P => Vec::new(),
-            AminoAcidType::S => Vec::new(),
-            AminoAcidType::T => Vec::new(),
-            AminoAcidType::W => Vec::new(),
-            AminoAcidType::Y => Vec::new(),
-            AminoAcidType::V => Vec::new(),
-        };
-
-        Self { atoms }
-    }
-}
 
 /// Describes a water molecule. These aren't directly part of a protein, but may play a role in its
 /// folding, among other potential roles.

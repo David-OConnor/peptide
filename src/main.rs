@@ -1,6 +1,9 @@
 //! Model, render, and predict protein structure. Uses the peptide bond
 //! as an immutable basis for structure. Attempts to find foldin patterns
 //! that may lead to an ultimate structure.
+//!
+//! [A paper on modelling proteins](https://cnx.org/contents/9cMfjngH@6.3:WjXbYFJI@15/Representing-Proteins-in-Silico-and-Protein-Forward-Kinematics)
+//! [Article on hydrogen bond modelling](https://www.nature.com/articles/ncomms6803)
 
 // todo: Switch from Bevy to Ash or similar. Or perhaps Godot's rust bindings.
 // todo: Temperature sensitivity. Surroundin water molecules.
@@ -17,7 +20,8 @@ mod chem_definitions;
 mod coord_gen;
 mod render;
 mod render_bevy;
-// mod graphics_wgpu;
+mod sidechain;
+// mod render_wgpu;
 
 use chem_definitions::AminoAcidType;
 use coord_gen::{ProteinCoords, ProteinDescription, Residue};
@@ -73,14 +77,20 @@ fn init_protein() -> ProteinDescription {
     let φ_helix = -0.715584993317675;
     let ψ_helix = -0.715584993317675;
 
+    let φ_sheet = -140. * TAU/360.;
+    let ψ_sheet = 135. * TAU/360.;
+
+
     let mut residues = Vec::new();
-    for i in 0..10 {
+    for i in 0..2{
         residues.push(
             Residue {
                 aa: AminoAcidType::A,
                 ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
-                φ: φ_helix,
-                ψ: ψ_helix,
+                φ: φ_sheet,
+                // φ: φ_helix,
+                ψ: ψ_sheet,
+                // ψ: ψ_helix,
             }
         );
     }
@@ -170,5 +180,5 @@ fn init_protein() -> ProteinDescription {
 fn main() {
     coord_gen::init_local_bond_vecs();
     render_bevy::run();
-    // graphics::run();
+    // render_wgpu::run();
 }
