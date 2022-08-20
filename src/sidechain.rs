@@ -2,7 +2,7 @@
 
 use crate::{
     chem_definitions::{AminoAcidType, AtomType},
-    coord_gen::{AtomSidechain},
+    coord_gen::AtomSidechain,
     lin_alg::Vec3,
 };
 
@@ -15,12 +15,10 @@ pub struct Sidechain {
 impl Sidechain {
     pub fn from_aa(aa: AminoAcidType) -> Self {
         let atoms = match aa {
-            AminoAcidType::A => vec![
-                AtomSidechain {
-                    role: AtomType::C,
-                    position: Vec3::new(0., 0., 0.),
-                },
-            ],
+            AminoAcidType::A => vec![AtomSidechain {
+                role: AtomType::C,
+                position: Vec3::new(0., 0., 0.),
+            }],
             AminoAcidType::R => vec![
                 AtomSidechain {
                     role: AtomType::C,

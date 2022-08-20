@@ -79,22 +79,19 @@ fn init_protein() -> ProteinDescription {
     let φ_helix = -0.715584993317675;
     let ψ_helix = -0.715584993317675;
 
-    let φ_sheet = -140. * TAU/360.;
-    let ψ_sheet = 135. * TAU/360.;
-
+    let φ_sheet = -140. * TAU / 360.;
+    let ψ_sheet = 135. * TAU / 360.;
 
     let mut residues = Vec::new();
-    for i in 0..2{
-        residues.push(
-            Residue {
-                aa: AminoAcidType::A,
-                ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
-                φ: φ_sheet,
-                // φ: φ_helix,
-                ψ: ψ_sheet,
-                // ψ: ψ_helix,
-            }
-        );
+    for i in 0..2 {
+        residues.push(Residue {
+            aa: AminoAcidType::A,
+            ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
+            φ: φ_sheet,
+            // φ: φ_helix,
+            ψ: ψ_sheet,
+            // ψ: ψ_helix,
+        });
     }
 
     let r0 = Residue {
@@ -174,9 +171,7 @@ fn init_protein() -> ProteinDescription {
         ψ: 1. / 2. * TAU,
     };
 
-    ProteinDescription {
-        residues,
-    }
+    ProteinDescription { residues }
 }
 
 fn main() {

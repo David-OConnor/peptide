@@ -17,8 +17,8 @@ use crate::{
     lin_alg::{self, Quaternion},
     render::{
         self, BACKGROUND_COLOR, BOND_COLOR, BOND_N_SIDES, BOND_RADIUS, CAM_MOVE_SENS,
-        CAM_ROTATE_KEY_SENS, CAM_ROTATE_SENS, DT, FWD_VEC, LIGHT_INTENSITY, RIGHT_VEC, UP_VEC,
-        RUN_FACTOR,
+        CAM_ROTATE_KEY_SENS, CAM_ROTATE_SENS, DT, FWD_VEC, LIGHT_INTENSITY, RIGHT_VEC, RUN_FACTOR,
+        UP_VEC,
     },
     State, ROTATION_SPEED,
 };
@@ -50,7 +50,7 @@ struct AtomRender {
 #[derive(Component)]
 struct BondRender {
     pub atom_id: usize, // Bond from this atom to the prev.
-    pub bond_id: usize, // ie local id within the atom.
+                        // pub bond_id: usize, // ie local id within the atom.
 }
 impl BackboneRole {
     pub fn render_color(&self) -> Color {
@@ -98,39 +98,47 @@ fn setup(
                 ..Default::default()
             });
 
-        // for (residue_id, _residue) in state.protein_descrip.iter().enumerate() {
-        for bond_id in 0..4 {
-            let bond_render = BondRender {
-                atom_id: id,
-                bond_id,
-            };
+        // for residue in state.protein_descrip {
+        // for bond_id in 0..4 {
+        let bond_render = BondRender {
+            atom_id: id,
+            // bond_id: 0, // todo: This field is currently unused.
+        };
 
-            // one iter per bond in the residue (not including sidechain)
-            let bond_len = match bond_id {
-                0 => LEN_N_CALPHA as f32,
-                1 => LEN_CALPHA_CP as f32,
-                2 => LEN_CP_N as f32,
-                3 => LEN_CP_O as f32,
-                _ => unreachable!(),
-            };
+        // one iter per bond in the residue (not including sidechain)
+        // let bond_len = match bond_id {
+        //     0 => LEN_N_CALPHA as f32,
+        //     1 => LEN_CALPHA_CP as f32,
+        //     2 => LEN_CP_N as f32,
+        //     3 => LEN_CP_O as f32,
+        //     _ => unreachable!(),
+        // };
 
-            commands
-                .spawn()
-                .insert(bond_render)
-                .insert_bundle(PbrBundle {
-                    mesh: meshes.add(Mesh::from(Capsule {
-                        radius: BOND_RADIUS,
-                        rings: 1,
-                        depth: bond_len,
-                        latitudes: 4,
-                        longitudes: BOND_N_SIDES,
-                        uv_profile: CapsuleUvProfile::Uniform, // todo
-                    })),
-                    material: materials
-                        .add(Color::rgb(BOND_COLOR.0, BOND_COLOR.1, BOND_COLOR.2).into()),
-                    ..Default::default()
-                });
-        }
+        let bond_len = match atom.role {
+            BackboneRole::N => LEN_CP_N as f32,
+            BackboneRole::Cα => LEN_N_CALPHA as f32,
+            BackboneRole::Cp => LEN_CALPHA_CP as f32,
+            BackboneRole::O => LEN_CP_O as f32,
+            _ => 20., // placeholder; shouldn't come up, but we'll now if it does
+        };
+
+        commands
+            .spawn()
+            .insert(bond_render)
+            .insert_bundle(PbrBundle {
+                mesh: meshes.add(Mesh::from(Capsule {
+                    radius: BOND_RADIUS,
+                    rings: 1,
+                    depth: bond_len,
+                    latitudes: 4,
+                    longitudes: BOND_N_SIDES,
+                    uv_profile: CapsuleUvProfile::Uniform, // todo
+                })),
+                material: materials
+                    .add(Color::rgb(BOND_COLOR.0, BOND_COLOR.1, BOND_COLOR.2).into()),
+                ..Default::default()
+            });
+        // }
     }
 
     // Render cylinders defining the origin and axes
@@ -332,14 +340,26 @@ fn render_bonds(
     state: Res<State>,
 ) {
     for (bond_render, mut transform) in query.iter_mut() {
-        if bond_render.atom_id < 2 {
-            continue;
-        }
         let atom = &state.protein_coords.atoms_backbone[bond_render.atom_id];
 
-        let atom_prev_id = match bond_render.bond_id {
-            3 => bond_render.atom_id - 2, // O: Back 2 for C' (Skip N)
-            0 => bond_render.atom_id - 2, // Calpha: Back 2 for N (Skip O)
+        if bond_render.atom_id == 0 { // Starting n at position=0
+            // todo why overflowing at 2?
+            // todo: For first, bind to default n
+            continue;
+        }
+
+        let atom_prev_id = match atom.role {
+            // O: Back 2 for C' (Skip N)
+            // Calpha: Back 2 for N (Skip O)
+            BackboneRole::O => bond_render.atom_id - 2,
+            BackboneRole::Cα => {
+                if bond_render.atom_id == 1 {
+                    // atom 1 is the initial α Carbon; there's no O to step over.
+                    bond_render.atom_id - 1
+                } else {
+                    bond_render.atom_id - 2
+                }
+            }
             _ => bond_render.atom_id - 1,
         };
 
@@ -373,7 +393,7 @@ fn adjust_camera(
     let mut cam_moved = false;
     let mut cam_rotated = false;
 
-    let mut movement_vec = lin_alg::Vec3::zero();
+    let mut movement_vec = lin_alg::Vec3::new_zero();
 
     if keyboard_input.pressed(KeyCode::LShift) {
         move_amt *= RUN_FACTOR;
@@ -460,9 +480,11 @@ pub fn run() {
         .add_system(change_dihedral_angle)
         .add_system(render_atoms)
         .add_system(render_bonds)
-        .insert_resource(ClearColor(
-            Color::rgb(BACKGROUND_COLOR.0, BACKGROUND_COLOR.1, BACKGROUND_COLOR.2),
-        ))
+        .insert_resource(ClearColor(Color::rgb(
+            BACKGROUND_COLOR.0,
+            BACKGROUND_COLOR.1,
+            BACKGROUND_COLOR.2,
+        )))
         .add_system_set(SystemSet::new().with_run_criteria(FixedTimestep::step(DT as f64)))
         .run();
 }

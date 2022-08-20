@@ -513,8 +513,6 @@ pub struct AtomSidechain {
     pub position: Vec3,
 }
 
-
-
 /// Describes a water molecule. These aren't directly part of a protein, but may play a role in its
 /// folding, among other potential roles.
 #[derive(Debug)]
