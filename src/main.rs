@@ -5,6 +5,8 @@
 //! [A paper on modelling proteins](https://cnx.org/contents/9cMfjngH@6.3:WjXbYFJI@15/Representing-Proteins-in-Silico-and-Protein-Forward-Kinematics)
 //! [Article on hydrogen bond modelling](https://www.nature.com/articles/ncomms6803)
 
+// todo: Instead of fixed DT,use a dynamic DT based on frame time subtraction
+
 // todo: Switch from Bevy to Ash or similar. Or perhaps Godot's rust bindings.
 // todo: Temperature sensitivity. Surroundin water molecules.
 // Initially, focus on modeling the bond angles and backbone. Both

@@ -332,10 +332,11 @@ fn render_bonds(
     state: Res<State>,
 ) {
     for (bond_render, mut transform) in query.iter_mut() {
-        if bond_render.atom_id == 0 {
+        if bond_render.atom_id < 2 {
             continue;
         }
         let atom = &state.protein_coords.atoms_backbone[bond_render.atom_id];
+
         let atom_prev_id = match bond_render.bond_id {
             3 => bond_render.atom_id - 2, // O: Back 2 for C' (Skip N)
             0 => bond_render.atom_id - 2, // Calpha: Back 2 for N (Skip O)
@@ -346,8 +347,12 @@ fn render_bonds(
 
         let bond_center_position = (atom.position + atom_prev.position) * 0.5;
 
-        let bond_dir = atom.position + atom_prev.position * -1.;
-        let bond_orientation = Quaternion::from_axis_angle(bond_dir, 0.);
+        let bond_dir = (atom.position + atom_prev.position * -1.).to_normalized();
+
+        /// The length-wise axis of Bevy's cylinder model
+        let model_axis = lin_alg::Vec3::new(0., 1., 0.);
+
+        let bond_orientation = Quaternion::from_unit_vecs(model_axis, bond_dir);
 
         transform.translation = bond_center_position.to_bevy();
         transform.rotation = bond_orientation.to_bevy();

@@ -1,5 +1,11 @@
 //! This module contains info related to side chains, including their geometry
 
+use crate::{
+    chem_definitions::{AminoAcidType, AtomType},
+    coord_gen::{AtomSidechain},
+    lin_alg::Vec3,
+};
+
 /// Describes the sidechain of a given amino acid
 #[derive(Debug)]
 pub struct Sidechain {
