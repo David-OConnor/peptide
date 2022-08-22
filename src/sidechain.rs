@@ -2,9 +2,117 @@
 
 use crate::{
     chem_definitions::{AminoAcidType, AtomType},
-    coord_gen::AtomSidechain,
     lin_alg::Vec3,
 };
+
+/// An atom, in a sidechain
+#[derive(Debug)]
+pub struct AtomSidechain {
+    /// type of Atom, eg Carbon, Oxygen etc
+    pub role: AtomType,
+    /// Local position, anchored to Calpha = 0, 0, 0
+    /// todo: Orientation of side chain rel to Calpha?
+    pub position: Vec3,
+}
+
+// the AA-specific structs below specify dihedral angles for each AA instance
+// `θ_0` for each is for the bond between the c_alpha, and the first C in the sidechain.
+
+pub struct Arg {
+    pub θ_0: f64,
+    pub θ_1: f64,
+    pub θ_2: f64,
+    pub θ_3: f64,
+}
+
+pub struct His {
+    pub θ_0: f64,
+    pub θ_1: f64,
+}
+
+pub struct Lys {
+    pub θ_0: f64,
+    pub θ_1: f64,
+    pub θ_2: f64,
+    pub θ_3: f64,
+}
+
+pub struct Asp {
+    pub θ_0: f64,
+    pub θ_1: f64,
+}
+
+pub struct Glu {
+    pub θ_0: f64,
+    pub θ_1: f64,
+    pub θ_2: f64,
+}
+
+pub struct Ser {
+    pub θ_0: f64,
+}
+
+pub struct Thr {
+    pub θ_0: f64,
+}
+
+pub struct Asn {
+    pub θ_0: f64,
+    pub θ_1: f64,
+}
+
+pub struct Gln {
+    pub θ_0: f64,
+    pub θ_1: f64,
+    pub θ_2: f64,
+}
+
+pub struct Cys {
+    pub θ_0: f64,
+}
+
+pub struct Sec {
+    pub θ_0: f64,
+}
+
+pub struct Gly {}
+
+pub struct Pro {}
+
+pub struct Ala {}
+
+pub struct Val {
+    pub θ_0: f64,
+}
+
+pub struct Ile {
+    pub θ_0: f64,
+    pub θ_1: f64,
+}
+
+pub struct Leu {
+    pub θ_0: f64,
+    pub θ_1: f64,
+}
+pub struct Met {
+    pub θ_0: f64,
+    pub θ_1: f64,
+    pub θ_2: f64,
+}
+pub struct Phe {
+    pub θ_0: f64,
+    pub θ_1: f64,
+}
+
+pub struct Tyr {
+    pub θ_0: f64,
+    pub θ_1: f64,
+}
+
+pub struct Trp {
+    pub θ_0: f64,
+    pub θ_1: f64,
+}
 
 /// Describes the sidechain of a given amino acid
 #[derive(Debug)]

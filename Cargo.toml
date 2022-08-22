@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 bevy = "^0.8.0"
-#graphics = { path = "../graphics_wgpu" }
+graphics = { path = "../graphics_wgpu" }

@@ -144,8 +144,6 @@ pub fn init_local_bond_vecs() {
 
             // Of note, our first value (axis = 0) seems to be the answer here?!
             if (angle_n_o - BOND_ANGLE_CP_O_N).abs() < EPS {
-                println!("cp_o: [{}, {}, {}]", CP_O_BOND.x, CP_O_BOND.y, CP_O_BOND.z);
-                println!("angle N O: {angle_n_o}");
                 break;
             }
             //
@@ -180,8 +178,9 @@ impl ProteinCoords {
 
         let mut id = 0;
 
-        // N-terminus nitrogen, at the *start* of our chain.
-        let starting_n = AtomCoords {
+        // N-terminus nitrogen, at the *start* of our chain. This is our anchor atom, with 0 position,
+        // and an identity-quaternion orientation.
+        let n_anchor = AtomCoords {
             residue_id: id,
             role: BackboneRole::N,
             position: Vec3::new(0., 0., 0.),
@@ -189,13 +188,13 @@ impl ProteinCoords {
         };
 
         // Store these values, to anchor each successive residue to the previous.
-        let mut prev_n_position = starting_n.position;
-        let mut prev_n_orientation = starting_n.orientation;
+        let mut prev_n_position = n_anchor.position;
+        let mut prev_n_orientation = n_anchor.orientation;
         // todo: This may need adjustment. to match physical reality.
         // this position affects the first dihedral angle.
         let mut prev_cp_position = Vec3::new(1., 1., 0.).to_normalized();
 
-        backbone.push(starting_n);
+        backbone.push(n_anchor);
         id += 1;
 
         for aa in &descrip.residues {
@@ -296,11 +295,12 @@ fn calc_dihedral_angle(bond_middle: Vec3, bond_adjacent1: Vec3, bond_adjacent2: 
     let bond1_on_plane = bond_adjacent1.project_to_plane(bond_middle).to_normalized();
     let bond2_on_plane = bond_adjacent2.project_to_plane(bond_middle).to_normalized();
 
-    let result = (bond1_on_plane.dot(bond2_on_plane)).acos();
+    // Not sure why we need to offset by 𝜏/2 here, but it seems to be the case
+    let result = (bond1_on_plane.dot(bond2_on_plane)).acos() + TAU / 2.;
 
     // The dot product approach to angles between vectors only covers half of possible
     // rotations; use a determinant of the 3 vectors as matrix columns to determine if we
-    // need to offset by TAU/2.
+    // need to modify to be on the second half.
     let det = lin_alg::det_from_cols(bond1_on_plane, bond2_on_plane, bond_middle);
 
     // todo: Exception if vecs are the same??
@@ -314,7 +314,7 @@ fn calc_dihedral_angle(bond_middle: Vec3, bond_adjacent1: Vec3, bond_adjacent2: 
 /// Calculate the orientation, as a quaternion, and position, as a vector, of an atom, given the orientation of a
 /// previous atom, and the bond angle. `bond_angle` is the vector representing the bond to
 /// this atom from the previous atom's orientation. `bond_prev` and `bond_next` are in the atom's
-/// coordinates; not worldspace.
+/// coordinates; not worldspace. This is solving an iteration of the *forward kinematics problem*.
 pub fn find_atom_placement(
     o_prev: Quaternion,
     bond_to_prev_local: Vec3, // Local space
@@ -363,40 +363,11 @@ pub fn find_atom_placement(
     // todo: Quick and dirty approach here. You can perhaps come up with something
     // todo more efficient, ie in one shot.
     if (dihedral_angle - dihedral_angle_current2).abs() > 0.0001 {
-        dihedral_rotation = Quaternion::from_axis_angle(rotate_axis, -angle_dif + TAU / 1.);
+        dihedral_rotation = Quaternion::from_axis_angle(rotate_axis, -angle_dif + TAU);
     }
 
     (position, dihedral_rotation * bond_alignment_rotation)
 }
-
-// /// In this approach we model atoms with a vector indicating their position, and we model
-// /// each bond as a quaternion.
-// pub fn find_backbone_atom_orientation2(
-//     bond_to_this: Quaternion,
-//     // bond_to_this_worldspace: Vec3,
-//     bond_angle: f64, // The angle between the incoming and outgoing bond.
-//     dihedral_angle: f64,
-// ) -> Quaternion {
-//     let to_this_vec = bond_to_this.to_vec().to_normalized();
-//
-//     let v = Vec3::new(1., 0., 0.); // todo: Arbitrary, fornow.
-//     let normal_to_bond = to_this_vec.cross(v);
-//     let rotation_to_next_bond = Quaternion::from_axis_angle(normal_to_bond, bond_angle);
-//
-//     println!("BTT: {:?}, This to vec: {:?}", bond_to_this, to_this_vec);
-//
-//     let angle = dihedral_angle; // todo
-//     let bond_to_this_worldspace = to_this_vec; // todo is this right?
-//
-//     let rotation_around_axis = Quaternion::from_axis_angle(bond_to_this_worldspace, angle);
-//
-//     println!(
-//         "TEST {:?}, {:?}, {:?}",
-//         rotation_around_axis, rotation_to_next_bond, bond_to_this
-//     );
-//
-//     rotation_around_axis * rotation_to_next_bond * bond_to_this
-// }
 
 /// An amino acid in a protein structure, including position information.
 #[derive(Debug)]
@@ -417,7 +388,7 @@ pub struct Residue {
 
 impl Residue {
     /// Generate cartesian coordinates of points from diahedral angles and bond lengths. Starts with
-    /// N, and ends with C'.
+    /// N, and ends with C'. This is solving the *forward kinematics problem*.
     /// Accepts position, and orientation of the N atom that starts this segment.
     /// Also returns orientation of the N atom, for use when calculating coordinates for the next
     /// AA in the chain.
@@ -501,16 +472,6 @@ pub struct _ZmatrixItem {
     bond_len: f64,       // Angstrom
     bond_angle: f64,     // radians
     dihedral_angle: f64, // radians
-}
-
-/// An atom, in a sidechain
-#[derive(Debug)]
-pub struct AtomSidechain {
-    /// type of Atom, eg Carbon, Oxygen etc
-    pub role: AtomType,
-    /// Local position, anchored to Calpha = 0, 0, 0
-    /// todo: Orientation of side chain rel to Calpha?
-    pub position: Vec3,
 }
 
 /// Describes a water molecule. These aren't directly part of a protein, but may play a role in its

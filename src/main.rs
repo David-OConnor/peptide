@@ -83,7 +83,7 @@ fn init_protein() -> ProteinDescription {
     let ψ_sheet = 135. * TAU / 360.;
 
     let mut residues = Vec::new();
-    for i in 0..2 {
+    for i in 0..40 {
         residues.push(Residue {
             aa: AminoAcidType::A,
             ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
@@ -176,6 +176,6 @@ fn init_protein() -> ProteinDescription {
 
 fn main() {
     coord_gen::init_local_bond_vecs();
-    render_bevy::run();
-    // render_wgpu::run();
+    // render_bevy::run();
+    render_wgpu::run();
 }

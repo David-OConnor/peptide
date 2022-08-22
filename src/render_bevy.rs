@@ -342,9 +342,8 @@ fn render_bonds(
     for (bond_render, mut transform) in query.iter_mut() {
         let atom = &state.protein_coords.atoms_backbone[bond_render.atom_id];
 
-        if bond_render.atom_id == 0 { // Starting n at position=0
-            // todo why overflowing at 2?
-            // todo: For first, bind to default n
+        if bond_render.atom_id == 0 {
+            // Starting n at position=0
             continue;
         }
 
@@ -388,7 +387,7 @@ fn adjust_camera(
 ) {
     let mut move_amt = CAM_MOVE_SENS * DT;
     const ROTATE_AMT: f64 = CAM_ROTATE_SENS * DT;
-    const ROTATE_KEY_AMT: f64 = CAM_ROTATE_KEY_SENS * DT;
+    let mut rotate_key_amt: f64 = CAM_ROTATE_KEY_SENS * DT;
 
     let mut cam_moved = false;
     let mut cam_rotated = false;
@@ -397,6 +396,7 @@ fn adjust_camera(
 
     if keyboard_input.pressed(KeyCode::LShift) {
         move_amt *= RUN_FACTOR;
+        rotate_key_amt *= RUN_FACTOR;
     }
 
     if keyboard_input.pressed(KeyCode::W) {
@@ -432,10 +432,10 @@ fn adjust_camera(
 
     // todo: Why do we need to reverse these?
     if keyboard_input.pressed(KeyCode::E) {
-        rotation = Quaternion::from_axis_angle(fwd, -ROTATE_KEY_AMT);
+        rotation = Quaternion::from_axis_angle(fwd, -rotate_key_amt);
         cam_rotated = true;
     } else if keyboard_input.pressed(KeyCode::Q) {
-        rotation = Quaternion::from_axis_angle(fwd, ROTATE_KEY_AMT);
+        rotation = Quaternion::from_axis_angle(fwd, rotate_key_amt);
         cam_rotated = true;
     }
 
