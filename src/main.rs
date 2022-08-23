@@ -18,17 +18,20 @@ use std::f64::consts::TAU;
 
 mod lin_alg;
 
+mod atom_coords;
 mod chem_definitions;
-mod coord_gen;
+mod kinematics;
 mod render;
 mod render_bevy;
+mod render_wgpu;
 mod sidechain;
-// mod render_wgpu;
 
+use atom_coords::ProteinCoords;
 use chem_definitions::AminoAcidType;
-use coord_gen::{ProteinCoords, ProteinDescription, Residue};
+use kinematics::{ProteinDescription, Residue};
 use lin_alg::{Quaternion, Vec3};
 use render::Camera;
+use sidechain::Sidechain;
 
 // todo: model the oxygen double-bounded to Cp next.
 
@@ -85,97 +88,99 @@ fn init_protein() -> ProteinDescription {
     let mut residues = Vec::new();
     for i in 0..40 {
         residues.push(Residue {
-            aa: AminoAcidType::A,
+            // aa_type: AminoAcidType::Ala,
             ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
             φ: φ_sheet,
             // φ: φ_helix,
             ψ: ψ_sheet,
             // ψ: ψ_helix,
+            sidechain: Sidechain::Ala(Default::default()),
         });
     }
 
     let r0 = Residue {
-        aa: AminoAcidType::A,
+        // aa_type: AminoAcidType::Ala,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
+        sidechain: Sidechain::Ala(Default::default()),
     };
 
     let r1 = Residue {
-        aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
+        sidechain: Sidechain::Ala(Default::default()),
     };
 
     let r2 = Residue {
-        aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
+        sidechain: Sidechain::Ala(Default::default()),
     };
 
     let r3 = Residue {
-        aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
+        sidechain: Sidechain::Ala(Default::default()),
     };
 
     let r4 = Residue {
-        aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
+        sidechain: Sidechain::Ala(Default::default()),
     };
 
     let r5 = Residue {
-        aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
+        sidechain: Sidechain::Ala(Default::default()),
     };
 
     let r6 = Residue {
-        aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
+        sidechain: Sidechain::Ala(Default::default()),
     };
 
     let r7 = Residue {
-        aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
+        sidechain: Sidechain::Ala(Default::default()),
     };
 
     let r8 = Residue {
-        aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
+        sidechain: Sidechain::Ala(Default::default()),
     };
 
     let r9 = Residue {
-        aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
+        sidechain: Sidechain::Ala(Default::default()),
     };
 
     let r10 = Residue {
-        aa: AminoAcidType::A,
         ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
         φ: 1. / 2. * TAU,
         ψ: 1. / 2. * TAU,
+        sidechain: Sidechain::Ala(Default::default()),
     };
 
     ProteinDescription { residues }
 }
 
 fn main() {
-    coord_gen::init_local_bond_vecs();
+    kinematics::init_local_bond_vecs();
     // render_bevy::run();
     render_wgpu::run();
 }

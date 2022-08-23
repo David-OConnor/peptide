@@ -1,15 +1,15 @@
-//! This module contains code for calculating atom coordinates.
-
-// todo: QC quaternion error creep, and re-normalize A/R
+//! This module contains code for calculating atom coordinates from dihedral angles.
+//! It solves the *forward kinematics problem*.
+//!
+//! https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2810841/
 
 use core::f64::consts::TAU;
 
 use crate::{
     chem_definitions::{AminoAcidType, AtomType, BackboneRole},
     lin_alg::{self, Quaternion, Vec3},
+    sidechain::{self, Sidechain},
 };
-
-// https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2810841/
 
 // Double bond len of C' to N.
 pub const LEN_CP_N: f64 = 1.33; // angstrom
@@ -50,13 +50,13 @@ const INIT_BOND_VEC: Vec3 = Vec3 {
 // the linear algebra operations that operate on them) in their construction.
 const CALPHA_CP_BOND: Vec3 = INIT_BOND_VEC;
 
-static mut CALPHA_N_BOND: Vec3 = Vec3 {
+pub static mut CALPHA_N_BOND: Vec3 = Vec3 {
     x: 0.,
     y: 0.,
     z: 0.,
 };
 
-static mut CALPHA_R_BOND: Vec3 = Vec3 {
+pub static mut CALPHA_R_BOND: Vec3 = Vec3 {
     x: 0.,
     y: 0.,
     z: 0.,
@@ -163,106 +163,6 @@ pub struct ProteinDescription {
     pub residues: Vec<Residue>,
 }
 
-#[derive(Debug)]
-/// Describes the sequence of atoms that make up a protein backbone, with worldspace coordinates.
-/// this is what is needed for the render, and spacial manipulations.
-pub struct ProteinCoords {
-    pub atoms_backbone: Vec<AtomCoords>,
-}
-
-impl ProteinCoords {
-    /// Creates coordinates from bond angles etc.
-    pub fn from_descrip(descrip: &ProteinDescription) -> Self {
-        // todo: Only update downstream atoms for a given rotation.
-        let mut backbone = Vec::new();
-
-        let mut id = 0;
-
-        // N-terminus nitrogen, at the *start* of our chain. This is our anchor atom, with 0 position,
-        // and an identity-quaternion orientation.
-        let n_anchor = AtomCoords {
-            residue_id: id,
-            role: BackboneRole::N,
-            position: Vec3::new(0., 0., 0.),
-            orientation: Quaternion::new_identity(),
-        };
-
-        // Store these values, to anchor each successive residue to the previous.
-        let mut prev_n_position = n_anchor.position;
-        let mut prev_n_orientation = n_anchor.orientation;
-        // todo: This may need adjustment. to match physical reality.
-        // this position affects the first dihedral angle.
-        let mut prev_cp_position = Vec3::new(1., 1., 0.).to_normalized();
-
-        backbone.push(n_anchor);
-        id += 1;
-
-        for aa in &descrip.residues {
-            let aa_coords =
-                aa.backbone_cart_coords(prev_n_position, prev_n_orientation, prev_cp_position);
-
-            let c_alpha = AtomCoords {
-                residue_id: id,
-                role: BackboneRole::Cα,
-                position: aa_coords.cα,
-                orientation: aa_coords.cα_orientation,
-            };
-
-            backbone.push(c_alpha);
-            id += 1;
-
-            let cp = AtomCoords {
-                residue_id: id,
-                role: BackboneRole::Cp,
-                position: aa_coords.cp,
-                orientation: aa_coords.cp_orientation,
-            };
-
-            prev_cp_position = cp.position;
-
-            backbone.push(cp);
-            id += 1;
-
-            let n = AtomCoords {
-                residue_id: id,
-                role: BackboneRole::N,
-                position: aa_coords.n_next,
-                orientation: aa_coords.n_next_orientation,
-            };
-
-            prev_n_position = n.position;
-            prev_n_orientation = n.orientation;
-
-            backbone.push(n);
-            id += 1;
-
-            let o = AtomCoords {
-                residue_id: id,
-                role: BackboneRole::O,
-                position: aa_coords.o,
-                orientation: aa_coords.o_orientation,
-            };
-
-            backbone.push(o);
-            id += 1;
-        }
-
-        Self {
-            atoms_backbone: backbone,
-        }
-    }
-}
-
-/// Location of an atom, in the worldspace coordinate system.
-#[derive(Debug)]
-pub struct AtomCoords {
-    /// id of the Amino Acid this atom is part of
-    pub residue_id: usize, // todo: Do we want this id, or use an index?
-    pub role: BackboneRole,
-    pub position: Vec3,
-    pub orientation: Quaternion,
-}
-
 /// Holds backbone atom coordinates and orientations, relative to the alpha carbon, for
 /// a single amino acid. Generated from an AA's bond angles.
 ///
@@ -273,7 +173,7 @@ pub struct AtomCoords {
 /// directional convention described above. (todo: How do we orient axes?)
 /// todo: To start, convention is the previous C' to this AA's starting A is on the positive X axis.
 #[derive(Debug)]
-pub struct BackboneCoordsAa {
+pub struct BackboneCoords {
     /// Cα
     pub cα: Vec3,
     /// Carbon' atom bound to C_alpha
@@ -319,12 +219,15 @@ pub fn find_atom_placement(
     o_prev: Quaternion,
     bond_to_prev_local: Vec3, // Local space
     bond_to_next_local: Vec3, // Local space
-    prev_bond_world: Vec3,    // World space
+    // prev_bond_world: Vec3,    // World space
     dihedral_angle: f64,
     posit_prev: Vec3,
+    posit_2_back: Vec3,
     bond_to_this_local: Vec3, // direction-only unit vec
     bond_to_this_len: f64,
 ) -> (Vec3, Quaternion) {
+    let prev_bond_world = posit_prev - posit_2_back;
+
     // Find the position:
     let position = posit_prev + o_prev.rotate_vec(bond_to_this_local) * bond_to_this_len;
 
@@ -369,10 +272,11 @@ pub fn find_atom_placement(
     (position, dihedral_rotation * bond_alignment_rotation)
 }
 
-/// An amino acid in a protein structure, including position information.
+/// An amino acid in a protein structure, including all dihedral angles required to determine
+/// the conformation. Includes backbone and side chain dihedral angles. Doesn't store coordinates,
+/// but coordinates can be generated using forward kinematics from the angles.
 #[derive(Debug)]
 pub struct Residue {
-    pub aa: AminoAcidType,
     /// Dihedral angle between C' and N
     /// Tor (Cα, C, N, Cα) is the ω torsion angle
     /// Assumed to be TAU/2 for most cases
@@ -383,7 +287,8 @@ pub struct Residue {
     /// Dihedral angle, between Cα and C'
     ///  Tor (N, Cα, C, N) is the ψ torsion angle
     pub ψ: f64,
-    // todo: Include bond lengths here if they're not constant.
+    /// Contains the χ angles that define t
+    pub sidechain: Sidechain,
 }
 
 impl Residue {
@@ -399,7 +304,7 @@ impl Residue {
         n_pos: Vec3,
         n_orientation: Quaternion,
         prev_cp_pos: Vec3,
-    ) -> BackboneCoordsAa {
+    ) -> BackboneCoords {
         // These are the angles between each of 2 4 equally-spaced atoms on a tetrahedron,
         // with center of (0., 0., 0.). They are the angle formed between 3 atoms.
         // We have chosen the two angles to describe the backbone. We have chosen these arbitrarily.
@@ -410,9 +315,9 @@ impl Residue {
             CALPHA_CP_BOND,
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
-            n_pos - prev_cp_pos,
             self.φ,
             n_pos,
+            prev_cp_pos,
             N_CALPHA_BOND,
             LEN_N_CALPHA,
         );
@@ -421,9 +326,9 @@ impl Residue {
             cα_orientation,
             unsafe { CP_CALPHA_BOND },
             CP_N_BOND,
-            cα - n_pos,
             self.ψ,
             cα,
+            n_pos,
             CALPHA_CP_BOND,
             LEN_CALPHA_CP,
         );
@@ -432,9 +337,9 @@ impl Residue {
             cp_orientation,
             unsafe { N_CP_BOND },
             N_CALPHA_BOND,
-            cp - cα,
             self.ω,
             cp,
+            cα,
             CP_N_BOND,
             LEN_CP_N,
         );
@@ -446,14 +351,14 @@ impl Residue {
             cp_orientation,
             O_CP_BOND,
             Vec3::new(0., 1., 0.), // arbitrary, since O doesn't continue the chain
-            cp - cα,
-            0., // arbitrary
+            0.,                    // arbitrary
             cp,
+            cα,
             unsafe { CP_O_BOND },
             LEN_CP_O,
         );
 
-        BackboneCoordsAa {
+        BackboneCoords {
             cα,
             cp,
             n_next,
@@ -464,14 +369,6 @@ impl Residue {
             o_orientation,
         }
     }
-}
-
-/// Used to represent one atom in a system built of atoms.
-pub struct _ZmatrixItem {
-    atomic_number: u8,
-    bond_len: f64,       // Angstrom
-    bond_angle: f64,     // radians
-    dihedral_angle: f64, // radians
 }
 
 /// Describes a water molecule. These aren't directly part of a protein, but may play a role in its

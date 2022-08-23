@@ -12,8 +12,9 @@ use bevy::{
 // use bevy::{core::FixedTimestep, render::primitives::Sphere};
 
 use crate::{
+    atom_coords::ProteinCoords,
     chem_definitions::BackboneRole,
-    coord_gen::{ProteinCoords, LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA},
+    kinematics::{LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA},
     lin_alg::{self, Quaternion},
     render::{
         self, BACKGROUND_COLOR, BOND_COLOR, BOND_N_SIDES, BOND_RADIUS, CAM_MOVE_SENS,
@@ -58,12 +59,17 @@ impl BackboneRole {
         let cp = render::CP_COLOR;
         let n = render::N_COLOR;
         let o = render::O_COLOR;
+        let cs = render::C_SIDECHAIN_COLOR;
         // let c_other = render::CALPHA_COLOR;
         match self {
             Self::Cα => Color::rgb(cα.0, cα.1, cα.2),
             Self::Cp => Color::rgb(cp.0, cp.1, cp.2),
             Self::N => Color::rgb(n.0, n.1, n.2),
             Self::O => Color::rgb(o.0, o.1, o.2),
+            Self::CSidechain => Color::rgb(cs.0, cs.1, cs.2),
+            // todo: Consider a diff shade for n and o sidechain colors
+            Self::NSidechain => Color::rgb(n.0, n.1, n.2),
+            Self::OSidechain => Color::rgb(o.0, o.1, o.2),
             // Self::C_OTHER => Color::rgb(c_other.0, c_other.1, c_other.2),
         }
     }

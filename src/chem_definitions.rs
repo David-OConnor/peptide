@@ -27,58 +27,64 @@ impl AtomType {
 }
 
 #[derive(Clone, Copy, Debug)]
+/// Our order follows this Wikipedia example:
+/// https://upload.wikimedia.org/wikipedia/commons/4/4f/ProteinogenicAminoAcids.svg
 pub enum AminoAcidType {
-    A,
-    R,
-    N,
-    D,
-    C,
-    Q,
-    E,
-    G,
-    H,
-    I,
-    L,
-    K,
-    M,
-    F,
-    P,
-    S,
-    T,
-    W,
-    Y,
-    V,
+    Arg,
+    His,
+    Lys,
+    Asp,
+    Glu,
+    Ser,
+    Thr,
+    Asn,
+    Gln,
+    Cys,
+    Sec,
+    Gly,
+    Pro,
+    Ala,
+    Val,
+    Ile,
+    Leu,
+    Met,
+    Phe,
+    Tyr,
+    Trp,
 }
 
 impl AminoAcidType {
     pub fn symbol(&self) -> &str {
         match self {
-            Self::A => "Ala",
-            Self::R => "Arg",
-            Self::N => "Asn",
-            Self::D => "Asp",
-            Self::C => "Cys",
-            Self::Q => "Gln",
-            Self::E => "Glu",
-            Self::G => "Gly",
-            Self::H => "His",
-            Self::I => "Ile",
-            Self::L => "Leu",
-            Self::K => "Lys",
-            Self::M => "Met",
-            Self::F => "Phe",
-            Self::P => "Pro",
-            Self::S => "Ser",
-            Self::T => "Thr",
-            Self::W => "Trp",
-            Self::Y => "Tyr",
-            Self::V => "Val",
+            Self::Ala => "Ala",
+            Self::Arg => "Arg",
+            Self::Asn => "Asn",
+            Self::Asp => "Asp",
+            Self::Cys => "Cys",
+            Self::Gln => "Gln",
+            Self::Glu => "Glu",
+            Self::Gly => "Gly",
+            Self::His => "His",
+            Self::Ile => "Ile",
+            Self::Leu => "Leu",
+            Self::Lys => "Lys",
+            Self::Met => "Met",
+            Self::Phe => "Phe",
+            Self::Pro => "Pro",
+            Self::Ser => "Ser",
+            Self::Thr => "Thr",
+            Self::Trp => "Trp",
+            Self::Tyr => "Tyr",
+            Self::Val => "Val",
+            Self::Sec => "Sec",
         }
     }
 }
 
 #[derive(Clone, Copy, Debug)]
 /// The positional role of an atom in an amino acid
+/// todo: We've overloaded this to include sidechains too! Consider
+/// todo how you'd prefer to handle this.
 pub enum BackboneRole {
     N,
     /// The carbon attom that attaches to the side chain.
@@ -86,6 +92,9 @@ pub enum BackboneRole {
     Cp,
     /// Oxygen double-bonded to C'
     O,
+    CSidechain,
+    OSidechain,
+    NSidechain,
 }
 
 impl BackboneRole {
