@@ -102,8 +102,6 @@ impl ProteinCoords {
                     let sc_coords = angles.sidechain_cart_coords(
                         bb_coords.cα,
                         bb_coords.cα_orientation,
-                        // Todo: THis will be the wrong n, since you've alreayd
-                        // todoupdated it with the enxt n.
                         prev_n_posit,
                     );
 
@@ -152,6 +150,68 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::NSidechain,
                         sc_coords.n_eta2,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        &mut id,
+                    );
+                }
+                Sidechain::Asp(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        // Todo: THis will be the wrong n, since you've alreayd
+                        // todoupdated it with the nxt n.
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_gamma,
+                        sc_coords.c_gamma_orientation,
+                        &mut backbone,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::OSidechain,
+                        sc_coords.o_delta1,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::OSidechain,
+                        sc_coords.o_delta2,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        &mut id,
+                    );
+                }
+                Sidechain::Ser(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        // Todo: THis will be the wrong n, since you've alreayd
+                        // todoupdated it with the nxt n.
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.o_gamma,
                         Quaternion::new_identity(),
                         &mut backbone,
                         &mut id,

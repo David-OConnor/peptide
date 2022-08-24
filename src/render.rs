@@ -4,7 +4,8 @@ use crate::lin_alg::{Quaternion, Vec3};
 
 pub const BACKGROUND_COLOR: (f32, f32, f32) = (0.9, 0.9, 0.9);
 
-pub const BOND_COLOR: (f32, f32, f32) = (0.2, 0.2, 0.2);
+pub const BOND_COLOR_BACKBONE: (f32, f32, f32) = (0.2, 0.2, 0.2);
+pub const BOND_COLOR_SIDECHAIN: (f32, f32, f32) = (0.6, 0.6, 0.8);
 
 // Atom colors
 pub const CALPHA_COLOR: (f32, f32, f32) = (0.7, 0.86, 0.66);
@@ -15,7 +16,8 @@ pub const C_SIDECHAIN_COLOR: (f32, f32, f32) = (0.3, 0.3, 0.3);
 
 pub const LIGHT_INTENSITY: f32 = 1500.0;
 
-pub const BOND_RADIUS: f32 = 0.03;
+pub const BOND_RADIUS_BACKBONE: f32 = 0.07;
+pub const BOND_RADIUS_SIDECHAIN: f32 = 0.03;
 pub const BOND_N_SIDES: usize = 10;
 
 // These sensitivities are in units (position), or radians (orientation) per second.

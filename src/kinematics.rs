@@ -118,7 +118,7 @@ pub fn init_local_bond_vecs() {
         CP_CALPHA_BOND = rotation_cp.rotate_vec(CP_N_BOND);
         N_CP_BOND = rotation_n.rotate_vec(N_CALPHA_BOND);
 
-        CALPHA_R_BOND = rotation_cα.rotate_vec(CALPHA_R_BOND); // todo: QC etc.
+        // CALPHA_R_BOND = rotation_cα.rotate_vec(CALPHA_R_BOND); // todo: QC etc.
 
         // println!("cp_n: [{}, {}, {}]", CP_N_BOND.x, CP_N_BOND.y, CP_N_BOND.z);
         // println!("cp_calpha: [{}, {}, {}]", CP_CALPHA_BOND.x, CP_CALPHA_BOND.y, CP_CALPHA_BOND.z);
@@ -142,6 +142,9 @@ pub fn init_local_bond_vecs() {
             let r2 = Quaternion::from_axis_angle(normal, BOND_ANGLE_CP_CALPHA_O);
 
             CP_O_BOND = r2.rotate_vec(CP_CALPHA_BOND);
+
+            // todo: Quick/sloppy. Also, exits on satisfying CP_O_bond; not this.
+            CALPHA_R_BOND = r2.rotate_vec(CALPHA_N_BOND);
 
             // let angle_calpha_o = (CP_CALPHA_BOND.dot(CP_O_BOND)).acos();
             // let angle_calpha_n = (CP_CALPHA_BOND.dot(CP_N_BOND)).acos();
@@ -224,7 +227,6 @@ pub fn find_atom_placement(
     o_prev: Quaternion,
     bond_to_prev_local: Vec3, // Local space
     bond_to_next_local: Vec3, // Local space
-    // prev_bond_world: Vec3,    // World space
     dihedral_angle: f64,
     posit_prev: Vec3,
     posit_2_back: Vec3,

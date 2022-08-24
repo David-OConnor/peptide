@@ -80,14 +80,14 @@ impl Arg {
 
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { CALPHA_R_BOND },
+            BOND_IN,
             BOND_OUT1,
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
             self.χ_1,
             c_alpha,
             n_pos,
-            BOND_OUT1,
+            unsafe { CALPHA_R_BOND },
             LEN_SC,
         );
 
@@ -173,6 +173,115 @@ impl Arg {
             c_delta_orientation,
             n_eps_orientation,
             c_zeta_orientation,
+        }
+    }
+}
+
+impl Asp {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsAsp {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (c_gamma, c_gamma_orientation) = find_atom_placement(
+            c_beta_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            self.χ_2,
+            c_beta,
+            c_alpha,
+            BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (o_delta1, _) = find_atom_placement(
+            c_gamma_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            0.,
+            c_gamma,
+            c_beta,
+            BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (o_delta2, _) = find_atom_placement(
+            c_gamma_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            0.,
+            c_gamma,
+            c_beta,
+            BOND_OUT2,
+            LEN_SC,
+        );
+
+        CoordsAsp {
+            c_beta,
+            c_gamma,
+            o_delta1,
+            o_delta2,
+
+            c_beta_orientation,
+            c_gamma_orientation,
+        }
+    }
+}
+
+impl Ser {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsSer {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (o_gamma, _) = find_atom_placement(
+            c_beta_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            0.,
+            c_beta,
+            c_alpha,
+            BOND_OUT1,
+            LEN_SC,
+        );
+
+        CoordsSer {
+            c_beta,
+            o_gamma,
+
+            c_beta_orientation,
         }
     }
 }

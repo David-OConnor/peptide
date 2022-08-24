@@ -86,20 +86,20 @@ fn init_protein() -> ProteinDescription {
     let ψ_sheet = 135. * TAU / 360.;
 
     let mut residues = Vec::new();
-    for i in 0..2 {
+    for i in 0..4 {
         residues.push(Residue {
             // aa_type: AminoAcidType::Ala,
             ω: 1. / 2. * TAU, // ω Assumed to be TAU/2 for most cases
-            φ: φ_helix,
             // φ: φ_helix,
-            ψ: ψ_helix,
+            φ: φ_sheet,
             // ψ: ψ_helix,
-            sidechain: Sidechain::Arg(sidechain::Arg {
+            ψ: ψ_sheet,
+            sidechain: Sidechain::Asp(sidechain::Asp {
                 χ_1: 1. / 2. * TAU,
                 χ_2: 1. / 2. * TAU,
-                χ_3: 1. / 2. * TAU,
-                χ_4: 1. / 2. * TAU,
-                χ_5: 1. / 2. * TAU,
+                // χ_3: 1. / 2. * TAU,
+                // χ_4: 1. / 2. * TAU,
+                // χ_5: 1. / 2. * TAU,
             }),
         });
     }

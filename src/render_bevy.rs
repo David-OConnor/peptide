@@ -17,9 +17,9 @@ use crate::{
     kinematics::{LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA},
     lin_alg::{self, Quaternion},
     render::{
-        self, BACKGROUND_COLOR, BOND_COLOR, BOND_N_SIDES, BOND_RADIUS, CAM_MOVE_SENS,
-        CAM_ROTATE_KEY_SENS, CAM_ROTATE_SENS, DT, FWD_VEC, LIGHT_INTENSITY, RIGHT_VEC, RUN_FACTOR,
-        UP_VEC,
+        self, BACKGROUND_COLOR, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN, BOND_N_SIDES,
+        BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, CAM_MOVE_SENS, CAM_ROTATE_KEY_SENS,
+        CAM_ROTATE_SENS, DT, FWD_VEC, LIGHT_INTENSITY, RIGHT_VEC, RUN_FACTOR, UP_VEC,
     },
     sidechain::LEN_SC,
     State, ROTATION_SPEED,
@@ -61,7 +61,6 @@ impl BackboneRole {
         let n = render::N_COLOR;
         let o = render::O_COLOR;
         let cs = render::C_SIDECHAIN_COLOR;
-        // let c_other = render::CALPHA_COLOR;
         match self {
             Self::Cα => Color::rgb(cα.0, cα.1, cα.2),
             Self::Cp => Color::rgb(cp.0, cp.1, cp.2),
@@ -71,7 +70,6 @@ impl BackboneRole {
             // todo: Consider a diff shade for n and o sidechain colors
             Self::NSidechain => Color::rgb(n.0, n.1, n.2),
             Self::OSidechain => Color::rgb(o.0, o.1, o.2),
-            // Self::C_OTHER => Color::rgb(c_other.0, c_other.1, c_other.2),
         }
     }
 }
@@ -107,14 +105,23 @@ fn setup(
 
         let bond_render = BondRender { atom_id: id };
 
-        let bond_len = match atom.role {
-            BackboneRole::N => LEN_CP_N as f32,
-            BackboneRole::Cα => LEN_N_CALPHA as f32,
-            BackboneRole::Cp => LEN_CALPHA_CP as f32,
-            BackboneRole::O => LEN_CP_O as f32,
-            BackboneRole::CSidechain => LEN_SC as f32,
-            BackboneRole::OSidechain => LEN_SC as f32,
-            BackboneRole::NSidechain => LEN_SC as f32,
+        let color_a = match atom.role {
+            BackboneRole::CSidechain | BackboneRole::OSidechain | BackboneRole::NSidechain => {
+                BOND_COLOR_SIDECHAIN
+            }
+            _ => BOND_COLOR_BACKBONE,
+        };
+
+        let color = Color::rgb(color_a.0, color_a.1, color_a.2).into();
+
+        let (bond_len, radius) = match atom.role {
+            BackboneRole::N => (LEN_CP_N as f32, BOND_RADIUS_BACKBONE),
+            BackboneRole::Cα => (LEN_N_CALPHA as f32, BOND_RADIUS_BACKBONE),
+            BackboneRole::Cp => (LEN_CALPHA_CP as f32, BOND_RADIUS_BACKBONE),
+            BackboneRole::O => (LEN_CP_O as f32, BOND_RADIUS_BACKBONE),
+            BackboneRole::CSidechain => (LEN_SC as f32, BOND_RADIUS_SIDECHAIN),
+            BackboneRole::OSidechain => (LEN_SC as f32, BOND_RADIUS_SIDECHAIN),
+            BackboneRole::NSidechain => (LEN_SC as f32, BOND_RADIUS_SIDECHAIN),
         };
 
         commands
@@ -122,15 +129,14 @@ fn setup(
             .insert(bond_render)
             .insert_bundle(PbrBundle {
                 mesh: meshes.add(Mesh::from(Capsule {
-                    radius: BOND_RADIUS,
+                    radius,
                     rings: 1,
                     depth: bond_len,
                     latitudes: 4,
                     longitudes: BOND_N_SIDES,
                     uv_profile: CapsuleUvProfile::Uniform, // todo
                 })),
-                material: materials
-                    .add(Color::rgb(BOND_COLOR.0, BOND_COLOR.1, BOND_COLOR.2).into()),
+                material: materials.add(color),
                 ..Default::default()
             });
         // }
