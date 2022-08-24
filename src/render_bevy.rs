@@ -21,6 +21,7 @@ use crate::{
         CAM_ROTATE_KEY_SENS, CAM_ROTATE_SENS, DT, FWD_VEC, LIGHT_INTENSITY, RIGHT_VEC, RUN_FACTOR,
         UP_VEC,
     },
+    sidechain::LEN_SC,
     State, ROTATION_SPEED,
 };
 
@@ -104,28 +105,16 @@ fn setup(
                 ..Default::default()
             });
 
-        // for residue in state.protein_descrip {
-        // for bond_id in 0..4 {
-        let bond_render = BondRender {
-            atom_id: id,
-            // bond_id: 0, // todo: This field is currently unused.
-        };
-
-        // one iter per bond in the residue (not including sidechain)
-        // let bond_len = match bond_id {
-        //     0 => LEN_N_CALPHA as f32,
-        //     1 => LEN_CALPHA_CP as f32,
-        //     2 => LEN_CP_N as f32,
-        //     3 => LEN_CP_O as f32,
-        //     _ => unreachable!(),
-        // };
+        let bond_render = BondRender { atom_id: id };
 
         let bond_len = match atom.role {
             BackboneRole::N => LEN_CP_N as f32,
             BackboneRole::Cα => LEN_N_CALPHA as f32,
             BackboneRole::Cp => LEN_CALPHA_CP as f32,
             BackboneRole::O => LEN_CP_O as f32,
-            _ => 20., // placeholder; shouldn't come up, but we'll now if it does
+            BackboneRole::CSidechain => LEN_SC as f32,
+            BackboneRole::OSidechain => LEN_SC as f32,
+            BackboneRole::NSidechain => LEN_SC as f32,
         };
 
         commands
@@ -345,33 +334,43 @@ fn render_bonds(
     mut query: Query<(&mut BondRender, &mut Transform), With<BondRender>>,
     state: Res<State>,
 ) {
+    // Store cα and c' so we can properly assign bonds after sidechains.
+    let mut n_id = 0; // Residue 0, index 0 for first N
+    let mut cα_id = 1; // Residue 0, index 1 for first Cα
+    let mut cp_id = 0;
+
     for (bond_render, mut transform) in query.iter_mut() {
         let atom = &state.protein_coords.atoms_backbone[bond_render.atom_id];
 
         if bond_render.atom_id == 0 {
-            // Starting n at position=0
+            // Anchor N at position=0
             continue;
         }
 
+        // Find the previous atom in the chain: The one that connects to this.
         let atom_prev_id = match atom.role {
-            // O: Back 2 for C' (Skip N)
-            // Calpha: Back 2 for N (Skip O)
-            BackboneRole::O => bond_render.atom_id - 2,
-            BackboneRole::Cα => {
-                if bond_render.atom_id == 1 {
-                    // atom 1 is the initial α Carbon; there's no O to step over.
-                    bond_render.atom_id - 1
-                } else {
-                    bond_render.atom_id - 2
-                }
+            BackboneRole::N => {
+                n_id = bond_render.atom_id;
+                cp_id
             }
-            _ => bond_render.atom_id - 1,
+            BackboneRole::Cα => {
+                cα_id = bond_render.atom_id;
+                n_id
+            }
+            BackboneRole::CSidechain | BackboneRole::OSidechain | BackboneRole::NSidechain => {
+                // This assumes the prev atom added befroe the sidechain was Cα.
+                bond_render.atom_id - 1
+            }
+            BackboneRole::Cp => {
+                cp_id = bond_render.atom_id;
+                cα_id
+            }
+            BackboneRole::O => cp_id,
         };
 
         let atom_prev = &state.protein_coords.atoms_backbone[atom_prev_id];
 
         let bond_center_position = (atom.position + atom_prev.position) * 0.5;
-
         let bond_dir = (atom.position + atom_prev.position * -1.).to_normalized();
 
         /// The length-wise axis of Bevy's cylinder model

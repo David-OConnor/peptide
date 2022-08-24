@@ -3,7 +3,7 @@
 use crate::{
     chem_definitions::{AminoAcidType, AtomType},
     // todo: Find actual bonds / angles; these are temp!
-    kinematics::{find_atom_placement, CALPHA_N_BOND, CALPHA_R_BOND, LEN_CALPHA_CP},
+    kinematics::{find_atom_placement, CALPHA_R_BOND},
     lin_alg::{Quaternion, Vec3},
 };
 
@@ -19,6 +19,24 @@ use crate::{
 
 // Note: Carbon alpha here isn't the same as
 // the backbone carbon alpha this is connected to!
+
+// todo: These are temp
+pub const LEN_SC: f64 = 1.53;
+pub const BOND_IN: Vec3 = Vec3 {
+    x: 1.,
+    y: 0.,
+    z: 0.,
+};
+pub const BOND_OUT1: Vec3 = Vec3 {
+    x: 0.,
+    y: 1.,
+    z: 0.,
+};
+pub const BOND_OUT2: Vec3 = Vec3 {
+    x: 0.,
+    y: 1.,
+    z: 1.,
+};
 
 // todo: Consider moving AminoAcidType here, and making some of these methods of it?
 
@@ -62,101 +80,83 @@ impl Arg {
 
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            // todo: These bond are temp
-            unsafe { CALPHA_N_BOND },
             unsafe { CALPHA_R_BOND },
+            BOND_OUT1,
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
             self.χ_1,
             c_alpha,
             n_pos,
-            unsafe { CALPHA_R_BOND }, // todo temp
-            LEN_CALPHA_CP,
+            BOND_OUT1,
+            LEN_SC,
         );
 
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
-            // todo: These bond are temp
-            unsafe { CALPHA_N_BOND },
-            unsafe { CALPHA_R_BOND },
+            BOND_IN,
+            BOND_OUT1,
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
             self.χ_2,
             c_beta,
             c_alpha,
-            unsafe { CALPHA_R_BOND }, // todo temp
-            LEN_CALPHA_CP,
+            BOND_OUT1,
+            LEN_SC,
         );
 
         let (c_delta, c_delta_orientation) = find_atom_placement(
             c_gamma_orientation,
-            // todo: These bond are temp
-            unsafe { CALPHA_N_BOND },
-            unsafe { CALPHA_R_BOND },
-            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
-            // (world space)
+            BOND_IN,
+            BOND_OUT1,
             self.χ_3,
             c_gamma,
             c_beta,
-            unsafe { CALPHA_R_BOND }, // todo temp
-            LEN_CALPHA_CP,
+            BOND_OUT1,
+            LEN_SC,
         );
 
         let (n_eps, n_eps_orientation) = find_atom_placement(
             c_delta_orientation,
-            // todo: These bond are temp
-            unsafe { CALPHA_N_BOND },
-            unsafe { CALPHA_R_BOND },
-            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
-            // (world space)
+            BOND_IN,
+            BOND_OUT1,
             self.χ_4,
             c_delta,
             c_gamma,
-            unsafe { CALPHA_R_BOND }, // todo temp
-            LEN_CALPHA_CP,
+            BOND_OUT1,
+            LEN_SC,
         );
 
         let (c_zeta, c_zeta_orientation) = find_atom_placement(
             n_eps_orientation,
-            // todo: These bond are temp
-            unsafe { CALPHA_N_BOND },
-            unsafe { CALPHA_R_BOND },
-            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
-            // (world space)
+            BOND_IN,
+            BOND_OUT1,
             self.χ_5,
             n_eps,
             c_delta,
-            unsafe { CALPHA_R_BOND }, // todo temp
-            LEN_CALPHA_CP,
+            BOND_OUT1,
+            LEN_SC,
         );
 
         let (n_eta1, _) = find_atom_placement(
             c_zeta_orientation,
-            // todo: These bond are temp
-            unsafe { CALPHA_N_BOND },
-            unsafe { CALPHA_R_BOND },
-            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
-            // (world space)
+            BOND_IN,
+            BOND_OUT1,
             0.,
             c_zeta,
             n_eps,
-            unsafe { CALPHA_R_BOND }, // todo temp
-            LEN_CALPHA_CP,
+            BOND_OUT1,
+            LEN_SC,
         );
 
         let (n_eta2, _) = find_atom_placement(
             c_zeta_orientation,
-            // todo: These bond are temp
-            unsafe { CALPHA_N_BOND },
-            unsafe { CALPHA_R_BOND },
-            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
-            // (world space)
+            BOND_IN,
+            BOND_OUT1,
             0.,
             c_zeta,
             n_eps,
-            // todo note: This change this bond to have this not at the same pos as n_eta1.
-            unsafe { CALPHA_R_BOND }, // todo temp
-            LEN_CALPHA_CP,
+            BOND_OUT2,
+            LEN_SC,
         );
 
         CoordsArg {

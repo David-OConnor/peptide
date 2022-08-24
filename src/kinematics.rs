@@ -110,10 +110,15 @@ pub fn init_local_bond_vecs() {
     let rotation_cp = Quaternion::from_axis_angle(normal_cp, BOND_ANGLE_CP_CALPHA_N);
     let rotation_n = Quaternion::from_axis_angle(normal_n, BOND_ANGLE_N_CALPHA_CP);
 
+    // todo: Experimenting with bonds to R.
+    // let rotation_n = Quaternion::from_axis_angle(normal_cα, BOND_ANGLE_CALPHA_R_CP);
+
     unsafe {
         CALPHA_N_BOND = rotation_cα.rotate_vec(CALPHA_CP_BOND);
         CP_CALPHA_BOND = rotation_cp.rotate_vec(CP_N_BOND);
         N_CP_BOND = rotation_n.rotate_vec(N_CALPHA_BOND);
+
+        CALPHA_R_BOND = rotation_cα.rotate_vec(CALPHA_R_BOND); // todo: QC etc.
 
         // println!("cp_n: [{}, {}, {}]", CP_N_BOND.x, CP_N_BOND.y, CP_N_BOND.z);
         // println!("cp_calpha: [{}, {}, {}]", CP_CALPHA_BOND.x, CP_CALPHA_BOND.y, CP_CALPHA_BOND.z);

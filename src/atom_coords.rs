@@ -44,6 +44,7 @@ fn add_atom(
 
 impl ProteinCoords {
     /// Creates coordinates from bond angles etc.
+    /// The order we add them matters in terms of rendering indices, including bond arrangement.
     pub fn from_descrip(descrip: &ProteinDescription) -> Self {
         // todo: Only update downstream atoms for a given rotation.
         let mut backbone = Vec::new();
@@ -52,17 +53,27 @@ impl ProteinCoords {
 
         // N-terminus nitrogen, at the *start* of our chain. This is our anchor atom, with 0 position,
         // and an identity-quaternion orientation.
-        let n_anchor = AtomCoords {
-            residue_id: id,
-            role: BackboneRole::N,
-            position: Vec3::new(0., 0., 0.),
-            orientation: Quaternion::new_identity(),
-        };
+        add_atom(
+            BackboneRole::N,
+            Vec3::new(0., 0., 0.),
+            Quaternion::new_identity(),
+            &mut backbone,
+            &mut id,
+        );
 
         // Store these values, to anchor each successive residue to the previous. We update them
         // after each residue.
-        let mut prev_n_posit = n_anchor.position;
-        let mut prev_n_or = n_anchor.orientation;
+        let mut prev_n_posit = backbone[id - 1].position;
+        let mut prev_n_or = backbone[id - 1].orientation;
+
+        // For anchoring the next residue
+        prev_n_posit = backbone[id - 1].position;
+        prev_n_or = backbone[id - 1].orientation;
+
+        // For anchoring the dihedral angle on the sidechain
+        // this_n_posit = backbone[id - 1].position;
+        // this_n_or = backbone[id - 1].orientation;
+
         // todo: This may need adjustment. to match physical reality.
         // this position affects the first dihedral angle.
         let mut prev_cp_posit = Vec3::new(1., 1., 0.).to_normalized();
@@ -71,12 +82,8 @@ impl ProteinCoords {
         let mut c_alpha_posit = Vec3::new_zero();
         let mut c_alpha_or = Quaternion::new_identity();
 
-        backbone.push(n_anchor);
-        id += 1;
-
         for res in &descrip.residues {
-            let bb_coords =
-                res.backbone_cart_coords(prev_n_posit, prev_n_or, prev_cp_posit);
+            let bb_coords = res.backbone_cart_coords(prev_n_posit, prev_n_or, prev_cp_posit);
 
             add_atom(
                 BackboneRole::Cα,
@@ -89,42 +96,14 @@ impl ProteinCoords {
             c_alpha_posit = backbone[id - 1].position;
             c_alpha_or = backbone[id - 1].orientation;
 
-            add_atom(
-                BackboneRole::Cp,
-                bb_coords.cp,
-                bb_coords.cp_orientation,
-                &mut backbone,
-                &mut id,
-            );
-
-            prev_cp_posit = backbone[id - 1].position;
-
-            add_atom(
-                BackboneRole::N,
-                bb_coords.n_next,
-                bb_coords.n_next_orientation,
-                &mut backbone,
-                &mut id,
-            );
-
-            prev_n_posit = backbone[id - 1].position;
-            prev_n_or = backbone[id - 1].orientation;
-
-            add_atom(
-                BackboneRole::O,
-                bb_coords.o,
-                bb_coords.o_orientation,
-                &mut backbone,
-                &mut id,
-            );
-
-            // todo: Consider moving this elsewhere, since it's verbose.
             // Add sidechains
             match &res.sidechain {
                 Sidechain::Arg(angles) => {
                     let sc_coords = angles.sidechain_cart_coords(
                         bb_coords.cα,
                         bb_coords.cα_orientation,
+                        // Todo: THis will be the wrong n, since you've alreayd
+                        // todoupdated it with the enxt n.
                         prev_n_posit,
                     );
 
@@ -180,6 +159,35 @@ impl ProteinCoords {
                 }
                 _ => (), // todo; rest are not implemented yet in `sidechains` module
             }
+
+            add_atom(
+                BackboneRole::Cp,
+                bb_coords.cp,
+                bb_coords.cp_orientation,
+                &mut backbone,
+                &mut id,
+            );
+
+            prev_cp_posit = backbone[id - 1].position;
+
+            add_atom(
+                BackboneRole::O,
+                bb_coords.o,
+                bb_coords.o_orientation,
+                &mut backbone,
+                &mut id,
+            );
+
+            add_atom(
+                BackboneRole::N,
+                bb_coords.n_next,
+                bb_coords.n_next_orientation,
+                &mut backbone,
+                &mut id,
+            );
+
+            prev_n_posit = backbone[id - 1].position;
+            prev_n_or = backbone[id - 1].orientation;
         }
 
         Self {
