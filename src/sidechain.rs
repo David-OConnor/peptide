@@ -558,6 +558,68 @@ impl Gln {
     }
 }
 
+impl Gly {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsGly {
+
+        CoordsGly {}
+    }
+}
+
+impl Pro {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsPro {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (c_gamma, c_gamma_orientation) = find_atom_placement(
+            c_beta_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            self.χ_2,
+            c_beta,
+            c_alpha,
+            BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (c_delta, _) = find_atom_placement(
+            c_beta_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            self.χ_2,
+            c_gamma,
+            c_beta,
+            BOND_OUT1,
+            LEN_SC,
+        );
+        CoordsPro {
+            c_beta,
+            c_gamma,
+            c_delta,
+
+            c_beta_orientation,
+            c_gamma_orientation,
+        }
+    }
+}
+
 impl Ile {
     pub fn sidechain_cart_coords(
         &self,
@@ -954,6 +1016,19 @@ pub struct CoordsTyr {
     pub c_eps1_orientation: Quaternion,
     pub c_eps2_orientation: Quaternion,
     pub c_zeta_orientation: Quaternion,
+}
+
+#[derive(Debug, Default)]
+pub struct CoordsGly {}
+
+#[derive(Debug, Default)]
+pub struct CoordsPro {
+    pub c_beta: Vec3,
+    pub c_gamma: Vec3,
+    pub c_delta: Vec3,
+
+    pub c_beta_orientation: Quaternion,
+    pub c_gamma_orientation: Quaternion,
 }
 
 // todo: Coord structs for the remaining AAs.

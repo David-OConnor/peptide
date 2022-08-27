@@ -345,6 +345,39 @@ impl ProteinCoords {
                         &mut id,
                     );
                 }
+                Sidechain::Gly(angles) => {} // No sidechain on Gly
+                Sidechain::Pro(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_gamma,
+                        sc_coords.c_gamma_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_delta,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                }
                 Sidechain::Ile(angles) => {
                     let sc_coords = angles.sidechain_cart_coords(
                         bb_coords.cα,
