@@ -301,7 +301,9 @@ pub struct Residue {
 
 impl Residue {
     pub fn new(ω: f64, φ: f64, ψ: f64, sidechain: Sidechain) -> Self {
-        Self { ω, φ, ψ, sidechain }
+        Self {
+            ω, φ, ψ, sidechain
+        }
     }
 
     /// Generate cartesian coordinates of points from diahedral angles and bond lengths. Starts with

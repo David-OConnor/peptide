@@ -398,7 +398,7 @@ impl Thr {
             LEN_SC,
         );
 
-        let (o_gamma1,_) = find_atom_placement(
+        let (o_gamma1, _) = find_atom_placement(
             c_beta_orientation,
             BOND_IN,
             BOND_OUT1,
@@ -448,7 +448,7 @@ impl Asn {
             LEN_SC,
         );
 
-        let (o_delta1,_) = find_atom_placement(
+        let (o_delta1, _) = find_atom_placement(
             c_gamma_orientation,
             BOND_IN,
             BOND_OUT1,
@@ -459,7 +459,7 @@ impl Asn {
             LEN_SC,
         );
 
-        let (n_delta2,_) = find_atom_placement(
+        let (n_delta2, _) = find_atom_placement(
             c_gamma_orientation,
             BOND_IN,
             BOND_OUT1,
@@ -522,7 +522,7 @@ impl Gln {
             LEN_SC,
         );
 
-        let (o_eps1,_) = find_atom_placement(
+        let (o_eps1, _) = find_atom_placement(
             c_delta_orientation,
             BOND_IN,
             BOND_OUT1,
@@ -533,7 +533,7 @@ impl Gln {
             LEN_SC,
         );
 
-        let (n_eps2,_) = find_atom_placement(
+        let (n_eps2, _) = find_atom_placement(
             c_delta_orientation,
             BOND_IN,
             BOND_OUT1,
@@ -544,7 +544,7 @@ impl Gln {
             LEN_SC,
         );
 
-        CoordsGln{
+        CoordsGln {
             c_beta,
             c_gamma,
             c_delta,
@@ -554,6 +554,69 @@ impl Gln {
             c_beta_orientation,
             c_gamma_orientation,
             c_delta_orientation,
+        }
+    }
+}
+
+impl Ile {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsIle {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (c_gamma1, _) = find_atom_placement(
+            c_beta_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            0.,
+            c_beta,
+            c_alpha,
+            BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (c_gamma2, c_gamma2_orientation) = find_atom_placement(
+            c_beta_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            self.χ_2,
+            c_beta,
+            c_alpha,
+            BOND_OUT2,
+            LEN_SC,
+        );
+
+        let (c_delta, _) = find_atom_placement(
+            c_gamma2_orientation,
+            BOND_IN,
+            BOND_OUT1,
+            0.,
+            c_gamma2,
+            c_beta,
+            BOND_OUT1,
+            LEN_SC,
+        );
+
+        CoordsIle {
+            c_beta,
+            c_gamma1,
+            c_gamma2,
+            c_delta, // off gamma2
+
+            c_beta_orientation,
+            c_gamma2_orientation,
         }
     }
 }
@@ -598,7 +661,7 @@ impl Leu {
             LEN_SC,
         );
 
-        let (c_delta2,_) = find_atom_placement(
+        let (c_delta2, _) = find_atom_placement(
             c_gamma_orientation,
             BOND_IN,
             BOND_OUT1,
@@ -733,69 +796,6 @@ impl Tyr {
             c_eps1_orientation,
             c_eps2_orientation,
             c_zeta_orientation,
-        }
-    }
-}
-
-impl Ile {
-    pub fn sidechain_cart_coords(
-        &self,
-        c_alpha: Vec3,
-        c_alpha_orientation: Quaternion,
-        n_pos: Vec3,
-    ) -> CoordsIle {
-        let (c_beta, c_beta_orientation) = find_atom_placement(
-            c_alpha_orientation,
-            BOND_IN,
-            BOND_OUT1,
-            self.χ_1,
-            c_alpha,
-            n_pos,
-            unsafe { CALPHA_R_BOND },
-            LEN_SC,
-        );
-
-        let (c_gamma1, _) = find_atom_placement(
-            c_beta_orientation,
-            BOND_IN,
-            BOND_OUT1,
-            0.,
-            c_beta,
-            c_alpha,
-            BOND_OUT1,
-            LEN_SC,
-        );
-
-        let (c_gamma2, c_gamma2_orientation) = find_atom_placement(
-            c_beta_orientation,
-            BOND_IN,
-            BOND_OUT1,
-            self.χ_2,
-            c_beta,
-            c_alpha,
-            BOND_OUT2,
-            LEN_SC,
-        );
-
-        let (c_delta, _) = find_atom_placement(
-            c_gamma2_orientation,
-            BOND_IN,
-            BOND_OUT1,
-            0.,
-            c_gamma2,
-            c_beta,
-            BOND_OUT1,
-            LEN_SC,
-        );
-
-        CoordsIle {
-            c_beta,
-            c_gamma1,
-            c_gamma2,
-            c_delta, // off gamma2
-
-            c_beta_orientation,
-            c_gamma2_orientation,
         }
     }
 }
@@ -955,7 +955,6 @@ pub struct CoordsTyr {
     pub c_eps2_orientation: Quaternion,
     pub c_zeta_orientation: Quaternion,
 }
-
 
 // todo: Coord structs for the remaining AAs.
 

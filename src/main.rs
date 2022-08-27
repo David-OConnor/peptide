@@ -21,14 +21,13 @@ mod lin_alg;
 mod atom_coords;
 mod chem_definitions;
 mod kinematics;
+mod proteins;
 mod render;
 mod render_bevy;
 mod render_wgpu;
 mod sidechain;
-mod proteins;
 
 use atom_coords::ProteinCoords;
-use chem_definitions::AminoAcidType;
 use kinematics::{ProteinDescription, Residue};
 use lin_alg::{Quaternion, Vec3};
 use render::Camera;
@@ -90,17 +89,20 @@ fn init_protein() -> ProteinDescription {
     for i in 0..4 {
         residues.push(
             // ω, φ, ψ
-            Residue::new(1. / 2. * TAU, φ_sheet, ψ_sheet,
-                         Sidechain::Arg(sidechain::Arg {
-                             χ_1: 1. / 2. * TAU,
-                             χ_2: 1. / 2. * TAU,
-                             χ_3: 1. / 2. * TAU,
-                             χ_4: 1. / 2. * TAU,
-                             χ_5: 1. / 2. * TAU,
-                         }))
+            Residue::new(
+                1. / 2. * TAU,
+                φ_sheet,
+                ψ_sheet,
+                Sidechain::Arg(sidechain::Arg {
+                    χ_1: 1. / 2. * TAU,
+                    χ_2: 1. / 2. * TAU,
+                    χ_3: 1. / 2. * TAU,
+                    χ_4: 1. / 2. * TAU,
+                    χ_5: 1. / 2. * TAU,
+                }),
+            ),
         );
     }
-
 
     proteins::make_trp_cage()
 }
@@ -110,5 +112,3 @@ fn main() {
     render_bevy::run();
     // render_wgpu::run();
 }
-
-

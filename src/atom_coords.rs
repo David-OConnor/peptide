@@ -257,6 +257,246 @@ impl ProteinCoords {
                         &mut id,
                     );
                 }
+                Sidechain::Asn(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_gamma,
+                        sc_coords.c_gamma_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::OSidechain,
+                        sc_coords.o_delta1,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::NSidechain,
+                        sc_coords.n_delta2,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        2,
+                        &mut id,
+                    );
+                }
+                Sidechain::Gln(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_gamma,
+                        sc_coords.c_gamma_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_delta,
+                        sc_coords.c_delta_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::OSidechain,
+                        sc_coords.o_eps1,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::NSidechain,
+                        sc_coords.n_eps2,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        2,
+                        &mut id,
+                    );
+                }
+                Sidechain::Ile(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_gamma1,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_gamma2,
+                        sc_coords.c_gamma2_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_delta,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        2,
+                        &mut id,
+                    );
+                }
+                Sidechain::Leu(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_gamma,
+                        sc_coords.c_gamma_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_delta1,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_delta2,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        2,
+                        &mut id,
+                    );
+                }
+                Sidechain::Tyr(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_gamma,
+                        sc_coords.c_gamma_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_delta1,
+                        sc_coords.c_delta1_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_delta2,
+                        sc_coords.c_delta2_orientation,
+                        &mut backbone,
+                        2,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_eps1,
+                        sc_coords.c_eps1_orientation,
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_eps2,
+                        sc_coords.c_eps2_orientation,
+                        &mut backbone,
+                        2,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_zeta,
+                        sc_coords.c_zeta_orientation,
+                        &mut backbone,
+                        2,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::OSidechain,
+                        sc_coords.o_eta,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        2,
+                        &mut id,
+                    );
+                }
                 _ => (), // todo; rest are not implemented yet in `sidechains` module
             }
 
