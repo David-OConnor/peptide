@@ -365,7 +365,7 @@ fn render_bonds(
             }
             BackboneRole::CSidechain | BackboneRole::OSidechain | BackboneRole::NSidechain => {
                 // This assumes the prev atom added befroe the sidechain was Cα.
-                bond_render.atom_id - 1
+                bond_render.atom_id - atom.sidechain_bond_step
             }
             BackboneRole::Cp => {
                 cp_id = bond_render.atom_id;

@@ -143,7 +143,8 @@ pub fn init_local_bond_vecs() {
 
             CP_O_BOND = r2.rotate_vec(CP_CALPHA_BOND);
 
-            // todo: Quick/sloppy. Also, exits on satisfying CP_O_bond; not this.
+            // todo: Quick/sloppy. Also, exits on satisfying CP_O_bond; not this. For now,
+            // todo appears to produce the correct result.
             CALPHA_R_BOND = r2.rotate_vec(CALPHA_N_BOND);
 
             // let angle_calpha_o = (CP_CALPHA_BOND.dot(CP_O_BOND)).acos();
@@ -299,6 +300,10 @@ pub struct Residue {
 }
 
 impl Residue {
+    pub fn new(ω: f64, φ: f64, ψ: f64, sidechain: Sidechain) -> Self {
+        Self { ω, φ, ψ, sidechain }
+    }
+
     /// Generate cartesian coordinates of points from diahedral angles and bond lengths. Starts with
     /// N, and ends with C'. This is solving the *forward kinematics problem*.
     /// Accepts position, and orientation of the N atom that starts this segment.

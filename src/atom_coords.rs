@@ -15,6 +15,9 @@ pub struct AtomCoords {
     pub role: BackboneRole,
     pub position: Vec3,
     pub orientation: Quaternion,
+    // Normally 1. Set this to 2 to go back 2 in the sidechain to find its partner,
+    // eg ASPs second O.
+    pub sidechain_bond_step: usize,
 }
 
 #[derive(Debug)]
@@ -30,6 +33,7 @@ fn add_atom(
     position: Vec3,
     orientation: Quaternion,
     backbone: &mut Vec<AtomCoords>,
+    step: usize,
     id: &mut usize,
 ) {
     backbone.push(AtomCoords {
@@ -37,6 +41,7 @@ fn add_atom(
         role,
         position,
         orientation,
+        sidechain_bond_step: step,
     });
 
     *id += 1;
@@ -58,6 +63,7 @@ impl ProteinCoords {
             Vec3::new(0., 0., 0.),
             Quaternion::new_identity(),
             &mut backbone,
+            1,
             &mut id,
         );
 
@@ -65,14 +71,6 @@ impl ProteinCoords {
         // after each residue.
         let mut prev_n_posit = backbone[id - 1].position;
         let mut prev_n_or = backbone[id - 1].orientation;
-
-        // For anchoring the next residue
-        prev_n_posit = backbone[id - 1].position;
-        prev_n_or = backbone[id - 1].orientation;
-
-        // For anchoring the dihedral angle on the sidechain
-        // this_n_posit = backbone[id - 1].position;
-        // this_n_or = backbone[id - 1].orientation;
 
         // todo: This may need adjustment. to match physical reality.
         // this position affects the first dihedral angle.
@@ -90,6 +88,7 @@ impl ProteinCoords {
                 bb_coords.cα,
                 bb_coords.cα_orientation,
                 &mut backbone,
+                1,
                 &mut id,
             );
 
@@ -110,6 +109,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
+                        1,
                         &mut id,
                     );
                     add_atom(
@@ -117,6 +117,7 @@ impl ProteinCoords {
                         sc_coords.c_gamma,
                         sc_coords.c_gamma_orientation,
                         &mut backbone,
+                        1,
                         &mut id,
                     );
                     add_atom(
@@ -124,6 +125,7 @@ impl ProteinCoords {
                         sc_coords.c_delta,
                         sc_coords.c_delta_orientation,
                         &mut backbone,
+                        1,
                         &mut id,
                     );
                     add_atom(
@@ -131,6 +133,7 @@ impl ProteinCoords {
                         sc_coords.n_eps,
                         sc_coords.n_eps_orientation,
                         &mut backbone,
+                        1,
                         &mut id,
                     );
                     add_atom(
@@ -138,6 +141,7 @@ impl ProteinCoords {
                         sc_coords.c_zeta,
                         sc_coords.c_zeta_orientation,
                         &mut backbone,
+                        1,
                         &mut id,
                     );
                     add_atom(
@@ -145,6 +149,7 @@ impl ProteinCoords {
                         sc_coords.n_eta1,
                         Quaternion::new_identity(),
                         &mut backbone,
+                        1,
                         &mut id,
                     );
                     add_atom(
@@ -152,6 +157,7 @@ impl ProteinCoords {
                         sc_coords.n_eta2,
                         Quaternion::new_identity(),
                         &mut backbone,
+                        2,
                         &mut id,
                     );
                 }
@@ -159,8 +165,6 @@ impl ProteinCoords {
                     let sc_coords = angles.sidechain_cart_coords(
                         bb_coords.cα,
                         bb_coords.cα_orientation,
-                        // Todo: THis will be the wrong n, since you've alreayd
-                        // todoupdated it with the nxt n.
                         prev_n_posit,
                     );
 
@@ -169,6 +173,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
+                        1,
                         &mut id,
                     );
                     add_atom(
@@ -176,6 +181,7 @@ impl ProteinCoords {
                         sc_coords.c_gamma,
                         sc_coords.c_gamma_orientation,
                         &mut backbone,
+                        1,
                         &mut id,
                     );
                     add_atom(
@@ -183,6 +189,7 @@ impl ProteinCoords {
                         sc_coords.o_delta1,
                         Quaternion::new_identity(),
                         &mut backbone,
+                        1,
                         &mut id,
                     );
                     add_atom(
@@ -190,6 +197,7 @@ impl ProteinCoords {
                         sc_coords.o_delta2,
                         Quaternion::new_identity(),
                         &mut backbone,
+                        2,
                         &mut id,
                     );
                 }
@@ -197,8 +205,6 @@ impl ProteinCoords {
                     let sc_coords = angles.sidechain_cart_coords(
                         bb_coords.cα,
                         bb_coords.cα_orientation,
-                        // Todo: THis will be the wrong n, since you've alreayd
-                        // todoupdated it with the nxt n.
                         prev_n_posit,
                     );
 
@@ -207,13 +213,47 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::OSidechain,
+                        sc_coords.o_gamma,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                }
+                Sidechain::Thr(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        1,
                         &mut id,
                     );
                     add_atom(
                         BackboneRole::CSidechain,
-                        sc_coords.o_gamma,
+                        sc_coords.c_gamma2,
                         Quaternion::new_identity(),
                         &mut backbone,
+                        1,
+                        &mut id,
+                    );
+                    add_atom(
+                        BackboneRole::OSidechain,
+                        sc_coords.o_gamma1,
+                        Quaternion::new_identity(),
+                        &mut backbone,
+                        2,
                         &mut id,
                     );
                 }
@@ -225,6 +265,7 @@ impl ProteinCoords {
                 bb_coords.cp,
                 bb_coords.cp_orientation,
                 &mut backbone,
+                1,
                 &mut id,
             );
 
@@ -235,6 +276,7 @@ impl ProteinCoords {
                 bb_coords.o,
                 bb_coords.o_orientation,
                 &mut backbone,
+                1,
                 &mut id,
             );
 
@@ -243,12 +285,17 @@ impl ProteinCoords {
                 bb_coords.n_next,
                 bb_coords.n_next_orientation,
                 &mut backbone,
+                1,
                 &mut id,
             );
 
             prev_n_posit = backbone[id - 1].position;
             prev_n_or = backbone[id - 1].orientation;
         }
+        //
+        // for atom in &backbone {
+        //     println!("ATOM: {:?}\n", atom);
+        // }
 
         Self {
             atoms_backbone: backbone,

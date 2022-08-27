@@ -12,7 +12,7 @@ pub const CALPHA_COLOR: (f32, f32, f32) = (0.7, 0.86, 0.66);
 pub const CP_COLOR: (f32, f32, f32) = (0.86, 0.82, 0.68);
 pub const N_COLOR: (f32, f32, f32) = (0., 0., 1.);
 pub const O_COLOR: (f32, f32, f32) = (1., 0., 0.);
-pub const C_SIDECHAIN_COLOR: (f32, f32, f32) = (0.3, 0.3, 0.3);
+pub const C_SIDECHAIN_COLOR: (f32, f32, f32) = (0.5, 0.5, 0.5);
 
 pub const LIGHT_INTENSITY: f32 = 1500.0;
 
