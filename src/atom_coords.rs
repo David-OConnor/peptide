@@ -406,7 +406,7 @@ impl ProteinCoords {
                         sc_coords.c_gamma2,
                         sc_coords.c_gamma2_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         &mut id,
                     );
                     add_atom(
@@ -414,7 +414,7 @@ impl ProteinCoords {
                         sc_coords.c_delta,
                         Quaternion::new_identity(),
                         &mut backbone,
-                        2,
+                        1,
                         &mut id,
                     );
                 }
@@ -518,7 +518,7 @@ impl ProteinCoords {
                         sc_coords.c_zeta,
                         sc_coords.c_zeta_orientation,
                         &mut backbone,
-                        2,
+                        1,
                         &mut id,
                     );
                     add_atom(
@@ -526,7 +526,7 @@ impl ProteinCoords {
                         sc_coords.o_eta,
                         Quaternion::new_identity(),
                         &mut backbone,
-                        2,
+                        1,
                         &mut id,
                     );
                 }

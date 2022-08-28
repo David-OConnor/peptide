@@ -7,7 +7,7 @@ use crate::{
     sidechain::Sidechain,
 };
 
-///https://www.rcsb.org/sequence/1L2Y
+/// https://www.rcsb.org/sequence/1L2Y
 pub fn make_trp_cage() -> ProteinDescription {
     let dihed = 1. / 2. * TAU; // todo temp
 

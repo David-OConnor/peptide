@@ -512,10 +512,10 @@ impl Gln {
         );
 
         let (c_delta, c_delta_orientation) = find_atom_placement(
-            c_beta_orientation,
+            c_gamma_orientation,
             BOND_IN,
             BOND_OUT1,
-            self.χ_2,
+            self.χ_3,
             c_gamma,
             c_beta,
             BOND_OUT1,
@@ -527,8 +527,8 @@ impl Gln {
             BOND_IN,
             BOND_OUT1,
             0.,
+            c_delta,
             c_gamma,
-            c_beta,
             BOND_OUT1,
             LEN_SC,
         );
@@ -538,8 +538,8 @@ impl Gln {
             BOND_IN,
             BOND_OUT1,
             0.,
+            c_delta,
             c_gamma,
-            c_beta,
             BOND_OUT2,
             LEN_SC,
         );
@@ -565,7 +565,6 @@ impl Gly {
         c_alpha_orientation: Quaternion,
         n_pos: Vec3,
     ) -> CoordsGly {
-
         CoordsGly {}
     }
 }
@@ -603,7 +602,7 @@ impl Pro {
             c_beta_orientation,
             BOND_IN,
             BOND_OUT1,
-            self.χ_2,
+            self.χ_3,
             c_gamma,
             c_beta,
             BOND_OUT1,
@@ -815,17 +814,17 @@ impl Tyr {
             0., // todo
             c_delta2,
             c_gamma,
-            BOND_OUT2,
+            BOND_OUT1,
             LEN_SC,
         );
 
         let (c_zeta, c_zeta_orientation) = find_atom_placement(
-            c_eps1_orientation, // todo: Which one?
+            c_eps2_orientation,
             BOND_IN,
             BOND_OUT1,
             0., // todo
-            c_eps1,
-            c_delta1,
+            c_eps2,
+            c_delta2,
             BOND_OUT1,
             LEN_SC,
         );
@@ -836,7 +835,7 @@ impl Tyr {
             BOND_OUT1,
             0.,
             c_zeta,
-            c_eps1,
+            c_eps2,
             BOND_OUT1,
             LEN_SC,
         );
@@ -1110,7 +1109,11 @@ pub struct Sec {
 pub struct Gly {}
 
 #[derive(Debug, Default)]
-pub struct Pro {}
+pub struct Pro {
+    pub χ_1: f64,
+    pub χ_2: f64,
+    pub χ_3: f64,
+}
 
 #[derive(Debug, Default)]
 pub struct Ala {}

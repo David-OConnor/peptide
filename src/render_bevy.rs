@@ -208,6 +208,16 @@ fn setup(
         transform: Transform::from_xyz(-4.0, -8.0, -4.0),
         ..default()
     });
+    commands.spawn_bundle(PointLightBundle {
+        point_light: PointLight {
+            intensity: LIGHT_INTENSITY,
+            shadows_enabled: true,
+            ..default()
+        },
+
+        transform: Transform::from_xyz(-8.0, -16.0, -8.0),
+        ..default()
+    });
 
     let mut cam_transform = Transform::identity();
     cam_transform.translation = state.cam.position.to_bevy();
@@ -232,7 +242,7 @@ fn change_dihedral_angle(keyboard_input: Res<Input<KeyCode>>, mut state: ResMut<
         if state.active_residue != state.protein_descrip.residues.len() - 1 {
             state.active_residue += 1;
         }
-    } else if keyboard_input.pressed(KeyCode::Down) && state.active_residue != 0 {
+    } else if keyboard_input.pressed(KeyCode::Down) && state.active_residue != 1 {
         state.active_residue -= 1;
     }
 
@@ -242,10 +252,7 @@ fn change_dihedral_angle(keyboard_input: Res<Input<KeyCode>>, mut state: ResMut<
 
     let mut changed = false;
 
-    if keyboard_input.pressed(KeyCode::Key0) && max_i >= 1 {
-        state.active_residue = 0;
-        changed = true;
-    } else if keyboard_input.pressed(KeyCode::Key1) && max_i >= 2 {
+    if keyboard_input.pressed(KeyCode::Key1) && max_i >= 2 {
         state.active_residue = 1;
         changed = true;
     } else if keyboard_input.pressed(KeyCode::Key2) && max_i >= 3 {
@@ -274,27 +281,28 @@ fn change_dihedral_angle(keyboard_input: Res<Input<KeyCode>>, mut state: ResMut<
         changed = true;
     }
 
-    let ar = state.active_residue; // code shortener.
+    // We count starting at 1, per chem conventions.
+    let ar_i = state.active_residue - 1;
 
     if keyboard_input.pressed(KeyCode::T) {
-        state.protein_descrip.residues[ar].φ += rotation_amt;
+        state.protein_descrip.residues[ar_i].φ += rotation_amt;
         changed = true;
     } else if keyboard_input.pressed(KeyCode::G) {
-        state.protein_descrip.residues[ar].φ -= rotation_amt;
+        state.protein_descrip.residues[ar_i].φ -= rotation_amt;
         changed = true;
     }
     if keyboard_input.pressed(KeyCode::Y) {
-        state.protein_descrip.residues[ar].ψ += rotation_amt;
+        state.protein_descrip.residues[ar_i].ψ += rotation_amt;
         changed = true;
     } else if keyboard_input.pressed(KeyCode::H) {
-        state.protein_descrip.residues[ar].ψ -= rotation_amt;
+        state.protein_descrip.residues[ar_i].ψ -= rotation_amt;
         changed = true;
     }
     if keyboard_input.pressed(KeyCode::U) {
-        state.protein_descrip.residues[ar].ω += rotation_amt;
+        state.protein_descrip.residues[ar_i].ω += rotation_amt;
         changed = true;
     } else if keyboard_input.pressed(KeyCode::J) {
-        state.protein_descrip.residues[ar].ω -= rotation_amt;
+        state.protein_descrip.residues[ar_i].ω -= rotation_amt;
         changed = true;
     }
 

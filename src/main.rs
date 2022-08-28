@@ -52,7 +52,7 @@ struct State {
     pub protein_descrip: ProteinDescription,
     /// Stored coordinates, calculated in `coord_gen`.
     pub protein_coords: ProteinCoords,
-    /// Residue id that's selected for rotation.
+    /// Residue id that's selected for rotation. Starts at 1.
     pub active_residue: usize,
     /// Camera position and orientation
     pub cam: Camera,
@@ -68,7 +68,7 @@ impl Default for State {
             protein_coords: ProteinCoords {
                 atoms_backbone: Vec::new(),
             },
-            active_residue: 0,
+            active_residue: 1,
             cam: Camera {
                 position: Vec3::new(0., 0., 7.),
                 orientation: Quaternion::new_identity(),
