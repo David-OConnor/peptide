@@ -48,7 +48,7 @@ const INIT_BOND_VEC: Vec3 = Vec3 {
 
 // We use `static mut` here instead of constant, since we need non-const fns (like sin and cos, and
 // the linear algebra operations that operate on them) in their construction.
-const CALPHA_CP_BOND: Vec3 = INIT_BOND_VEC;
+pub const CALPHA_CP_BOND: Vec3 = INIT_BOND_VEC;
 
 pub static mut CALPHA_N_BOND: Vec3 = Vec3 {
     x: 0.,
@@ -118,6 +118,8 @@ pub fn init_local_bond_vecs() {
         CP_CALPHA_BOND = rotation_cp.rotate_vec(CP_N_BOND);
         N_CP_BOND = rotation_n.rotate_vec(N_CALPHA_BOND);
 
+        sidechain::BOND_OUT2 = CALPHA_CP_BOND;
+        sidechain::BOND_IN = CALPHA_N_BOND;
         // CALPHA_R_BOND = rotation_cα.rotate_vec(CALPHA_R_BOND); // todo: QC etc.
 
         // println!("cp_n: [{}, {}, {}]", CP_N_BOND.x, CP_N_BOND.y, CP_N_BOND.z);
@@ -151,10 +153,13 @@ pub fn init_local_bond_vecs() {
             // let angle_calpha_n = (CP_CALPHA_BOND.dot(CP_N_BOND)).acos();
             let angle_n_o = (CP_N_BOND.dot(CP_O_BOND)).acos();
 
+            sidechain::BOND_OUT1 = CALPHA_R_BOND;
+
             // Of note, our first value (axis = 0) seems to be the answer here?!
             if (angle_n_o - BOND_ANGLE_CP_O_N).abs() < EPS {
                 break;
             }
+
             //
             // println!("cp_o: [{}, {}, {}]", CP_O_BOND.x, CP_O_BOND.y, CP_O_BOND.z);
             // // println!("angle calpha O: {angle_calpha_o}");

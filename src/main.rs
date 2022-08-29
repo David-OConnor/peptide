@@ -109,6 +109,6 @@ fn init_protein() -> ProteinDescription {
 
 fn main() {
     kinematics::init_local_bond_vecs();
-    // render_bevy::run();
-    render_wgpu::run();
+    render_bevy::run();
+    // render_wgpu::run();
 }
