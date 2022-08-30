@@ -46,7 +46,7 @@ pub const LEN_SC: f64 = 1.53;
 
 // todo: temp
 // These are updated in `init_local_bond_vecs`.
-pub static mut BOND_IN: Vec3 = Vec3 {
+pub static mut BOND_TO_PREV: Vec3 = Vec3 {
     x: 0.,
     y: 0.,
     z: 0.,
@@ -61,8 +61,6 @@ pub static mut BOND_OUT2: Vec3 = Vec3 {
     y: 0.,
     z: 0.,
 };
-
-// todo: Consider moving AminoAcidType here, and making some of these methods of it?
 
 #[derive(Debug)]
 pub enum Sidechain {
@@ -89,6 +87,77 @@ pub enum Sidechain {
     Trp(Trp),
 }
 
+impl Sidechain {
+    pub fn add_to_χ1(&mut self, val: f64) {
+        match self {
+            Self::Arg(aa) => aa.χ_1 += val,
+            Self::His(aa) => aa.χ_1 += val,
+            Self::Lys(aa) => aa.χ_1 += val,
+            Self::Asp(aa) => aa.χ_1 += val,
+            Self::Glu(aa) => aa.χ_1 += val,
+            Self::Ser(aa) => aa.χ_1 += val,
+            Self::Thr(aa) => aa.χ_1 += val,
+            Self::Asn(aa) => aa.χ_1 += val,
+            Self::Gln(aa) => aa.χ_1 += val,
+            Self::Cys(aa) => aa.χ_1 += val,
+            Self::Sec(aa) => aa.χ_1 += val,
+            Self::Pro(aa) => aa.χ_1 += val,
+            Self::Val(aa) => aa.χ_1 += val,
+            Self::Ile(aa) => aa.χ_1 += val,
+            Self::Leu(aa) => aa.χ_1 += val,
+            Self::Met(aa) => aa.χ_1 += val,
+            Self::Phe(aa) => aa.χ_1 += val,
+            Self::Tyr(aa) => aa.χ_1 += val,
+            Self::Trp(aa) => aa.χ_1 += val,
+            _ => (),
+        }
+    }
+
+    pub fn add_to_χ2(&mut self, val: f64) {
+        match self {
+            Self::Arg(aa) => aa.χ_2 += val,
+            Self::His(aa) => aa.χ_2 += val,
+            Self::Lys(aa) => aa.χ_2 += val,
+            Self::Asp(aa) => aa.χ_2 += val,
+            Self::Glu(aa) => aa.χ_2 += val,
+            Self::Asn(aa) => aa.χ_2 += val,
+            Self::Gln(aa) => aa.χ_2 += val,
+            Self::Pro(aa) => aa.χ_2 += val,
+            Self::Ile(aa) => aa.χ_2 += val,
+            Self::Leu(aa) => aa.χ_2 += val,
+            Self::Met(aa) => aa.χ_2 += val,
+            Self::Phe(aa) => aa.χ_2 += val,
+            Self::Tyr(aa) => aa.χ_2 += val,
+            Self::Trp(aa) => aa.χ_2 += val,
+            _ => (),
+        }
+    }
+    pub fn add_to_χ3(&mut self, val: f64) {
+        match self {
+            Self::Arg(aa) => aa.χ_3 += val,
+            Self::Lys(aa) => aa.χ_3 += val,
+            Self::Glu(aa) => aa.χ_3 += val,
+            Self::Gln(aa) => aa.χ_3 += val,
+            Self::Pro(aa) => aa.χ_3 += val,
+            Self::Met(aa) => aa.χ_3 += val,
+            _ => (),
+        }
+    }
+    pub fn add_to_χ4(&mut self, val: f64) {
+        match self {
+            Self::Arg(aa) => aa.χ_4 += val,
+            Self::Lys(aa) => aa.χ_4 += val,
+            _ => (),
+        }
+    }
+    pub fn add_to_χ5(&mut self, val: f64) {
+        match self {
+            Self::Arg(aa) => aa.χ_5 += val,
+            _ => (),
+        }
+    }
+}
+
 impl Arg {
     // todo: Equiv from `backbone_cart_coords`.
     pub fn sidechain_cart_coords(
@@ -104,7 +173,7 @@ impl Arg {
 
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
@@ -117,7 +186,7 @@ impl Arg {
 
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
@@ -130,7 +199,7 @@ impl Arg {
 
         let (c_delta, c_delta_orientation) = find_atom_placement(
             c_gamma_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_3,
             c_gamma,
@@ -141,7 +210,7 @@ impl Arg {
 
         let (n_eps, n_eps_orientation) = find_atom_placement(
             c_delta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_4,
             c_delta,
@@ -152,7 +221,7 @@ impl Arg {
 
         let (c_zeta, c_zeta_orientation) = find_atom_placement(
             n_eps_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_5,
             n_eps,
@@ -163,7 +232,7 @@ impl Arg {
 
         let (n_eta1, _) = find_atom_placement(
             c_zeta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_zeta,
@@ -174,7 +243,7 @@ impl Arg {
 
         let (n_eta2, _) = find_atom_placement(
             c_zeta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_zeta,
@@ -216,7 +285,7 @@ impl Lys {
 
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
@@ -229,7 +298,7 @@ impl Lys {
 
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
@@ -242,7 +311,7 @@ impl Lys {
 
         let (c_delta, c_delta_orientation) = find_atom_placement(
             c_gamma_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_3,
             c_gamma,
@@ -253,7 +322,7 @@ impl Lys {
 
         let (c_eps, c_eps_orientation) = find_atom_placement(
             c_delta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_4,
             c_delta,
@@ -264,7 +333,7 @@ impl Lys {
 
         let (n_zeta, _) = find_atom_placement(
             c_eps_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_eps,
@@ -297,7 +366,7 @@ impl Asp {
     ) -> CoordsAsp {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
@@ -310,7 +379,7 @@ impl Asp {
 
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
@@ -323,7 +392,7 @@ impl Asp {
 
         let (o_delta1, _) = find_atom_placement(
             c_gamma_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_gamma,
@@ -334,7 +403,7 @@ impl Asp {
 
         let (o_delta2, _) = find_atom_placement(
             c_gamma_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_gamma,
@@ -364,7 +433,7 @@ impl Ser {
     ) -> CoordsSer {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_1,
             c_alpha,
@@ -375,7 +444,7 @@ impl Ser {
 
         let (o_gamma, _) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_beta,
@@ -402,7 +471,7 @@ impl Thr {
     ) -> CoordsThr {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_1,
             c_alpha,
@@ -413,7 +482,7 @@ impl Thr {
 
         let (c_gamma2, _) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_beta,
@@ -424,7 +493,7 @@ impl Thr {
 
         let (o_gamma1, _) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_beta,
@@ -452,7 +521,7 @@ impl Asn {
     ) -> CoordsAsn {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_1,
             c_alpha,
@@ -463,7 +532,7 @@ impl Asn {
 
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_2,
             c_beta,
@@ -474,7 +543,7 @@ impl Asn {
 
         let (o_delta1, _) = find_atom_placement(
             c_gamma_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_gamma,
@@ -485,7 +554,7 @@ impl Asn {
 
         let (n_delta2, _) = find_atom_placement(
             c_gamma_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_gamma,
@@ -515,7 +584,7 @@ impl Gln {
     ) -> CoordsGln {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_1,
             c_alpha,
@@ -526,7 +595,7 @@ impl Gln {
 
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_2,
             c_beta,
@@ -537,7 +606,7 @@ impl Gln {
 
         let (c_delta, c_delta_orientation) = find_atom_placement(
             c_gamma_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_3,
             c_gamma,
@@ -548,7 +617,7 @@ impl Gln {
 
         let (o_eps1, _) = find_atom_placement(
             c_delta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_delta,
@@ -559,7 +628,7 @@ impl Gln {
 
         let (n_eps2, _) = find_atom_placement(
             c_delta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_delta,
@@ -602,7 +671,7 @@ impl Pro {
     ) -> CoordsPro {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_1,
             c_alpha,
@@ -613,7 +682,7 @@ impl Pro {
 
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_2,
             c_beta,
@@ -624,7 +693,7 @@ impl Pro {
 
         let (c_delta, _) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_3,
             c_gamma,
@@ -652,7 +721,7 @@ impl Ile {
     ) -> CoordsIle {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_1,
             c_alpha,
@@ -663,7 +732,7 @@ impl Ile {
 
         let (c_gamma1, _) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_beta,
@@ -674,8 +743,8 @@ impl Ile {
 
         let (c_gamma2, c_gamma2_orientation) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
-            unsafe { BOND_OUT1 },
+            unsafe { BOND_TO_PREV },
+            unsafe { BOND_OUT2 }, // todo?
             self.χ_2,
             c_beta,
             c_alpha,
@@ -685,7 +754,7 @@ impl Ile {
 
         let (c_delta, _) = find_atom_placement(
             c_gamma2_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_gamma2,
@@ -715,7 +784,7 @@ impl Leu {
     ) -> CoordsLeu {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_1,
             c_alpha,
@@ -726,7 +795,7 @@ impl Leu {
 
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_2,
             c_beta,
@@ -737,7 +806,7 @@ impl Leu {
 
         let (c_delta1, _) = find_atom_placement(
             c_gamma_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_gamma,
@@ -748,7 +817,7 @@ impl Leu {
 
         let (c_delta2, _) = find_atom_placement(
             c_gamma_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_gamma,
@@ -778,7 +847,7 @@ impl Tyr {
     ) -> CoordsTyr {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_1,
             c_alpha,
@@ -789,7 +858,7 @@ impl Tyr {
 
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             self.χ_2,
             c_beta,
@@ -800,7 +869,7 @@ impl Tyr {
 
         let (c_delta1, c_delta1_orientation) = find_atom_placement(
             c_gamma_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0., // todo
             c_gamma,
@@ -811,7 +880,7 @@ impl Tyr {
 
         let (c_delta2, c_delta2_orientation) = find_atom_placement(
             c_gamma_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0., // todo
             c_gamma,
@@ -822,7 +891,7 @@ impl Tyr {
 
         let (c_eps1, c_eps1_orientation) = find_atom_placement(
             c_delta1_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0., // todo
             c_delta1,
@@ -833,7 +902,7 @@ impl Tyr {
 
         let (c_eps2, c_eps2_orientation) = find_atom_placement(
             c_delta2_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0., // todo
             c_delta2,
@@ -844,7 +913,7 @@ impl Tyr {
 
         let (c_zeta, c_zeta_orientation) = find_atom_placement(
             c_eps2_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0., // todo
             c_eps2,
@@ -855,7 +924,7 @@ impl Tyr {
 
         let (o_eta, _) = find_atom_placement(
             c_zeta_orientation,
-            unsafe { BOND_IN },
+            unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             0.,
             c_zeta,

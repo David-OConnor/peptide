@@ -119,7 +119,7 @@ pub fn init_local_bond_vecs() {
         N_CP_BOND = rotation_n.rotate_vec(N_CALPHA_BOND);
 
         sidechain::BOND_OUT2 = CALPHA_CP_BOND;
-        sidechain::BOND_IN = CALPHA_N_BOND;
+        sidechain::BOND_TO_PREV = CALPHA_N_BOND;
         // CALPHA_R_BOND = rotation_cα.rotate_vec(CALPHA_R_BOND); // todo: QC etc.
 
         // println!("cp_n: [{}, {}, {}]", CP_N_BOND.x, CP_N_BOND.y, CP_N_BOND.z);

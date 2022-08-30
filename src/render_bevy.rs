@@ -234,7 +234,7 @@ fn setup(
 fn change_dihedral_angle(keyboard_input: Res<Input<KeyCode>>, mut state: ResMut<State>) {
     // Update dihedral angles.
     // todo: Move keyboard logic elsewhere.
-    let rotation_amt = ROTATION_SPEED * DT;
+    let mut rotation_amt = ROTATION_SPEED * DT;
 
     // Change active residue.
     // todo: You need to debounce this for it to work
@@ -251,6 +251,10 @@ fn change_dihedral_angle(keyboard_input: Res<Input<KeyCode>>, mut state: ResMut<
     let max_i = state.protein_descrip.residues.len(); // Code shortener
 
     let mut changed = false;
+
+    if keyboard_input.pressed(KeyCode::LShift) {
+        rotation_amt *= RUN_FACTOR;
+    }
 
     if keyboard_input.pressed(KeyCode::Key1) && max_i >= 2 {
         state.active_residue = 1;
@@ -303,6 +307,43 @@ fn change_dihedral_angle(keyboard_input: Res<Input<KeyCode>>, mut state: ResMut<
         changed = true;
     } else if keyboard_input.pressed(KeyCode::J) {
         state.protein_descrip.residues[ar_i].ω -= rotation_amt;
+        changed = true;
+    }
+
+    // Sidechain dihedral angles
+    if keyboard_input.pressed(KeyCode::I) {
+        state.protein_descrip.residues[ar_i]
+            .sidechain
+            .add_to_χ1(rotation_amt);
+        changed = true;
+    } else if keyboard_input.pressed(KeyCode::K) {
+        state.protein_descrip.residues[ar_i]
+            .sidechain
+            .add_to_χ1(-rotation_amt);
+        changed = true;
+    }
+
+    if keyboard_input.pressed(KeyCode::O) {
+        state.protein_descrip.residues[ar_i]
+            .sidechain
+            .add_to_χ2(rotation_amt);
+        changed = true;
+    } else if keyboard_input.pressed(KeyCode::L) {
+        state.protein_descrip.residues[ar_i]
+            .sidechain
+            .add_to_χ2(-rotation_amt);
+        changed = true;
+    }
+
+    if keyboard_input.pressed(KeyCode::P) {
+        state.protein_descrip.residues[ar_i]
+            .sidechain
+            .add_to_χ3(rotation_amt);
+        changed = true;
+    } else if keyboard_input.pressed(KeyCode::Semicolon) {
+        state.protein_descrip.residues[ar_i]
+            .sidechain
+            .add_to_χ3(-rotation_amt);
         changed = true;
     }
 
