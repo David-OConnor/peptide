@@ -1,11 +1,8 @@
 //! This module contains respresentations of atom coords.
 
-use crate::{
-    chem_definitions::BackboneRole,
-    kinematics::ProteinDescription,
-    lin_alg::{Quaternion, Vec3},
-    sidechain::Sidechain,
-};
+use crate::{chem_definitions::BackboneRole, kinematics::ProteinDescription, sidechain::Sidechain};
+
+use lin_alg2::f64::{Quaternion, Vec3};
 
 /// Location of an atom, in the worldspace coordinate system.
 #[derive(Debug)]

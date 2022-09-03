@@ -15,7 +15,6 @@ use crate::{
     atom_coords::ProteinCoords,
     chem_definitions::BackboneRole,
     kinematics::{LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA},
-    lin_alg::{self, Quaternion},
     render::{
         self, BACKGROUND_COLOR, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN, BOND_N_SIDES,
         BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, CAM_MOVE_SENS, CAM_ROTATE_KEY_SENS,
@@ -25,20 +24,18 @@ use crate::{
     State, ROTATION_SPEED,
 };
 
-impl lin_alg::Vec3 {
-    pub fn to_bevy(self) -> Vec3 {
-        Vec3 {
-            x: self.x as f32,
-            y: self.y as f32,
-            z: self.z as f32,
-        }
+use lin_alg2::f64::{self, Quaternion};
+
+pub fn vec_to_bevy(v: lin_alg2::f64::Vec3) -> Vec3 {
+    Vec3 {
+        x: v.x as f32,
+        y: v.y as f32,
+        z: v.z as f32,
     }
 }
 
-impl Quaternion {
-    pub fn to_bevy(self) -> Quat {
-        Quat::from_xyzw(self.x as f32, self.y as f32, self.z as f32, self.w as f32)
-    }
+pub fn quat_to_bevy(v: Quaternion) -> Quat {
+    Quat::from_xyzw(v.x as f32, v.y as f32, v.z as f32, v.w as f32)
 }
 
 #[derive(Component)]
@@ -220,8 +217,8 @@ fn setup(
     });
 
     let mut cam_transform = Transform::identity();
-    cam_transform.translation = state.cam.position.to_bevy();
-    cam_transform.rotation = state.cam.orientation.to_bevy();
+    cam_transform.translation = vec_to_bevy(state.cam.position);
+    cam_transform.rotation = quat_to_bevy(state.cam.orientation);
 
     commands
         .spawn_bundle(Camera3dBundle {
@@ -429,12 +426,12 @@ fn render_bonds(
         let bond_dir = (atom.position + atom_prev.position * -1.).to_normalized();
 
         /// The length-wise axis of Bevy's cylinder model
-        let model_axis = lin_alg::Vec3::new(0., 1., 0.);
+        let model_axis = lin_alg2::f64::Vec3::new(0., 1., 0.);
 
         let bond_orientation = Quaternion::from_unit_vecs(model_axis, bond_dir);
 
-        transform.translation = bond_center_position.to_bevy();
-        transform.rotation = bond_orientation.to_bevy();
+        transform.translation = vec_to_bevy(bond_center_position);
+        transform.rotation = quat_to_bevy(bond_orientation);
     }
 }
 
@@ -452,7 +449,7 @@ fn adjust_camera(
     let mut cam_moved = false;
     let mut cam_rotated = false;
 
-    let mut movement_vec = lin_alg::Vec3::new_zero();
+    let mut movement_vec = lin_alg2::f64::Vec3::new_zero();
 
     if keyboard_input.pressed(KeyCode::LShift) {
         move_amt *= RUN_FACTOR;
@@ -513,7 +510,7 @@ fn adjust_camera(
         state.cam.position = state.cam.position + state.cam.orientation.rotate_vec(movement_vec);
 
         for (_camera, mut transform) in query.iter_mut() {
-            transform.translation = state.cam.position.to_bevy();
+            transform.translation = vec_to_bevy(state.cam.position);
         }
     }
 
@@ -524,7 +521,7 @@ fn adjust_camera(
         state.cam.orientation = rotation * state.cam.orientation;
 
         for (_camera, mut transform) in query.iter_mut() {
-            transform.rotation = state.cam.orientation.to_bevy();
+            transform.rotation = quat_to_bevy(state.cam.orientation);
         }
     }
 }

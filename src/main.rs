@@ -16,8 +16,6 @@
 
 use std::f64::consts::TAU;
 
-mod lin_alg;
-
 mod atom_coords;
 mod chem_definitions;
 mod kinematics;
@@ -29,9 +27,10 @@ mod sidechain;
 
 use atom_coords::ProteinCoords;
 use kinematics::{ProteinDescription, Residue};
-use lin_alg::{Quaternion, Vec3};
 use render::Camera;
 use sidechain::Sidechain;
+
+use lin_alg2::f64::{Quaternion, Vec3};
 
 // todo: model the oxygen double-bounded to Cp next.
 

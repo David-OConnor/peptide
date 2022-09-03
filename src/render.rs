@@ -1,6 +1,6 @@
 //! This file contains render-related code that's engine agnostic.
 
-use crate::lin_alg::{Quaternion, Vec3};
+use lin_alg2::f64::{Quaternion, Vec3};
 
 pub const BACKGROUND_COLOR: (f32, f32, f32) = (0.9, 0.9, 0.9);
 

@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 bevy = "^0.8.0"
 graphics = { path = "../graphics_wgpu" }
+lin_alg2 = { path = "../lin_alg" }

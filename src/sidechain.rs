@@ -7,8 +7,9 @@ use crate::{
     chem_definitions::{AminoAcidType, AtomType},
     // todo: Find actual bonds / angles; these are temp!
     kinematics::{find_atom_placement, CALPHA_R_BOND},
-    lin_alg::{Quaternion, Vec3},
 };
+
+use lin_alg2::f64::{Quaternion, Vec3};
 
 // /// An atom, in a sidechain
 // #[derive(Debug)]

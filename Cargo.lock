@@ -1884,6 +1884,7 @@ dependencies = [
  "chrono",
  "env_logger 0.9.0",
  "image",
+ "lin_alg2",
  "pollster",
  "wgpu",
  "winit 0.27.2",
@@ -2221,6 +2222,10 @@ dependencies = [
  "libc",
  "pkg-config",
 ]
+
+[[package]]
+name = "lin_alg2"
+version = "0.1.0"
 
 [[package]]
 name = "lock_api"
@@ -2764,6 +2769,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "graphics",
+ "lin_alg2",
 ]
 
 [[package]]
