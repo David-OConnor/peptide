@@ -38,6 +38,10 @@ pub fn quat_to_bevy(v: Quaternion) -> Quat {
     Quat::from_xyzw(v.x as f32, v.y as f32, v.z as f32, v.w as f32)
 }
 
+pub fn render_color_from_tuple(v: (f32, f32, f32)) -> Color {
+    Color::rgb(v.0, v.1, v.2)
+}
+
 #[derive(Component)]
 struct Cam;
 
@@ -50,25 +54,6 @@ struct AtomRender {
 struct BondRender {
     pub atom_id: usize, // Bond from this atom to the prev.
                         // pub bond_id: usize, // ie local id within the atom.
-}
-impl BackboneRole {
-    pub fn render_color(&self) -> Color {
-        let cα = render::CALPHA_COLOR;
-        let cp = render::CP_COLOR;
-        let n = render::N_COLOR;
-        let o = render::O_COLOR;
-        let cs = render::C_SIDECHAIN_COLOR;
-        match self {
-            Self::Cα => Color::rgb(cα.0, cα.1, cα.2),
-            Self::Cp => Color::rgb(cp.0, cp.1, cp.2),
-            Self::N => Color::rgb(n.0, n.1, n.2),
-            Self::O => Color::rgb(o.0, o.1, o.2),
-            Self::CSidechain => Color::rgb(cs.0, cs.1, cs.2),
-            // todo: Consider a diff shade for n and o sidechain colors
-            Self::NSidechain => Color::rgb(n.0, n.1, n.2),
-            Self::OSidechain => Color::rgb(o.0, o.1, o.2),
-        }
-    }
 }
 
 /// set up a simple 3D scene
@@ -95,8 +80,8 @@ fn setup(
                 //     sectors: usize,
                 //     stacks: usize,
                 // }
-                mesh: meshes.add(Mesh::from(shape::Cube { size: 0.3 })),
-                material: materials.add(atom.role.render_color().into()),
+                mesh: meshes.add(Mesh::from(shape::Cube { size: render::SIDE_LEN })),
+                material: materials.add(render_color_from_tuple(atom.role.render_color()).into()),
                 ..Default::default()
             });
 

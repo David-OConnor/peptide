@@ -303,12 +303,17 @@ pub struct Residue {
     pub ψ: f64,
     /// Contains the χ angles that define t
     pub sidechain: Sidechain,
+    pub dipole: Vec3,
 }
 
 impl Residue {
     pub fn new(ω: f64, φ: f64, ψ: f64, sidechain: Sidechain) -> Self {
         Self {
-            ω, φ, ψ, sidechain
+            ω,
+            φ,
+            ψ,
+            sidechain,
+            dipole: Vec3::new_zero(),
         }
     }
 

@@ -1,5 +1,7 @@
 //! This file contains render-related code that's engine agnostic.
 
+use crate::chem_definitions::BackboneRole;
+
 use lin_alg2::f64::{Quaternion, Vec3};
 
 pub const BACKGROUND_COLOR: (f32, f32, f32) = (0.9, 0.9, 0.9);
@@ -27,6 +29,9 @@ pub const CAM_ROTATE_KEY_SENS: f64 = 0.5;
 // Move speed multiplier when the run modifier key is held.
 pub const RUN_FACTOR: f64 = 5.;
 
+// Render size of an atom, on a [polyhedron] side.
+pub const SIDE_LEN: f32 = 0.3;
+
 pub const DT: f64 = 1. / 60.;
 
 pub const UP_VEC: Vec3 = Vec3 {
@@ -48,4 +53,25 @@ pub const FWD_VEC: Vec3 = Vec3 {
 pub struct Camera {
     pub position: Vec3,
     pub orientation: Quaternion,
+}
+
+impl BackboneRole {
+    pub fn render_color(&self) -> (f32, f32, f32) {
+        let cα = CALPHA_COLOR;
+        let cp = CP_COLOR;
+        let n = N_COLOR;
+        let o = O_COLOR;
+        let cs = C_SIDECHAIN_COLOR;
+
+        match self {
+            Self::Cα => (cα.0, cα.1, cα.2),
+            Self::Cp => (cp.0, cp.1, cp.2),
+            Self::N => (n.0, n.1, n.2),
+            Self::O => (o.0, o.1, o.2),
+            Self::CSidechain => (cs.0, cs.1, cs.2),
+            // todo: Consider a diff shade for n and o sidechain colors
+            Self::NSidechain => (n.0, n.1, n.2),
+            Self::OSidechain => (o.0, o.1, o.2),
+        }
+    }
 }
