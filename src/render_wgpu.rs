@@ -3,8 +3,10 @@
 use crate::{
     atom_coords::{AtomCoords, ProteinCoords},
     chem_definitions::BackboneRole,
-    kinematics::ProteinDescription,
-    render,
+    kinematics::{ProteinDescription, LEN_N_CALPHA, LEN_CP_O, LEN_CP_N, LEN_CALPHA_CP},
+    render::{self, BOND_RADIUS_SIDECHAIN, BOND_RADIUS_BACKBONE,
+             BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN},
+    sidechain::{LEN_SC},
 };
 
 use graphics::{self, lighting, Entity, InputSettings, Lighting, Mesh, Scene};
@@ -82,9 +84,28 @@ pub fn run() {
 
             let bond_orientation = Quaternion::from_unit_vecs(BOND_MODEL_AXIS, bond_dir);
 
+            let color_a = match atom.role {
+                BackboneRole::CSidechain | BackboneRole::OSidechain | BackboneRole::NSidechain => {
+                    BOND_COLOR_SIDECHAIN
+                }
+                _ => BOND_COLOR_BACKBONE,
+            };
+
+            // let color = Color::rgb(color_a.0, color_a.1, color_a.2).into();
+
+            let (bond_len, bond_mesh) = match atom.role {
+                BackboneRole::N => (LEN_CP_N as f32, 1),
+                BackboneRole::Cα => (LEN_N_CALPHA as f32, 1),
+                BackboneRole::Cp => (LEN_CALPHA_CP as f32, 1),
+                BackboneRole::O => (LEN_CP_O as f32, 1),
+                BackboneRole::CSidechain => (LEN_SC as f32, 2),
+                BackboneRole::OSidechain => (LEN_SC as f32, 2),
+                BackboneRole::NSidechain => (LEN_SC as f32, 2),
+            };
+
             // todo: Sidechain mesh and color.
             entities.push(Entity::new(
-                1,
+                bond_mesh,
                 vec3_to_f32(bond_center_position),
                 quat_to_f32(bond_orientation),
                 1.,
