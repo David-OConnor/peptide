@@ -1,4 +1,4 @@
-//! This file contains render-related code that's engine agnostic.
+//! This file contains render code that's engine agnostic.
 
 use crate::chem_definitions::BackboneRole;
 

@@ -12,6 +12,9 @@
 // Initially, focus on modeling the bond angles and backbone. Both
 // data to describe, and a 3d render
 
+// Is there value in modeling bonds as something other than straight lines? Curves?
+// Something else?
+
 // Doe sfolding begin starting at the end extruded?
 
 use std::f64::consts::TAU;
@@ -92,17 +95,20 @@ fn init_protein() -> ProteinDescription {
                 1. / 2. * TAU,
                 φ_sheet,
                 ψ_sheet,
-                Sidechain::Arg(sidechain::Arg {
-                    χ_1: 1. / 2. * TAU,
-                    χ_2: 1. / 2. * TAU,
-                    χ_3: 1. / 2. * TAU,
-                    χ_4: 1. / 2. * TAU,
-                    χ_5: 1. / 2. * TAU,
-                }),
+                Sidechain::Gly(sidechain::Gly {}),
+
+                // Sidechain::Arg(sidechain::Arg {
+                //     χ_1: 1. / 2. * TAU,
+                //     χ_2: 1. / 2. * TAU,
+                //     χ_3: 1. / 2. * TAU,
+                //     χ_4: 1. / 2. * TAU,
+                //     χ_5: 1. / 2. * TAU,
+                // }),
             ),
         );
     }
 
+    // ProteinDescription { residues }
     proteins::make_trp_cage()
 }
 

@@ -80,7 +80,9 @@ fn setup(
                 //     sectors: usize,
                 //     stacks: usize,
                 // }
-                mesh: meshes.add(Mesh::from(shape::Cube { size: render::SIDE_LEN })),
+                mesh: meshes.add(Mesh::from(shape::Cube {
+                    size: render::SIDE_LEN,
+                })),
                 material: materials.add(render_color_from_tuple(atom.role.render_color()).into()),
                 ..Default::default()
             });
