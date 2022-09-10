@@ -1,20 +1,48 @@
 //! This module contains code for use with our custom renderer.
 
+use std::mem;
+
 use crate::{
+    State,
     atom_coords::{AtomCoords, ProteinCoords},
     chem_definitions::BackboneRole,
-    kinematics::{ProteinDescription, LEN_N_CALPHA, LEN_CP_O, LEN_CP_N, LEN_CALPHA_CP},
-    render::{self, BOND_RADIUS_SIDECHAIN, BOND_RADIUS_BACKBONE,
-             BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN},
-    sidechain::{LEN_SC},
+    kinematics::{ProteinDescription, LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA},
+    render::{
+        self, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN, BOND_RADIUS_BACKBONE,
+        BOND_RADIUS_SIDECHAIN,
+    },
+    sidechain::LEN_SC,
 };
 
-use graphics::{self, lighting, Entity, InputSettings, Lighting, Mesh, Scene};
+// todo: Temp until we sort out how to use Fn traits vice function pointers.
+// static mut state: State = unsafe { mem::zeroed() };
 
-use lin_alg2::{self, f64::{Vec3, Quaternion}};
+static mut state: State = unsafe { State {
+    protein_descrip: ProteinDescription { residues: Vec::new() },
+    protein_coords: ProteinCoords { atoms_backbone: Vec::new() },
+    active_residue: 0,
+    cam: render::Camera {
+        position: Vec3 { x: 0., y: 0., z: 0. },
+        orientation: Quaternion { w: 0., x: 0., y: 0., z: 0. },
+    }
+}
+};
+
+use graphics::{
+    self, lighting, DeviceEvent, ElementState, Entity, InputSettings, Lighting, Mesh, Scene,
+};
+
+use lin_alg2::{
+    self,
+    f64::{Quaternion, Vec3},
+};
 
 // The length-wise axis of our graphics engine's cylinder mesh.
-const BOND_MODEL_AXIS: Vec3 = Vec3 { x: 0., y: 1., z: 0. };
+const BOND_MODEL_AXIS: Vec3 = Vec3 {
+    x: 0.,
+    y: 1.,
+    z: 0.,
+};
 
 fn vec3_to_f32(v: Vec3) -> lin_alg2::f32::Vec3 {
     lin_alg2::f32::Vec3::new(v.x as f32, v.y as f32, v.z as f32)
@@ -24,24 +52,113 @@ fn quat_to_f32(q: Quaternion) -> lin_alg2::f32::Quaternion {
     lin_alg2::f32::Quaternion::new(q.w as f32, q.x as f32, q.y as f32, q.z as f32)
 }
 
-/// The entry point for our renderer.
-pub fn run() {
-    let mut state = crate::State::default();
+// todo: Don't make dependency import winit? rexport etc?
+fn device_event_handler(
+    event: DeviceEvent,
+    // state: &mut State,
+    scene: &mut Scene,
+    dt: f32, // in seconds
+) -> Option<bool> {
+    // todo: Higher level api from winit or otherwise instead of scancode?
+    let mut changed = false;
 
-    // Initialize the render state here.
-    state.protein_descrip = crate::init_protein();
-    state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
+    // We count starting at 1, per chem conventions.
+    let ar_i = unsafe { state.active_residue } - 1;
 
-    let mut entities = Vec::new();
+    let mut rotation_amt = crate::BOND_ROTATION_SPEED * dt as f64;
 
-    // Store cα and c' so we can properly assign bonds after sidechains.
-    let mut n_id = 0; // Residue 0, index 0 for first N
-    let mut cα_id = 1; // Residue 0, index 1 for first Cα
-    let mut cp_id = 0;
+    unsafe {
+        match event {
+            DeviceEvent::Key(key) => {
+                if key.state == ElementState::Pressed {
+                    // todo: These should probably be every 10 residues.
+                    match key.scancode {
+                        2 => {
+                            state.active_residue = 1;
+                            changed = true;
+                        }
+                        3 => {
+                            state.active_residue = 2;
+                            changed = true;
+                        }
+                        4 => {
+                            state.active_residue = 3;
+                            changed = true;
+                        }
+                        5 => {
+                            state.active_residue = 4;
+                            changed = true;
+                        }
+                        6 => {
+                            state.active_residue = 5;
+                            changed = true;
+                        }
+                        7 => {
+                            state.active_residue = 6;
+                            changed = true;
+                        }
+                        8 => {
+                            state.active_residue = 7;
+                            changed = true;
+                        }
+                        9 => {
+                            state.active_residue = 8;
+                            changed = true;
+                        }
+                        10 => {
+                            state.active_residue = 9;
+                            changed = true;
+                        }
+                        20 => { // T
+                            state.protein_descrip.residues[ar_i].φ += rotation_amt;
+                            changed = true;
+                        }
+                        34 => { // G
+                            state.protein_descrip.residues[ar_i].φ -= rotation_amt;
+                            changed = true;
+                        }
+                        21 => { // Y
+                            state.protein_descrip.residues[ar_i].ψ += rotation_amt;
+                            changed = true;
+                        }
+                        35 => { // H
+                            state.protein_descrip.residues[ar_i].ψ -= rotation_amt;
+                            changed = true;
+                        }
+                        22 => { // U
+                            state.protein_descrip.residues[ar_i].ω += rotation_amt;
+                            changed = true;
+                        }
+                        36 => { // J
+                            state.protein_descrip.residues[ar_i].ω -= rotation_amt;
+                            changed = true;
+                        }
+                        // todo: Sidechain dihedral angles
+                        _ => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    if changed {
+        // Recalculate coordinates now that we've updated our bond angles
+        unsafe {
+            state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
+        }
+    }
 
-    // Render our atoms.
-    for (id, atom) in state.protein_coords.atoms_backbone.iter().enumerate() {
+    Some(changed) // todo temp awk way of doing it
+}
 
+fn render_handler() -> Option<Vec<Entity>> {
+    // fn render_handler(scene: &mut Scene) -> Option<Vec<Entity>> {
+    None
+}
+
+/// Generates entities from protein coordinates.
+fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
+    for (id, atom) in atoms_backbone.iter().enumerate() {
         entities.push(Entity::new(
             0,
             vec3_to_f32(atom.position),
@@ -54,7 +171,6 @@ pub fn run() {
         if id != 0 {
             // Find the previous atom in the chain: The one that connects to this.
             let atom_prev_id = match atom.role {
-
                 BackboneRole::N => {
                     n_id = id;
                     cp_id
@@ -114,7 +230,33 @@ pub fn run() {
         }
     }
 
-    let scene = Scene {
+    entities
+}
+
+/// The entry point for our renderer.
+pub unsafe fn run() {
+    // let mut state = State::default();
+    // todo: Initialize our static mut; bit of a hack
+    state = State::default();
+
+    // Initialize the render state here.
+
+    state.protein_descrip = crate::init_protein();
+    state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
+
+    let mut entities = Vec::new();
+
+    // Store cα and c' so we can properly assign bonds after sidechains.
+    let mut n_id = 0; // Residue 0, index 0 for first N
+    let mut cα_id = 1; // Residue 0, index 1 for first Cα
+    let mut cp_id = 0;
+
+    // Render our atoms.
+    let entities = generate_entities(
+        &state.protein_coords.atoms_backbone,
+    );
+
+    let mut scene = Scene {
         meshes: vec![
             Mesh::new_tetrahedron(render::SIDE_LEN),
             // todo: Temp bond len. You prob need a mesh per possible len.
@@ -127,7 +269,13 @@ pub fn run() {
 
     let input_settings = InputSettings::default();
 
-    graphics::run(scene, input_settings);
+    // let deh = |device_event, scene: &mut _| {
+    //     device_event_handler(device_event, &mut state, &mut scene);
+    //     println!("TEST");
+    //     None
+    // };
+
+    graphics::run(scene, input_settings, render_handler, device_event_handler);
 }
 
 // todo: Use state cam? Should it be in `Scene`?

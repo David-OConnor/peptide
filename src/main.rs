@@ -37,7 +37,7 @@ use lin_alg2::f64::{Quaternion, Vec3};
 
 // todo: model the oxygen double-bounded to Cp next.
 
-const ROTATION_SPEED: f64 = 1.; // radians/s
+const BOND_ROTATION_SPEED: f64 = 1.; // radians/s
 
 // #[derive(Clone, Copy)]
 // enum CarbonBond {
@@ -57,6 +57,7 @@ struct State {
     /// Residue id that's selected for rotation. Starts at 1.
     pub active_residue: usize,
     /// Camera position and orientation
+    /// todo: DO we want this? Probably not.
     pub cam: Camera,
 }
 
@@ -96,7 +97,6 @@ fn init_protein() -> ProteinDescription {
                 φ_sheet,
                 ψ_sheet,
                 Sidechain::Gly(sidechain::Gly {}),
-
                 // Sidechain::Arg(sidechain::Arg {
                 //     χ_1: 1. / 2. * TAU,
                 //     χ_2: 1. / 2. * TAU,
@@ -115,5 +115,6 @@ fn init_protein() -> ProteinDescription {
 fn main() {
     kinematics::init_local_bond_vecs();
     // render_bevy::run();
-    render_wgpu::run();
+    // todo: unsafe here is temp due to not getting Fn closure support working.
+    unsafe { render_wgpu::run(); }
 }

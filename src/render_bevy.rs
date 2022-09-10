@@ -18,11 +18,10 @@ use crate::{
     render::{
         self, BACKGROUND_COLOR, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN, BOND_N_SIDES,
         BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, CAM_MOVE_SENS, CAM_ROTATE_KEY_SENS,
-        CAM_ROTATE_SENS, DT, FWD_VEC, LIGHT_INTENSITY, RIGHT_VEC, RUN_FACTOR, UP_VEC,
-        SIDE_LEN,
+        CAM_ROTATE_SENS, DT, FWD_VEC, LIGHT_INTENSITY, RIGHT_VEC, RUN_FACTOR, SIDE_LEN, UP_VEC,
     },
     sidechain::LEN_SC,
-    State, ROTATION_SPEED,
+    State, BOND_ROTATION_SPEED,
 };
 
 use lin_alg2::f64::{self, Quaternion};
@@ -219,7 +218,7 @@ fn setup(
 fn change_dihedral_angle(keyboard_input: Res<Input<KeyCode>>, mut state: ResMut<State>) {
     // Update dihedral angles.
     // todo: Move keyboard logic elsewhere.
-    let mut rotation_amt = ROTATION_SPEED * DT;
+    let mut rotation_amt = BOND_ROTATION_SPEED * DT;
 
     // Change active residue.
     // todo: You need to debounce this for it to work
