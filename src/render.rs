@@ -16,7 +16,13 @@ pub const N_COLOR: (f32, f32, f32) = (0., 0., 1.);
 pub const O_COLOR: (f32, f32, f32) = (1., 0., 0.);
 pub const C_SIDECHAIN_COLOR: (f32, f32, f32) = (0.5, 0.5, 0.5);
 
+pub const ACTIVE_COLOR_ATOM: (f32, f32, f32) = (0.6, 0.3, 0.1);
+
 pub const LIGHT_INTENSITY: f32 = 5_000.0;
+
+// Shinyness affects specular intensity.
+pub const ATOM_SHINYNESS: f32 = 0.05;
+pub const BOND_SHINYNESS: f32 = 0.05;
 
 pub const BOND_RADIUS_BACKBONE: f32 = 0.07;
 pub const BOND_RADIUS_SIDECHAIN: f32 = 0.03;
