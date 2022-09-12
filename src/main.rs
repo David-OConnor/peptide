@@ -24,7 +24,6 @@ mod chem_definitions;
 mod kinematics;
 mod proteins;
 mod render;
-mod render_bevy;
 mod render_wgpu;
 mod sidechain;
 
@@ -114,7 +113,6 @@ fn init_protein() -> ProteinDescription {
 
 fn main() {
     kinematics::init_local_bond_vecs();
-    // render_bevy::run();
     // todo: unsafe here is temp due to not getting Fn closure support working.
     unsafe { render_wgpu::run(); }
 }

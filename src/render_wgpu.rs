@@ -117,7 +117,7 @@ fn device_event_handler(
                         }
                         // todo: Why are these scan codes for up/down so high??
                         57_416 => { // Up arrow
-                            if state.active_residue != state.protein_descrip.residues.len() - 1 {
+                            if state.active_residue != state.protein_descrip.residues.len() {
                                 state.active_residue += 1;
                             }
                             changed = true;
