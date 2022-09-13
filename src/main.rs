@@ -34,6 +34,8 @@ use sidechain::Sidechain;
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
+use eframe::egui;
+
 // todo: model the oxygen double-bounded to Cp next.
 
 const BOND_ROTATION_SPEED: f64 = 1.; // radians/s
@@ -111,8 +113,48 @@ fn init_protein() -> ProteinDescription {
     proteins::make_trp_cage()
 }
 
+struct MyApp {
+    name: String,
+    age: u32,
+}
+
+impl Default for MyApp {
+    fn default() -> Self {
+        Self {
+            name: "Arthur".to_owned(),
+            age: 42,
+        }
+    }
+}
+
+impl eframe::App for MyApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading("My egui Application");
+            ui.horizontal(|ui| {
+                ui.label("Your name: ");
+                ui.text_edit_singleline(&mut self.name);
+            });
+            ui.add(egui::Slider::new(&mut self.age, 0..=120).text("age"));
+            if ui.button("Click each year").clicked() {
+                self.age += 1;
+            }
+            ui.label(format!("Hello '{}', age {}", self.name, self.age));
+        });
+    }
+}
+
 fn main() {
     kinematics::init_local_bond_vecs();
     // todo: unsafe here is temp due to not getting Fn closure support working.
-    unsafe { render_wgpu::run(); }
+    unsafe {
+        render_wgpu::run();
+    }
+
+    let options = eframe::NativeOptions::default();
+    eframe::run_native(
+        "My egui App",
+        options,
+        Box::new(|_cc| Box::new(MyApp::default())),
+    );
 }

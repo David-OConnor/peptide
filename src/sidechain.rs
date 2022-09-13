@@ -3,6 +3,8 @@
 // Don't show warnings for unused AAs etc.
 #![allow(dead_code)]
 
+use core::f64::consts::TAU;
+
 use crate::{
     chem_definitions::{AminoAcidType, AtomType},
     // todo: Find actual bonds / angles; these are temp!
@@ -10,6 +12,8 @@ use crate::{
 };
 
 use lin_alg2::f64::{Quaternion, Vec3};
+
+const TAU_DIV2: f64 = TAU / 2.;
 
 // /// An atom, in a sidechain
 // #[derive(Debug)]
@@ -102,7 +106,6 @@ impl Sidechain {
             Self::Gln(aa) => aa.χ_1 += val,
             Self::Cys(aa) => aa.χ_1 += val,
             Self::Sec(aa) => aa.χ_1 += val,
-            Self::Pro(aa) => aa.χ_1 += val,
             Self::Val(aa) => aa.χ_1 += val,
             Self::Ile(aa) => aa.χ_1 += val,
             Self::Leu(aa) => aa.χ_1 += val,
@@ -123,7 +126,6 @@ impl Sidechain {
             Self::Glu(aa) => aa.χ_2 += val,
             Self::Asn(aa) => aa.χ_2 += val,
             Self::Gln(aa) => aa.χ_2 += val,
-            Self::Pro(aa) => aa.χ_2 += val,
             Self::Ile(aa) => aa.χ_2 += val,
             Self::Leu(aa) => aa.χ_2 += val,
             Self::Met(aa) => aa.χ_2 += val,
@@ -139,7 +141,6 @@ impl Sidechain {
             Self::Lys(aa) => aa.χ_3 += val,
             Self::Glu(aa) => aa.χ_3 += val,
             Self::Gln(aa) => aa.χ_3 += val,
-            Self::Pro(aa) => aa.χ_3 += val,
             Self::Met(aa) => aa.χ_3 += val,
             _ => (),
         }
@@ -235,7 +236,7 @@ impl Arg {
             c_zeta_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_zeta,
             n_eps,
             unsafe { BOND_OUT1 },
@@ -246,7 +247,7 @@ impl Arg {
             c_zeta_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_zeta,
             n_eps,
             unsafe { BOND_OUT2 },
@@ -336,7 +337,7 @@ impl Lys {
             c_eps_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_eps,
             c_delta,
             unsafe { BOND_OUT1 },
@@ -395,7 +396,7 @@ impl Asp {
             c_gamma_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_gamma,
             c_beta,
             unsafe { BOND_OUT1 },
@@ -406,7 +407,7 @@ impl Asp {
             c_gamma_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_gamma,
             c_beta,
             unsafe { BOND_OUT2 },
@@ -447,7 +448,7 @@ impl Ser {
             c_beta_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_beta,
             c_alpha,
             unsafe { BOND_OUT1 },
@@ -485,7 +486,7 @@ impl Thr {
             c_beta_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_beta,
             c_alpha,
             unsafe { BOND_OUT2 },
@@ -496,7 +497,7 @@ impl Thr {
             c_beta_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_beta,
             c_alpha,
             unsafe { BOND_OUT1 },
@@ -546,7 +547,7 @@ impl Asn {
             c_gamma_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_gamma,
             c_beta,
             unsafe { BOND_OUT1 },
@@ -557,7 +558,7 @@ impl Asn {
             c_gamma_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_gamma,
             c_beta,
             unsafe { BOND_OUT2 },
@@ -620,7 +621,7 @@ impl Gln {
             c_delta_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_delta,
             c_gamma,
             unsafe { BOND_OUT1 },
@@ -631,7 +632,7 @@ impl Gln {
             c_delta_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_delta,
             c_gamma,
             unsafe { BOND_OUT2 },
@@ -674,7 +675,7 @@ impl Pro {
             c_alpha_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            self.χ_1,
+            0.,
             c_alpha,
             n_pos,
             unsafe { CALPHA_R_BOND },
@@ -685,7 +686,7 @@ impl Pro {
             c_beta_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            self.χ_2,
+            0.,
             c_beta,
             c_alpha,
             unsafe { BOND_OUT1 },
@@ -693,10 +694,10 @@ impl Pro {
         );
 
         let (c_delta, _) = find_atom_placement(
-            c_beta_orientation,
+            c_gamma_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            self.χ_3,
+            0.,
             c_gamma,
             c_beta,
             unsafe { BOND_OUT1 },
@@ -735,7 +736,7 @@ impl Ile {
             c_beta_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_beta,
             c_alpha,
             unsafe { BOND_OUT1 },
@@ -757,7 +758,7 @@ impl Ile {
             c_gamma2_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_gamma2,
             c_beta,
             unsafe { BOND_OUT1 },
@@ -809,7 +810,7 @@ impl Leu {
             c_gamma_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_gamma,
             c_beta,
             unsafe { BOND_OUT1 },
@@ -820,7 +821,7 @@ impl Leu {
             c_gamma_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_gamma,
             c_beta,
             unsafe { BOND_OUT2 },
@@ -872,7 +873,7 @@ impl Tyr {
             c_gamma_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0., // todo
+            TAU_DIV2,
             c_gamma,
             c_beta,
             unsafe { BOND_OUT1 },
@@ -883,7 +884,7 @@ impl Tyr {
             c_gamma_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0., // todo
+            TAU_DIV2,
             c_gamma,
             c_beta,
             unsafe { BOND_OUT2 },
@@ -894,7 +895,7 @@ impl Tyr {
             c_delta1_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0., // todo
+            TAU_DIV2,
             c_delta1,
             c_gamma,
             unsafe { BOND_OUT1 },
@@ -905,7 +906,7 @@ impl Tyr {
             c_delta2_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0., // todo
+            0.,
             c_delta2,
             c_gamma,
             unsafe { BOND_OUT1 },
@@ -916,7 +917,7 @@ impl Tyr {
             c_eps2_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0., // todo
+            TAU_DIV2,
             c_eps2,
             c_delta2,
             unsafe { BOND_OUT1 },
@@ -927,7 +928,7 @@ impl Tyr {
             c_zeta_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            0.,
+            TAU_DIV2,
             c_zeta,
             c_eps2,
             unsafe { BOND_OUT1 },
@@ -1130,7 +1131,7 @@ pub struct CoordsPro {
 // `χ_1` for each is for the bond between the c_alpha, and the first atom in the
 // sidechain (eg c_bravo)
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Arg {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1139,13 +1140,34 @@ pub struct Arg {
     pub χ_5: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Arg {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+            χ_3: TAU_DIV2,
+            χ_4: TAU_DIV2,
+            χ_5: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct His {
     pub χ_1: f64,
     pub χ_2: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for His {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Lys {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1153,103 +1175,233 @@ pub struct Lys {
     pub χ_4: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Lys {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+            χ_3: TAU_DIV2,
+            χ_4: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Asp {
     pub χ_1: f64,
     pub χ_2: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Asp {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Glu {
     pub χ_1: f64,
     pub χ_2: f64,
     pub χ_3: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Glu {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+            χ_3: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Ser {
     pub χ_1: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Ser {
+    fn default() -> Self {
+        Self { χ_1: TAU_DIV2 }
+    }
+}
+
+#[derive(Debug)]
 pub struct Thr {
     pub χ_1: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Thr {
+    fn default() -> Self {
+        Self { χ_1: TAU_DIV2 }
+    }
+}
+
+#[derive(Debug)]
 pub struct Asn {
     pub χ_1: f64,
     pub χ_2: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Asn {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Gln {
     pub χ_1: f64,
     pub χ_2: f64,
     pub χ_3: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Gln {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+            χ_3: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Cys {
     pub χ_1: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Cys {
+    fn default() -> Self {
+        Self { χ_1: TAU_DIV2 }
+    }
+}
+
+#[derive(Debug)]
 pub struct Sec {
     pub χ_1: f64,
+}
+
+impl Default for Sec {
+    fn default() -> Self {
+        Self { χ_1: TAU_DIV2 }
+    }
 }
 
 #[derive(Debug, Default)]
 pub struct Gly {}
 
 #[derive(Debug, Default)]
-pub struct Pro {
-    pub χ_1: f64,
-    pub χ_2: f64,
-    pub χ_3: f64,
-}
+pub struct Pro {}
 
 #[derive(Debug, Default)]
 pub struct Ala {}
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Val {
     pub χ_1: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Val {
+    fn default() -> Self {
+        Self { χ_1: TAU_DIV2 }
+    }
+}
+
+#[derive(Debug)]
 pub struct Ile {
     pub χ_1: f64,
     pub χ_2: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Ile {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Leu {
     pub χ_1: f64,
     pub χ_2: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Leu {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Met {
     pub χ_1: f64,
     pub χ_2: f64,
     pub χ_3: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Met {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+            χ_3: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Phe {
     pub χ_1: f64,
     pub χ_2: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Phe {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Tyr {
     pub χ_1: f64,
     pub χ_2: f64,
 }
 
-#[derive(Debug, Default)]
+impl Default for Tyr {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Trp {
     pub χ_1: f64,
     pub χ_2: f64,
+}
+
+impl Default for Trp {
+    fn default() -> Self {
+        Self {
+            χ_1: TAU_DIV2,
+            χ_2: TAU_DIV2,
+        }
+    }
 }

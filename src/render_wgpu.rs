@@ -3,35 +3,49 @@
 use std::{
     // boxed::Box,
     mem,
-    sync::Mutex,
     rc::Rc,
+    sync::Mutex,
 };
 
 use crate::{
-    State,
     atom_coords::{AtomCoords, ProteinCoords},
     chem_definitions::BackboneRole,
     kinematics::{ProteinDescription, LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA},
     render::{
-        self, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN, BOND_RADIUS_BACKBONE,
-        BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS, ATOM_SHINYNESS, ACTIVE_COLOR_ATOM,
+        self, ACTIVE_COLOR_ATOM, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
+        BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS,
     },
     sidechain::LEN_SC,
+    State,
 };
 
 // todo: Temp until we sort out how to use Fn traits vice function pointers.
 // static mut state: State = unsafe { mem::zeroed() };
 
 // todo: Use a mutex instead of static mut here.
-static mut state: State = unsafe { State {
-    protein_descrip: ProteinDescription { residues: Vec::new() },
-    protein_coords: ProteinCoords { atoms_backbone: Vec::new() },
-    active_residue: 0,
-    cam: render::Camera {
-        position: Vec3 { x: 0., y: 0., z: 0. },
-        orientation: Quaternion { w: 0., x: 0., y: 0., z: 0. },
+static mut state: State = unsafe {
+    State {
+        protein_descrip: ProteinDescription {
+            residues: Vec::new(),
+        },
+        protein_coords: ProteinCoords {
+            atoms_backbone: Vec::new(),
+        },
+        active_residue: 0,
+        cam: render::Camera {
+            position: Vec3 {
+                x: 0.,
+                y: 0.,
+                z: 0.,
+            },
+            orientation: Quaternion {
+                w: 0.,
+                x: 0.,
+                y: 0.,
+                z: 0.,
+            },
+        },
     }
-}
 };
 
 use graphics::{
@@ -116,73 +130,87 @@ fn device_event_handler(
                             changed = true;
                         }
                         // todo: Why are these scan codes for up/down so high??
-                        57_416 => { // Up arrow
+                        57_416 => {
+                            // Up arrow
                             if state.active_residue != state.protein_descrip.residues.len() {
                                 state.active_residue += 1;
                             }
                             changed = true;
                         }
-                        57_424 => { // Down arrow
+                        57_424 => {
+                            // Down arrow
                             if state.active_residue != 1 {
                                 state.active_residue -= 1;
                             }
                             changed = true;
                         }
-                        20 => { // T
+                        20 => {
+                            // T
                             state.protein_descrip.residues[ar_i].φ += rotation_amt;
                             changed = true;
                         }
-                        34 => { // G
+                        34 => {
+                            // G
                             state.protein_descrip.residues[ar_i].φ -= rotation_amt;
                             changed = true;
                         }
-                        21 => { // Y
+                        21 => {
+                            // Y
                             state.protein_descrip.residues[ar_i].ψ += rotation_amt;
                             changed = true;
                         }
-                        35 => { // H
+                        35 => {
+                            // H
                             state.protein_descrip.residues[ar_i].ψ -= rotation_amt;
                             changed = true;
                         }
-                        22 => { // U
+                        22 => {
+                            // U
                             state.protein_descrip.residues[ar_i].ω += rotation_amt;
                             changed = true;
                         }
-                        36 => { // J
+                        36 => {
+                            // J
                             state.protein_descrip.residues[ar_i].ω -= rotation_amt;
                             changed = true;
                         }
-                        23 => { // I
+                        23 => {
+                            // I
                             state.protein_descrip.residues[ar_i]
                                 .sidechain
                                 .add_to_χ1(rotation_amt);
                             changed = true;
                         }
-                        37 => { // K
+                        37 => {
+                            // K
                             state.protein_descrip.residues[ar_i]
                                 .sidechain
                                 .add_to_χ1(-rotation_amt);
                             changed = true;
                         }
-                        24 => { // O
+                        24 => {
+                            // O
                             state.protein_descrip.residues[ar_i]
                                 .sidechain
                                 .add_to_χ2(rotation_amt);
                             changed = true;
                         }
-                        38 => { // L
+                        38 => {
+                            // L
                             state.protein_descrip.residues[ar_i]
                                 .sidechain
                                 .add_to_χ2(-rotation_amt);
                             changed = true;
                         }
-                        36 => { // P
+                        36 => {
+                            // P
                             state.protein_descrip.residues[ar_i]
                                 .sidechain
                                 .add_to_χ3(rotation_amt);
                             changed = true;
                         }
-                        39 => { // ;
+                        39 => {
+                            // ;
                             state.protein_descrip.residues[ar_i]
                                 .sidechain
                                 .add_to_χ3(-rotation_amt);
@@ -264,7 +292,7 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
             // Calculate the position of the bond mesh: This is the cylinder's z point,
             // half way between the 2 atoms it connects.
 
-            let atom_prev = unsafe { &state.protein_coords.atoms_backbone[atom_prev_id]};
+            let atom_prev = unsafe { &state.protein_coords.atoms_backbone[atom_prev_id] };
 
             let bond_center_position = (atom.position + atom_prev.position) * 0.5;
             let bond_dir = (atom.position - atom_prev.position).to_normalized();
@@ -319,9 +347,7 @@ pub unsafe fn run() {
     state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
 
     // Render our atoms.
-    let entities = generate_entities(
-        &state.protein_coords.atoms_backbone,
-    );
+    let entities = generate_entities(&state.protein_coords.atoms_backbone);
 
     let mut scene = Scene {
         meshes: vec![

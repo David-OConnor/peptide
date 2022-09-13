@@ -4,6 +4,13 @@ use crate::{chem_definitions::BackboneRole, kinematics::ProteinDescription, side
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
+const Q_I: Quaternion = Quaternion {
+    w: 1.,
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
 /// Location of an atom, in the worldspace coordinate system.
 #[derive(Debug)]
 pub struct AtomCoords {
@@ -60,7 +67,7 @@ impl ProteinCoords {
         add_atom(
             BackboneRole::N,
             Vec3::new(0., 0., 0.),
-            Quaternion::new_identity(),
+            Q_I,
             &mut backbone,
             1,
             residue_id,
@@ -81,7 +88,7 @@ impl ProteinCoords {
 
         // We store c_alpha posit and orientation for anchoring the sidechain
         let mut c_alpha_posit = Vec3::new_zero();
-        let mut c_alpha_or = Quaternion::new_identity();
+        let mut c_alpha_or = Q_I;
 
         for res in &descrip.residues {
             let bb_coords = res.backbone_cart_coords(prev_n_posit, prev_n_or, prev_cp_posit);
@@ -156,7 +163,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::NSidechain,
                         sc_coords.n_eta1,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         1,
                         residue_id,
@@ -165,9 +172,62 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::NSidechain,
                         sc_coords.n_eta2,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         2,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                }
+                Sidechain::Lys(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_gamma,
+                        sc_coords.c_gamma_orientation,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_delta,
+                        sc_coords.c_delta_orientation,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_eps,
+                        sc_coords.c_eps_orientation,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::NSidechain,
+                        sc_coords.n_zeta,
+                        Q_I,
+                        &mut backbone,
+                        1,
                         residue_id,
                         &mut atom_id,
                     );
@@ -200,7 +260,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::OSidechain,
                         sc_coords.o_delta1,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         1,
                         residue_id,
@@ -209,7 +269,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::OSidechain,
                         sc_coords.o_delta2,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         2,
                         residue_id,
@@ -235,7 +295,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::OSidechain,
                         sc_coords.o_gamma,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         1,
                         residue_id,
@@ -261,7 +321,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::CSidechain,
                         sc_coords.c_gamma2,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         1,
                         residue_id,
@@ -270,7 +330,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::OSidechain,
                         sc_coords.o_gamma1,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         2,
                         residue_id,
@@ -305,7 +365,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::OSidechain,
                         sc_coords.o_delta1,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         1,
                         residue_id,
@@ -314,7 +374,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::NSidechain,
                         sc_coords.n_delta2,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         2,
                         residue_id,
@@ -358,7 +418,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::OSidechain,
                         sc_coords.o_eps1,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         1,
                         residue_id,
@@ -367,7 +427,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::NSidechain,
                         sc_coords.n_eps2,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         2,
                         residue_id,
@@ -403,7 +463,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::CSidechain,
                         sc_coords.c_delta,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         1,
                         residue_id,
@@ -429,7 +489,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::CSidechain,
                         sc_coords.c_gamma1,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         1,
                         residue_id,
@@ -447,7 +507,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::CSidechain,
                         sc_coords.c_delta,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         1,
                         residue_id,
@@ -482,7 +542,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::CSidechain,
                         sc_coords.c_delta1,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         1,
                         residue_id,
@@ -491,7 +551,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::CSidechain,
                         sc_coords.c_delta2,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         2,
                         residue_id,
@@ -571,7 +631,7 @@ impl ProteinCoords {
                     add_atom(
                         BackboneRole::OSidechain,
                         sc_coords.o_eta,
-                        Quaternion::new_identity(),
+                        Q_I,
                         &mut backbone,
                         1,
                         residue_id,
