@@ -882,7 +882,7 @@ impl Tyr {
             c_delta1_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
-            TAU_DIV2,
+            0.,
             c_delta1,
             c_gamma,
             unsafe { BOND_OUT1 },
@@ -900,13 +900,14 @@ impl Tyr {
             LEN_SC,
         );
 
+        // We anchor c_zeta off eps1.
         let (c_zeta, c_zeta_orientation) = find_atom_placement(
-            c_eps2_orientation,
+            c_eps1_orientation,
             unsafe { BOND_TO_PREV },
             unsafe { BOND_OUT1 },
             TAU_DIV2,
-            c_eps2,
-            c_delta2,
+            c_eps1,
+            c_delta1,
             unsafe { BOND_OUT1 },
             LEN_SC,
         );

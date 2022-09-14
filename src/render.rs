@@ -34,7 +34,7 @@ pub const BOND_N_SIDES: usize = 10;
 
 // These sensitivities are in units (position), or radians (orientation) per second.
 pub const CAM_MOVE_SENS: f64 = 1.1;
-pub const CAM_ROTATE_SENS: f64 = 0.3;
+pub const CAM_ROTATE_SENS: f64 = 0.2;
 pub const CAM_ROTATE_KEY_SENS: f64 = 0.5;
 // Move speed multiplier when the run modifier key is held.
 pub const RUN_FACTOR: f64 = 5.;

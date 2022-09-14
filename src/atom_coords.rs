@@ -597,7 +597,7 @@ impl ProteinCoords {
                         sc_coords.c_delta2,
                         sc_coords.c_delta2_orientation,
                         &mut backbone,
-                        2,
+                        2, // to gamma
                         residue_id,
                         &mut atom_id,
                     );
@@ -606,7 +606,7 @@ impl ProteinCoords {
                         sc_coords.c_eps1,
                         sc_coords.c_eps1_orientation,
                         &mut backbone,
-                        1,
+                        2, // to delta1
                         residue_id,
                         &mut atom_id,
                     );
@@ -615,7 +615,7 @@ impl ProteinCoords {
                         sc_coords.c_eps2,
                         sc_coords.c_eps2_orientation,
                         &mut backbone,
-                        2,
+                        2, // to delta2
                         residue_id,
                         &mut atom_id,
                     );
@@ -624,7 +624,7 @@ impl ProteinCoords {
                         sc_coords.c_zeta,
                         sc_coords.c_zeta_orientation,
                         &mut backbone,
-                        1,
+                        2, // to eps1
                         residue_id,
                         &mut atom_id,
                     );
