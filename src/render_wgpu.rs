@@ -86,6 +86,8 @@ fn device_event_handler(
 
     // We count starting at 1, per chem conventions.
     let ar_i = unsafe { state.active_residue } - 1;
+    // code shortener
+    let mut active_res = unsafe { &mut state.protein_descrip.residues[ar_i] };
 
     let mut rotation_amt = crate::BOND_ROTATION_SPEED * dt as f64;
 
@@ -148,75 +150,67 @@ fn device_event_handler(
                         }
                         20 => {
                             // T
-                            state.protein_descrip.residues[ar_i].φ += rotation_amt;
+                            active_res.φ += rotation_amt;
                             changed = true;
                         }
                         34 => {
                             // G
-                            state.protein_descrip.residues[ar_i].φ -= rotation_amt;
+                            active_res.φ -= rotation_amt;
                             changed = true;
                         }
                         21 => {
                             // Y
-                            state.protein_descrip.residues[ar_i].ψ += rotation_amt;
+                            active_res.ψ += rotation_amt;
                             changed = true;
                         }
                         35 => {
                             // H
-                            state.protein_descrip.residues[ar_i].ψ -= rotation_amt;
+                            active_res.ψ -= rotation_amt;
                             changed = true;
                         }
                         22 => {
                             // U
-                            state.protein_descrip.residues[ar_i].ω += rotation_amt;
+                            active_res.ω += rotation_amt;
                             changed = true;
                         }
                         36 => {
                             // J
-                            state.protein_descrip.residues[ar_i].ω -= rotation_amt;
+                            active_res.ω -= rotation_amt;
                             changed = true;
                         }
                         23 => {
                             // I
-                            state.protein_descrip.residues[ar_i]
-                                .sidechain
-                                .add_to_χ1(rotation_amt);
+                            active_res.sidechain.add_to_χ1(rotation_amt);
                             changed = true;
                         }
                         37 => {
                             // K
-                            state.protein_descrip.residues[ar_i]
-                                .sidechain
-                                .add_to_χ1(-rotation_amt);
+                            active_res.sidechain.add_to_χ1(-rotation_amt);
                             changed = true;
                         }
                         24 => {
                             // O
-                            state.protein_descrip.residues[ar_i]
-                                .sidechain
-                                .add_to_χ2(rotation_amt);
+                            active_res.sidechain.add_to_χ2(rotation_amt);
                             changed = true;
                         }
                         38 => {
                             // L
-                            state.protein_descrip.residues[ar_i]
-                                .sidechain
-                                .add_to_χ2(-rotation_amt);
+                            active_res.sidechain.add_to_χ2(-rotation_amt);
                             changed = true;
                         }
                         36 => {
                             // P
-                            state.protein_descrip.residues[ar_i]
-                                .sidechain
-                                .add_to_χ3(rotation_amt);
+                            active_res.sidechain.add_to_χ3(rotation_amt);
                             changed = true;
                         }
                         39 => {
                             // ;
-                            state.protein_descrip.residues[ar_i]
-                                .sidechain
-                                .add_to_χ3(-rotation_amt);
+                            active_res.sidechain.add_to_χ3(-rotation_amt);
                             changed = true;
+                        }
+                        29 => {
+                            // Left ctrl
+                            println!("Active res id: {}\n{}", state.active_residue, active_res);
                         }
                         // todo: Sidechain dihedral angles
                         _ => {}

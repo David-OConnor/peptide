@@ -3,7 +3,7 @@
 //!
 //! https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2810841/
 
-use core::f64::consts::TAU;
+use std::{f64::consts::TAU, fmt};
 
 use crate::{
     chem_definitions::{AminoAcidType, AtomType, BackboneRole},
@@ -306,6 +306,20 @@ pub struct Residue {
     /// Contains the χ angles that define t
     pub sidechain: Sidechain,
     pub dipole: Vec3,
+}
+
+impl fmt::Display for Residue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // todo: Round
+        write!(
+            f,
+            "{}\n ω: {:.2}τ, φ: {:.2}τ ψ: {:.2}τ\n",
+            self.sidechain,
+            self.ω / TAU,
+            self.φ / TAU,
+            self.ψ / TAU
+        )
+    }
 }
 
 impl Residue {

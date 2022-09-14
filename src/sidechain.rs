@@ -3,7 +3,7 @@
 // Don't show warnings for unused AAs etc.
 #![allow(dead_code)]
 
-use core::f64::consts::TAU;
+use std::{f64::consts::TAU, fmt};
 
 use crate::{
     chem_definitions::{AminoAcidType, AtomType},
@@ -77,6 +77,100 @@ pub enum Sidechain {
     Phe(Phe),
     Tyr(Tyr),
     Trp(Trp),
+}
+
+impl fmt::Display for Sidechain {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Arg(aa) => {
+                write!(
+                    f,
+                    "Arg (R)\n χ1: {:.2}τ χ2: {:.2}τ χ3: {:.2}τ χ4: {:.2}τ χ5: {:.2}τ",
+                    aa.χ_1, aa.χ_2, aa.χ_3, aa.χ_4, aa.χ_5
+                )
+            }
+            Self::His(aa) => {
+                write!(f, "His (H)\n χ1: {:.2}τ χ2: {:.2}τ", aa.χ_1, aa.χ_2)
+            }
+            Self::Lys(aa) => {
+                write!(
+                    f,
+                    "Lys (K)\n χ1: {:.2}τ χ2: {:.2}τ χ3: {:.2}τ χ4: {:.2}τ",
+                    aa.χ_1, aa.χ_2, aa.χ_3, aa.χ_4
+                )
+            }
+            Self::Asp(aa) => {
+                write!(f, "Asp (D)\n χ1: {:.2}τ χ2: {:.2}τ", aa.χ_1, aa.χ_2)
+            }
+            Self::Glu(aa) => {
+                write!(
+                    f,
+                    "Glu\n χ1: {:.2}τ χ2: {:.2}τ χ3: {:.2}τ",
+                    aa.χ_1, aa.χ_2, aa.χ_3
+                )
+            }
+            Self::Ser(aa) => {
+                write!(f, "Ser(S)\n χ1: {:.2}τ", aa.χ_1)
+            }
+            Self::Thr(aa) => {
+                write!(f, "Thr (T)\n χ1: {:.2}τ", aa.χ_1)
+            }
+            Self::Asn(aa) => {
+                write!(f, "Asn (N)\n χ1: {:.2}τ χ2: {:.2}τ", aa.χ_1, aa.χ_2)
+            }
+            Self::Gln(aa) => {
+                write!(
+                    f,
+                    "Gln (Q)\n χ1: {:.2}τ χ2: {:.2}τ χ3: {:.2}τ",
+                    aa.χ_1, aa.χ_2, aa.χ_3
+                )
+            }
+            Self::Cys(aa) => {
+                write!(f, "Cys (C)\n χ1: {:.2}τ", aa.χ_1)
+            }
+            Self::Sec(aa) => {
+                write!(f, "Sec (U)\n χ1: {:.2}τ", aa.χ_1)
+            }
+            Self::Gly(aa) => {
+                write!(f, "Gly (G)")
+            }
+            Self::Pro(aa) => {
+                write!(f, "Pro (P)")
+            }
+            Self::Ala(aa) => {
+                write!(f, "Ala (A)")
+            }
+            Self::Val(aa) => {
+                write!(f, "Val (V)\n χ1: {:.2}τ", aa.χ_1)
+            }
+            Self::Ile(aa) => {
+                write!(f, "Ile (I)\n χ1: {:.2}τ χ2: {:.2}τ", aa.χ_1, aa.χ_2)
+            }
+            Self::Leu(aa) => {
+                write!(f, "Leu (L)\n χ1: {:.2}τ χ2: {:.2}τ", aa.χ_1, aa.χ_2)
+            }
+            Self::Met(aa) => {
+                write!(
+                    f,
+                    "Met (M)\n χ1: {:.2}τ χ2: {:.2}τ χ3: {:.2}τ",
+                    aa.χ_1, aa.χ_2, aa.χ_3
+                )
+            }
+            Self::Phe(aa) => {
+                write!(f, "Phe (F)\n χ1: {:.2}τ χ2: {:.2}τ", aa.χ_1, aa.χ_2)
+            }
+            Self::Tyr(aa) => {
+                write!(f, "Tyr (Y)\n χ1: {:.2}τ χ2: {:.2}τ", aa.χ_1, aa.χ_2)
+            }
+            Self::Trp(aa) => {
+                write!(
+                    f,
+                    "Trp (W)\n χ1: {:.2}τ χ2: {:.2}τ χ3: {:.2}τ",
+                    aa.χ_1, aa.χ_2, aa.χ_3
+                )
+            }
+        }
+    }
 }
 
 impl Sidechain {
