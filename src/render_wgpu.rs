@@ -26,6 +26,8 @@ use crate::{
 static mut state: State = unsafe {
     State {
         protein_descrip: ProteinDescription {
+            name: String::new(),
+            pdb_ident: String::new(),
             residues: Vec::new(),
         },
         protein_coords: ProteinCoords {
@@ -240,6 +242,17 @@ fn render_handler() -> Option<Vec<Entity>> {
     None
 }
 
+/// todo: Use a vec with vec ops instead?
+fn avg_colors(color1: (f32, f32, f32), color2: (f32, f32, f32)) -> (f32, f32, f32) {
+    let a = color1.0 + color2.0 / 2.;
+    let b = color1.1 + color2.1 / 2.;
+    let c = color1.2 + color2.2 / 2.;
+
+    let mag = (a.powi(2) + b.powi(2) + c.powi(2)).sqrt();
+    // todo: Normalize
+    (a / mag, b / mag, c / mag)
+}
+
 /// Generates entities from protein coordinates.
 fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
     let mut result = Vec::new();
@@ -251,7 +264,7 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
 
     for (id, atom) in atoms_backbone.iter().enumerate() {
         let atom_color = if unsafe { state.active_residue } == atom.residue_id {
-            ACTIVE_COLOR_ATOM // normalized?
+            avg_colors(ACTIVE_COLOR_ATOM, atom.role.render_color())
         } else {
             atom.role.render_color()
         };

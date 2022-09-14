@@ -9,6 +9,8 @@ edition = "2021"
 graphics = { path = "../graphics_wgpu" }
 lin_alg2 = { path = "../lin_alg" }
 
+winit = "^0.27.2"
+
 # todo: Should this GUI lib be in the engine or here?
 #egui = "^0.19.0"
 eframe = "^0.19.0" # todo what?

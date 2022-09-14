@@ -17,10 +17,11 @@
 
 // Doe sfolding begin starting at the end extruded?
 
-use std::f64::consts::TAU;
+use std::{f64::consts::TAU, thread};
 
 mod atom_coords;
 mod chem_definitions;
+mod gui;
 mod kinematics;
 mod proteins;
 mod render;
@@ -67,6 +68,8 @@ impl Default for State {
     fn default() -> Self {
         Self {
             protein_descrip: ProteinDescription {
+                name: "".to_owned(),
+                pdb_ident: "".to_owned(),
                 residues: Vec::new(),
             },
             protein_coords: ProteinCoords {
@@ -146,15 +149,21 @@ impl eframe::App for MyApp {
 
 fn main() {
     kinematics::init_local_bond_vecs();
+
+    // thread::spawn(|| {
+    //     gui::setup();
+    // });
+
     // todo: unsafe here is temp due to not getting Fn closure support working.
     unsafe {
         render_wgpu::run();
     }
 
-    let options = eframe::NativeOptions::default();
-    eframe::run_native(
-        "My egui App",
-        options,
-        Box::new(|_cc| Box::new(MyApp::default())),
-    );
+    //
+    // let options = eframe::NativeOptions::default();
+    // eframe::run_native(
+    //     "My egui App",
+    //     options,
+    //     Box::new(|_cc| Box::new(MyApp::default())),
+    // );
 }

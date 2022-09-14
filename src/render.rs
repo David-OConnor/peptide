@@ -4,19 +4,23 @@ use crate::chem_definitions::BackboneRole;
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
+// todo: These should probably all be vecs and normalized.
+
 pub const BACKGROUND_COLOR: (f32, f32, f32) = (0.9, 0.9, 0.9);
 
 pub const BOND_COLOR_BACKBONE: (f32, f32, f32) = (0.2, 0.2, 0.2);
 pub const BOND_COLOR_SIDECHAIN: (f32, f32, f32) = (0.6, 0.6, 0.8);
 
 // Atom colors
-pub const CALPHA_COLOR: (f32, f32, f32) = (0.7, 0.86, 0.66);
-pub const CP_COLOR: (f32, f32, f32) = (0.86, 0.82, 0.68);
+pub const CALPHA_COLOR: (f32, f32, f32) = (0.2, 0.6, 0.2);
+pub const CP_COLOR: (f32, f32, f32) = (0.4, 0.4, 0.2);
 pub const N_COLOR: (f32, f32, f32) = (0., 0., 1.);
 pub const O_COLOR: (f32, f32, f32) = (1., 0., 0.);
-pub const C_SIDECHAIN_COLOR: (f32, f32, f32) = (0.5, 0.5, 0.5);
+pub const C_SIDECHAIN_COLOR: (f32, f32, f32) = (0.333, 0.333, 0.333);
 
-pub const ACTIVE_COLOR_ATOM: (f32, f32, f32) = (0.6, 0.3, 0.1);
+// Note: This active color is deliberately not normalized, so it comes out weaker in saturation,
+// but brighter in the avg with the atom color.
+pub const ACTIVE_COLOR_ATOM: (f32, f32, f32) = (2., 1., 0.3);
 
 pub const LIGHT_INTENSITY: f32 = 5_000.0;
 

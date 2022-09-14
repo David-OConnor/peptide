@@ -638,6 +638,104 @@ impl ProteinCoords {
                         &mut atom_id,
                     );
                 }
+                Sidechain::Trp(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_gamma,
+                        sc_coords.c_gamma_orientation,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_delta1,
+                        sc_coords.c_delta1_orientation,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::NSidechain,
+                        sc_coords.n_delta2,
+                        sc_coords.n_delta2_orientation,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_eps1,
+                        sc_coords.c_eps1_orientation,
+                        &mut backbone,
+                        3, // Back to gamma.
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_eps2,
+                        sc_coords.c_eps2_orientation,
+                        &mut backbone,
+                        1, // Connected to eps1.
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_zeta1,
+                        sc_coords.c_zeta1_orientation,
+                        &mut backbone,
+                        2, // Back to eps1.
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_zeta2,
+                        sc_coords.c_zeta2_orientation,
+                        &mut backbone,
+                        2, // Back to eps2.
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_eta1,
+                        Q_I,
+                        &mut backbone,
+                        2, // Back to zeta1
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        BackboneRole::CSidechain,
+                        sc_coords.c_eta2,
+                        Q_I,
+                        &mut backbone,
+                        2, // Back to zeta2
+                        residue_id,
+                        &mut atom_id,
+                    );
+                }
                 _ => (), // todo; rest are not implemented yet in `sidechains` module
             }
 

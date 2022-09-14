@@ -15,19 +15,6 @@ use lin_alg2::f64::{Quaternion, Vec3};
 
 const TAU_DIV2: f64 = TAU / 2.;
 
-// /// An atom, in a sidechain
-// #[derive(Debug)]
-// pub struct AtomSidechain {
-//     /// type of Atom, eg Carbon, Oxygen etc
-//     pub role: AtomType,
-//     /// Local position, anchored to Calpha = 0, 0, 0
-//     /// todo: Orientation of side chain rel to Calpha?
-//     pub position: Vec3,
-// }
-
-// Note: Carbon alpha here isn't the same as
-// the backbone carbon alpha this is connected to!
-
 // todo: These are temp
 pub const LEN_SC: f64 = 1.53;
 
@@ -956,6 +943,154 @@ impl Tyr {
     }
 }
 
+impl Trp {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsTrp {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            unsafe { BOND_TO_PREV },
+            unsafe { BOND_OUT1 },
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (c_gamma, c_gamma_orientation) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { BOND_TO_PREV },
+            unsafe { BOND_OUT1 },
+            self.χ_2,
+            c_beta,
+            c_alpha,
+            unsafe { BOND_OUT1 },
+            LEN_SC,
+        );
+
+        // Trp's delta 1 and 2 are the ones not connecting to the second
+        // ring.
+        let (c_delta1, c_delta1_orientation) = find_atom_placement(
+            c_gamma_orientation,
+            unsafe { BOND_TO_PREV },
+            unsafe { BOND_OUT1 },
+            TAU_DIV2,
+            c_gamma,
+            c_beta,
+            unsafe { BOND_OUT1 },
+            LEN_SC,
+        );
+
+        let (n_delta2, n_delta2_orientation) = find_atom_placement(
+            c_delta1_orientation,
+            unsafe { BOND_TO_PREV },
+            unsafe { BOND_OUT1 },
+            TAU_DIV2,
+            c_delta1,
+            c_gamma,
+            unsafe { BOND_OUT1 },
+            LEN_SC,
+        );
+
+        // eps1 and eps2 are shared between the 2 rings.
+        let (c_eps1, c_eps1_orientation) = find_atom_placement(
+            c_gamma_orientation,
+            unsafe { BOND_TO_PREV },
+            unsafe { BOND_OUT1 },
+            TAU_DIV2,
+            c_gamma,
+            c_beta,
+            unsafe { BOND_OUT2 },
+            LEN_SC,
+        );
+
+        // Note: We've chosen to attach eps2 to eps1; another option
+        // would be attaching it to delta2.
+        let (c_eps2, c_eps2_orientation) = find_atom_placement(
+            c_eps1_orientation,
+            unsafe { BOND_TO_PREV },
+            unsafe { BOND_OUT1 },
+            TAU_DIV2,
+            c_eps1,
+            c_gamma,
+            unsafe { BOND_OUT1 },
+            LEN_SC,
+        );
+
+        let (c_zeta1, c_zeta1_orientation) = find_atom_placement(
+            c_eps1_orientation,
+            unsafe { BOND_TO_PREV },
+            unsafe { BOND_OUT1 },
+            // TAU_DIV2,
+            self.χ_3, // todo: How do you sort out this hinge?
+            c_eps1,
+            c_gamma,
+            unsafe { BOND_OUT2 },
+            LEN_SC,
+        );
+
+        let (c_zeta2, c_zeta2_orientation) = find_atom_placement(
+            c_eps2_orientation,
+            unsafe { BOND_TO_PREV },
+            unsafe { BOND_OUT1 },
+            self.χ_3, // todo: How do you sort out this hinge?
+            // 0., // todo: How do you sort out this hinge?
+            c_eps2,
+            c_eps1,
+            unsafe { BOND_OUT1 },
+            LEN_SC,
+        );
+
+        let (c_eta1, _) = find_atom_placement(
+            c_zeta1_orientation,
+            unsafe { BOND_TO_PREV },
+            unsafe { BOND_OUT1 },
+            0.,
+            c_zeta1,
+            c_eps1,
+            unsafe { BOND_OUT1 },
+            LEN_SC,
+        );
+
+        let (c_eta2, _) = find_atom_placement(
+            c_zeta2_orientation,
+            unsafe { BOND_TO_PREV },
+            unsafe { BOND_OUT1 },
+            TAU_DIV2,
+            c_zeta2,
+            c_eps2,
+            unsafe { BOND_OUT1 },
+            LEN_SC,
+        );
+
+        CoordsTrp {
+            c_beta,
+            c_gamma,
+            c_delta1,
+            n_delta2,
+            c_eps1,
+            c_eps2,
+            c_zeta1,
+            c_zeta2,
+            c_eta1,
+            c_eta2,
+
+            c_beta_orientation,
+            c_gamma_orientation,
+            c_delta1_orientation,
+            n_delta2_orientation,
+            c_eps1_orientation,
+            c_eps2_orientation,
+            c_zeta1_orientation,
+            c_zeta2_orientation,
+        }
+    }
+}
+
 /// These are global coordinates. Analog to `BackboneCoordsAa`
 #[derive(Debug, Default)]
 pub struct CoordsArg {
@@ -1093,6 +1228,19 @@ pub struct CoordsLeu {
 }
 
 #[derive(Debug, Default)]
+pub struct CoordsGly {}
+
+#[derive(Debug, Default)]
+pub struct CoordsPro {
+    pub c_beta: Vec3,
+    pub c_gamma: Vec3,
+    pub c_delta: Vec3,
+
+    pub c_beta_orientation: Quaternion,
+    pub c_gamma_orientation: Quaternion,
+}
+
+#[derive(Debug, Default)]
 pub struct CoordsTyr {
     pub c_beta: Vec3,
     pub c_gamma: Vec3,
@@ -1113,16 +1261,28 @@ pub struct CoordsTyr {
 }
 
 #[derive(Debug, Default)]
-pub struct CoordsGly {}
-
-#[derive(Debug, Default)]
-pub struct CoordsPro {
+pub struct CoordsTrp {
     pub c_beta: Vec3,
     pub c_gamma: Vec3,
-    pub c_delta: Vec3,
+    pub c_delta1: Vec3,
+    pub n_delta2: Vec3,
+    /// eps 1 and 2 are shared between the two rings.
+    pub c_eps1: Vec3,
+    pub c_eps2: Vec3,
+    /// zeta 1 is connected to eps1. zeta 2 is connected to eps2.
+    pub c_zeta1: Vec3,
+    pub c_zeta2: Vec3,
+    pub c_eta1: Vec3,
+    pub c_eta2: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
+    pub c_delta1_orientation: Quaternion,
+    pub n_delta2_orientation: Quaternion,
+    pub c_eps1_orientation: Quaternion,
+    pub c_eps2_orientation: Quaternion,
+    pub c_zeta1_orientation: Quaternion,
+    pub c_zeta2_orientation: Quaternion,
 }
 
 // todo: Coord structs for the remaining AAs.
@@ -1395,6 +1555,8 @@ impl Default for Tyr {
 pub struct Trp {
     pub χ_1: f64,
     pub χ_2: f64,
+    /// χ_3 is the rotation angle between the 2 rings.
+    pub χ_3: f64,
 }
 
 impl Default for Trp {
@@ -1402,6 +1564,9 @@ impl Default for Trp {
         Self {
             χ_1: TAU_DIV2,
             χ_2: TAU_DIV2,
+            // todo: Make sure this is anchored correctly; it may
+            // todo behave differently from single-atom angles.
+            χ_3: TAU_DIV2,
         }
     }
 }

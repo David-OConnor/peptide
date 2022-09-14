@@ -1614,6 +1614,7 @@ dependencies = [
  "egui-winit",
  "graphics",
  "lin_alg2",
+ "winit",
 ]
 
 [[package]]

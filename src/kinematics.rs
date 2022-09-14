@@ -175,6 +175,8 @@ pub fn init_local_bond_vecs() {
 #[derive(Debug)]
 /// A protein defined by AminoAcids: Name and bond angle.
 pub struct ProteinDescription {
+    pub name: String,
+    pub pdb_ident: String,
     pub residues: Vec<Residue>,
 }
 
