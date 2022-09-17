@@ -49,7 +49,6 @@ pub enum Sidechain {
     Asn(Asn),
     Gln(Gln),
     Cys(Cys),
-    Sec(Sec),
     Gly(Gly),
     Pro(Pro),
     Ala(Ala),
@@ -60,6 +59,8 @@ pub enum Sidechain {
     Phe(Phe),
     Tyr(Tyr),
     Trp(Trp),
+    /// Sec is not one of the most-common 20.
+    Sec(Sec),
 }
 
 impl fmt::Display for Sidechain {

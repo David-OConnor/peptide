@@ -21,6 +21,18 @@ pub struct ProteinDescription {
     pub residues: Vec<Residue>,
 }
 
+impl fmt::Display for ProteinDescription {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Name: {} PDB ident: {}, Residues:\n\n", self.name, self.pdb_ident);
+
+        for (i, residue) in self.residues.iter().enumerate() {
+            write!(f, "Id {} - {}\n", i + 1, residue);
+        }
+
+        Ok(())
+    }
+}
+
 /// Holds backbone atom coordinates and orientations, relative to the alpha carbon, for
 /// a single amino acid. Generated from an AA's bond angles.
 ///
@@ -151,7 +163,6 @@ pub struct Residue {
 
 impl fmt::Display for Residue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // todo: Round
         write!(
             f,
             "{}\nω: {:.2}τ, φ: {:.2}τ ψ: {:.2}τ\n",

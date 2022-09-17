@@ -94,25 +94,31 @@ fn init_protein() -> ProteinDescription {
     let φ_sheet = -140. * TAU / 360.;
     let ψ_sheet = 135. * TAU / 360.;
 
-    let mut residues = Vec::new();
-    for i in 0..4 {
-        residues.push(
-            // ω, φ, ψ
-            Residue::new(
-                1. / 2. * TAU,
-                φ_sheet,
-                ψ_sheet,
-                Sidechain::Gly(sidechain::Gly {}),
-                // Sidechain::Arg(sidechain::Arg {
-                //     χ_1: 1. / 2. * TAU,
-                //     χ_2: 1. / 2. * TAU,
-                //     χ_3: 1. / 2. * TAU,
-                //     χ_4: 1. / 2. * TAU,
-                //     χ_5: 1. / 2. * TAU,
-                // }),
-            ),
-        );
-    }
+    // let mut residues = Vec::new();
+    // for i in 0..4 {
+    //     residues.push(
+    //         // ω, φ, ψ
+    //         Residue::new(
+    //             1. / 2. * TAU,
+    //             φ_sheet,
+    //             ψ_sheet,
+    //             Sidechain::Gly(sidechain::Gly {}),
+    //             // Sidechain::Arg(sidechain::Arg {
+    //             //     χ_1: 1. / 2. * TAU,
+    //             //     χ_2: 1. / 2. * TAU,
+    //             //     χ_3: 1. / 2. * TAU,
+    //             //     χ_4: 1. / 2. * TAU,
+    //             //     χ_5: 1. / 2. * TAU,
+    //             // }),
+    //         ),
+    //     );
+    // }
+
+    let prot_test = proteins::make_trp_cage();
+    prot_test.save("trp_cage.prot");
+
+    let prot_test_load = ProteinDescription::load("trp_cage.prot");
+    println!("Loaded: {}", prot_test_load);
 
     // ProteinDescription { residues }
     proteins::make_trp_cage()

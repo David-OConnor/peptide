@@ -18,9 +18,9 @@ use lin_alg2::{
 
 use crate::{
     atom_coords::{AtomCoords, ProteinCoords},
+    bond_vecs::{LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA},
     chem_definitions::BackboneRole,
     kinematics::ProteinDescription,
-    bond_vecs::{LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA},
     render::{
         self, ACTIVE_COLOR_ATOM, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
         BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS,

@@ -28,7 +28,7 @@ pub const LIGHT_INTENSITY: f32 = 5_000.0;
 pub const ATOM_SHINYNESS: f32 = 1.;
 pub const BOND_SHINYNESS: f32 = 1.;
 
-pub const BOND_RADIUS_BACKBONE: f32 = 0.07;
+pub const BOND_RADIUS_BACKBONE: f32 = 0.10;
 pub const BOND_RADIUS_SIDECHAIN: f32 = 0.03;
 pub const BOND_N_SIDES: usize = 10;
 
