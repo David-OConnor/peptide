@@ -40,7 +40,7 @@ pub const CAM_ROTATE_KEY_SENS: f64 = 0.5;
 pub const RUN_FACTOR: f64 = 5.;
 
 // Render size of an atom, on a [polyhedron] side.
-pub const SIDE_LEN: f32 = 0.3;
+pub const SIDE_LEN: f32 = 0.4;
 
 pub const DT: f64 = 1. / 60.;
 

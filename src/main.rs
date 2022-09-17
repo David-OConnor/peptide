@@ -20,12 +20,14 @@
 use std::{f64::consts::TAU, thread};
 
 mod atom_coords;
+mod bond_vecs;
 mod chem_definitions;
 mod gui;
 mod kinematics;
 mod proteins;
 mod render;
 mod render_wgpu;
+mod save_load;
 mod sidechain;
 
 use atom_coords::ProteinCoords;
@@ -148,7 +150,7 @@ impl eframe::App for MyApp {
 }
 
 fn main() {
-    kinematics::init_local_bond_vecs();
+    bond_vecs::init_local_bond_vecs();
 
     // thread::spawn(|| {
     //     gui::setup();

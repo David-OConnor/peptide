@@ -7,10 +7,20 @@ use std::{
     sync::Mutex,
 };
 
+use graphics::{
+    self, lighting, Camera, DeviceEvent, ElementState, Entity, InputSettings, Lighting, Mesh, Scene,
+};
+
+use lin_alg2::{
+    self,
+    f64::{Quaternion, Vec3},
+};
+
 use crate::{
     atom_coords::{AtomCoords, ProteinCoords},
     chem_definitions::BackboneRole,
-    kinematics::{ProteinDescription, LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA},
+    kinematics::ProteinDescription,
+    bond_vecs::{LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA},
     render::{
         self, ACTIVE_COLOR_ATOM, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
         BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS,
@@ -48,15 +58,6 @@ static mut state: State = unsafe {
             },
         },
     }
-};
-
-use graphics::{
-    self, lighting, DeviceEvent, ElementState, Entity, InputSettings, Lighting, Mesh, Scene,
-};
-
-use lin_alg2::{
-    self,
-    f64::{Quaternion, Vec3},
 };
 
 // The length-wise axis of our graphics engine's cylinder mesh.
@@ -263,9 +264,14 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
             atom.role.render_color()
         };
 
+        let atom_mesh = match atom.role {
+            BackboneRole::N | BackboneRole::Cα | BackboneRole::Cp | BackboneRole::O => 0,
+            _ => 1,
+        };
+
         // The atom
         result.push(Entity::new(
-            0,
+            atom_mesh,
             vec3_to_f32(atom.position),
             quat_to_f32(atom.orientation),
             1.,
@@ -316,13 +322,13 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
             // let color = Color::rgb(color_a.0, color_a.1, color_a.2).into();
 
             let (bond_len, bond_mesh) = match atom.role {
-                BackboneRole::N => (LEN_CP_N as f32, 1),
-                BackboneRole::Cα => (LEN_N_CALPHA as f32, 1),
-                BackboneRole::Cp => (LEN_CALPHA_CP as f32, 1),
-                BackboneRole::O => (LEN_CP_O as f32, 1),
-                BackboneRole::CSidechain => (LEN_SC as f32, 2),
-                BackboneRole::OSidechain => (LEN_SC as f32, 2),
-                BackboneRole::NSidechain => (LEN_SC as f32, 2),
+                BackboneRole::N => (LEN_CP_N as f32, 2),
+                BackboneRole::Cα => (LEN_N_CALPHA as f32, 2),
+                BackboneRole::Cp => (LEN_CALPHA_CP as f32, 2),
+                BackboneRole::O => (LEN_CP_O as f32, 2),
+                BackboneRole::CSidechain => (LEN_SC as f32, 3),
+                BackboneRole::OSidechain => (LEN_SC as f32, 3),
+                BackboneRole::NSidechain => (LEN_SC as f32, 3),
             };
 
             // todo: Sidechain mesh and color.
@@ -358,12 +364,15 @@ pub unsafe fn run() {
 
     let mut scene = Scene {
         meshes: vec![
-            Mesh::new_tetrahedron(render::SIDE_LEN),
+            // Mesh::new_tetrahedron(render::SIDE_LEN),
+            Mesh::new_box(render::SIDE_LEN, render::SIDE_LEN, render::SIDE_LEN),
+            Mesh::new_sphere(render::SIDE_LEN / 2., 20, 20),
             // todo: Temp bond len. You prob need a mesh per possible len.
-            Mesh::new_cylinder(1.0, render::BOND_RADIUS_BACKBONE, render::BOND_N_SIDES),
-            Mesh::new_cylinder(1.0, render::BOND_RADIUS_SIDECHAIN, render::BOND_N_SIDES),
+            Mesh::new_cylinder(1.2, render::BOND_RADIUS_BACKBONE, render::BOND_N_SIDES),
+            Mesh::new_cylinder(1.2, render::BOND_RADIUS_SIDECHAIN, render::BOND_N_SIDES),
         ],
         entities,
+        camera: Camera::default(),
         lighting: Lighting::default(),
     };
 
