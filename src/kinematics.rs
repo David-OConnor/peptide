@@ -23,7 +23,11 @@ pub struct ProteinDescription {
 
 impl fmt::Display for ProteinDescription {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Name: {} PDB ident: {}, Residues:\n\n", self.name, self.pdb_ident);
+        write!(
+            f,
+            "\nName: {} PDB ident: {}, Residues:\n\n",
+            self.name, self.pdb_ident
+        );
 
         for (i, residue) in self.residues.iter().enumerate() {
             write!(f, "Id {} - {}\n", i + 1, residue);
@@ -46,16 +50,20 @@ impl fmt::Display for ProteinDescription {
 pub struct BackboneCoords {
     /// Cα
     pub cα: Vec3,
-    /// Carbon' atom bound to C_alpha
+    /// Carbon' atom bound to Cα
     pub cp: Vec3,
     /// Nitrogen atom of the next module.
     pub n_next: Vec3,
-    /// Oxygen atom bonded to c'
+    /// Oxygen atom bonded to C'
     pub o: Vec3,
+    /// HYdrogen atom bonded to N.
+    pub h_n: Vec3,
     pub cα_orientation: Quaternion,
     pub cp_orientation: Quaternion,
     pub n_next_orientation: Quaternion,
+    // todo: Do we want h and o orientations/
     pub o_orientation: Quaternion,
+    pub h_n_orientation: Quaternion,
 }
 
 /// Calculate the dihedral angle between 4 atoms.
@@ -251,15 +259,30 @@ impl Residue {
             LEN_CP_O,
         );
 
+        let (h_n, h_n_orientation) = find_atom_placement(
+            n_orientation,
+            H_N_BOND,
+            Vec3::new(0., 1., 0.), // arbitrary, since H doesn't continue the chain
+            0.,                    // arbitrary
+            n_pos,
+            // todo: n_next, or n_pos?
+            // cp,
+            prev_cp_pos, // todo: prev cp, or cp?
+            unsafe { N_H_BOND },
+            LEN_N_H,
+        );
+
         BackboneCoords {
             cα,
             cp,
             n_next,
             o,
+            h_n,
             cα_orientation,
             cp_orientation,
             n_next_orientation,
             o_orientation,
+            h_n_orientation,
         }
     }
 }

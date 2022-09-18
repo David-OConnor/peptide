@@ -23,7 +23,7 @@ const RESIDUE_START_I: usize = 96;
 
 const F64_SIZE: usize = 8;
 
-// Sidechain identifier (0 - 19), then up to 5 dihedral angles.
+// Sidechain amino acid identifier, then space for 5 dihedral angles.
 const SIDECHAIN_SIZE: usize = 1 + F64_SIZE * 5;
 const RESIDUE_SIZE: usize = SIDECHAIN_SIZE + 3 * F64_SIZE;
 

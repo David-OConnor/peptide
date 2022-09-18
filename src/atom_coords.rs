@@ -94,11 +94,21 @@ impl ProteinCoords {
             let bb_coords = res.backbone_cart_coords(prev_n_posit, prev_n_or, prev_cp_posit);
 
             add_atom(
+                BackboneRole::H_N,
+                bb_coords.h_n,
+                bb_coords.h_n_orientation,
+                &mut backbone,
+                1,
+                residue_id,
+                &mut atom_id,
+            );
+
+            add_atom(
                 BackboneRole::Cα,
                 bb_coords.cα,
                 bb_coords.cα_orientation,
                 &mut backbone,
-                1,
+                2, // Back 2 to skip the H bonded to N.
                 residue_id,
                 &mut atom_id,
             );

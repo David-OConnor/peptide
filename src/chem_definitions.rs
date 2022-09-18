@@ -92,6 +92,7 @@ pub enum BackboneRole {
     Cp,
     /// Oxygen double-bonded to C'
     O,
+    H_N,
     CSidechain,
     OSidechain,
     NSidechain,

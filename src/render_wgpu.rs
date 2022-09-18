@@ -18,7 +18,7 @@ use lin_alg2::{
 
 use crate::{
     atom_coords::{AtomCoords, ProteinCoords},
-    bond_vecs::{LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA},
+    bond_vecs::{LEN_CALPHA_CP, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA, LEN_N_H},
     chem_definitions::BackboneRole,
     kinematics::ProteinDescription,
     render::{
@@ -300,6 +300,7 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
                     cα_id
                 }
                 BackboneRole::O => cp_id,
+                BackboneRole::H_N => n_id,
             };
 
             // Calculate the position of the bond mesh: This is the cylinder's z point,
@@ -326,6 +327,7 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
                 BackboneRole::Cα => (LEN_N_CALPHA as f32, 2),
                 BackboneRole::Cp => (LEN_CALPHA_CP as f32, 2),
                 BackboneRole::O => (LEN_CP_O as f32, 2),
+                BackboneRole::H_N => (LEN_N_H as f32, 2),
                 BackboneRole::CSidechain => (LEN_SC as f32, 3),
                 BackboneRole::OSidechain => (LEN_SC as f32, 3),
                 BackboneRole::NSidechain => (LEN_SC as f32, 3),
@@ -365,7 +367,11 @@ pub unsafe fn run() {
     let mut scene = Scene {
         meshes: vec![
             // Mesh::new_tetrahedron(render::SIDE_LEN),
-            Mesh::new_box(render::SIDE_LEN, render::SIDE_LEN, render::SIDE_LEN),
+            Mesh::new_box(
+                render::SIDE_LEN * 0.7,
+                render::SIDE_LEN * 0.7,
+                render::SIDE_LEN * 0.7,
+            ),
             Mesh::new_sphere(render::SIDE_LEN / 2., 20, 20),
             // todo: Temp bond len. You prob need a mesh per possible len.
             Mesh::new_cylinder(1.2, render::BOND_RADIUS_BACKBONE, render::BOND_N_SIDES),
