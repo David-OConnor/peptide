@@ -12,8 +12,8 @@ pub const LEN_N_CALPHA: f64 = 1.46; // angstrom
 pub const LEN_CALPHA_CP: f64 = 1.53; // angstrom
 
 pub const LEN_CP_O: f64 = 1.2; // angstrom // todo placeholder!
+pub const LEN_CALPHA_H: f64 = 1.0; // angstrom // todo placeholder!
 pub const LEN_N_H: f64 = 1.0; // angstrom // todo placeholder!
-
 
 // Ideal bond angles. There are an approximation; from averages. Consider replacing with something
 // more robust later. All angles are in radians. We use degrees with math to match common sources.
@@ -29,7 +29,6 @@ pub const BOND_ANGLE_CALPHA_CP_R: f64 = 110.6 * TAU / 360.;
 pub const BOND_ANGLE_CALPHA_CP_N: f64 = 111.0 * TAU / 360.;
 pub const BOND_ANGLE_CALPHA_CP_H: f64 = 109.5 * TAU / 360.; // todo: Placeholder; Find this.
 pub const BOND_ANGLE_CALPHA_N_R: f64 = 110.6 * TAU / 360.; // todo: Placeholder; Find this.
-
 
 // todo: It would be more consistent to base all bonds off one (eg N), but the value we
 // todo found for the sidechain is from CP. Ideally, get CALPHA_N_R.
@@ -61,6 +60,12 @@ pub static mut CALPHA_N_BOND: Vec3 = Vec3 {
 };
 
 pub static mut CALPHA_R_BOND: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+pub static mut CALPHA_H_BOND: Vec3 = Vec3 {
     x: 0.,
     y: 0.,
     z: 0.,
@@ -98,6 +103,7 @@ pub static mut N_H_BOND: Vec3 = Vec3 {
 };
 
 pub const O_CP_BOND: Vec3 = ANCHOR_BOND_VEC;
+pub const H_CALPHA_BOND: Vec3 = ANCHOR_BOND_VEC;
 pub const H_N_BOND: Vec3 = ANCHOR_BOND_VEC;
 
 // todo: temp
@@ -134,9 +140,9 @@ fn find_third_bond_vec(
     bond2_rot_plane_norm: Vec3,
 ) -> Vec3 {
     // The angle between bond 2 and 3 must be within this (radians) to find our result.
-    const EPS: f64 = 0.05;
+    const EPS: f64 = 0.01;
     // The number of rotation plane to try.
-    const N_PLANES: usize = 60;
+    const N_PLANES: usize = 120;
 
     let rot_plane_incr = TAU / N_PLANES as f64;
 
@@ -150,16 +156,12 @@ fn find_third_bond_vec(
 
         // Rotate bond 1 around the angle between bond 1 and 3, along our iterated rotation angle.
         result = rotate_vec(bond1, angle_1_3, iterated_rot_plane_norm);
-        println!("RES: {:?}", result);
 
         // Measure the other constraint; the angle between bond 1 and our bond3 candidate.
         let angle_2_3_meas = (bond2.dot(result)).acos();
 
-        println!("ANGLE MEAS: {:?}", angle_2_3_meas);
-
         // Compare the other constraint against the target; the bond 1-3 angle.
         if (angle_2_3_meas - angle_2_3).abs() < EPS {
-            println!("FOUND IT");
             break;
         }
     }
@@ -190,16 +192,6 @@ pub fn init_local_bond_vecs() {
     // and N's Calpha bond. This is also the first sidechain bond out.
 
     unsafe {
-        println!("Calpha bonds:");
-        println!("C' {:?}", CALPHA_CP_BOND);
-        println!("N {:?}", CALPHA_N_BOND);
-        println!("R {:?}", CALPHA_R_BOND);
-
-
-        // println!("C' {:?}", CALPHA_N_BOND);
-    }
-
-    unsafe {
         // Find the second bond vectors. The initial anchor bonds (eg `CALPHA_CP_BOND`) are rotated
         // along the (underconstrained) normal plane above.
         CALPHA_N_BOND = rotate_vec(CALPHA_CP_BOND, BOND_ANGLE_CALPHA_CP_N, rot_plane_norm);
@@ -218,12 +210,23 @@ pub fn init_local_bond_vecs() {
         // todo taking an iterative approach based on that above. Long-term, you should
         // todo be able to calculate one of 2 valid choices (for carbon).
 
-
         CALPHA_R_BOND = find_third_bond_vec(
             CALPHA_CP_BOND,
             CALPHA_N_BOND,
             BOND_ANGLE_CALPHA_CP_R,
             BOND_ANGLE_CALPHA_N_R,
+            rot_plane_norm,
+        );
+
+        println!("CALPHA_R_BOND {:?}", CALPHA_R_BOND);
+
+        // todo: This is a 4th bond, and you don't have angles to it... this is a temp hack.
+        CALPHA_H_BOND = find_third_bond_vec(
+            CALPHA_CP_BOND,
+            CALPHA_N_BOND,
+            // todo: These value are placeholders.
+            60. * TAU / 360.,
+            300. * TAU / 360.,
             rot_plane_norm,
         );
 

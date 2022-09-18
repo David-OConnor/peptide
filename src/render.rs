@@ -28,7 +28,7 @@ pub const LIGHT_INTENSITY: f32 = 5_000.0;
 pub const ATOM_SHINYNESS: f32 = 1.;
 pub const BOND_SHINYNESS: f32 = 1.;
 
-pub const BOND_RADIUS_BACKBONE: f32 = 0.08;
+pub const BOND_RADIUS_BACKBONE: f32 = 0.09;
 pub const BOND_RADIUS_SIDECHAIN: f32 = 0.03;
 pub const BOND_N_SIDES: usize = 10;
 
@@ -72,6 +72,7 @@ impl BackboneRole {
         let n = N_COLOR;
         let o = O_COLOR;
         let h_n = H_COLOR;
+        let h_cα = H_COLOR;
         let cs = C_SIDECHAIN_COLOR;
 
         match self {
@@ -79,7 +80,8 @@ impl BackboneRole {
             Self::Cp => (cp.0, cp.1, cp.2),
             Self::N => (n.0, n.1, n.2),
             Self::O => (o.0, o.1, o.2),
-            Self::H_N => (h_n.0, h_n.1, h_n.2),
+            Self::HCα => (h_cα.0, h_cα.1, h_cα.2),
+            Self::HN => (h_n.0, h_n.1, h_n.2),
             Self::CSidechain => (cs.0, cs.1, cs.2),
             // todo: Consider a diff shade for n and o sidechain colors
             Self::NSidechain => (n.0, n.1, n.2),

@@ -291,7 +291,7 @@ impl Arg {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
             self.χ_1,
@@ -304,64 +304,64 @@ impl Arg {
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
             self.χ_2,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_delta, c_delta_orientation) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_3,
             c_gamma,
             c_beta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (n_eps, n_eps_orientation) = find_atom_placement(
             c_delta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_4,
             c_delta,
             c_gamma,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_zeta, c_zeta_orientation) = find_atom_placement(
             n_eps_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_5,
             n_eps,
             c_delta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (n_eta1, _) = find_atom_placement(
             c_zeta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_zeta,
             n_eps,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (n_eta2, _) = find_atom_placement(
             c_zeta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_zeta,
             n_eps,
@@ -403,7 +403,7 @@ impl Lys {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
             self.χ_1,
@@ -416,46 +416,46 @@ impl Lys {
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
             self.χ_2,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_delta, c_delta_orientation) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_3,
             c_gamma,
             c_beta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_eps, c_eps_orientation) = find_atom_placement(
             c_delta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_4,
             c_delta,
             c_gamma,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (n_zeta, _) = find_atom_placement(
             c_eps_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_eps,
             c_delta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
@@ -484,7 +484,7 @@ impl Asp {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
             self.χ_1,
@@ -497,31 +497,31 @@ impl Asp {
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
             self.χ_2,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (o_delta1, _) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_gamma,
             c_beta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (o_delta2, _) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_gamma,
             c_beta,
@@ -551,7 +551,7 @@ impl Ser {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_1,
             c_alpha,
             n_pos,
@@ -562,11 +562,11 @@ impl Ser {
         let (o_gamma, _) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
@@ -589,7 +589,7 @@ impl Thr {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_1,
             c_alpha,
             n_pos,
@@ -600,7 +600,7 @@ impl Thr {
         let (c_gamma2, _) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_beta,
             c_alpha,
@@ -611,11 +611,11 @@ impl Thr {
         let (o_gamma1, _) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
@@ -639,7 +639,7 @@ impl Asn {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_1,
             c_alpha,
             n_pos,
@@ -650,29 +650,29 @@ impl Asn {
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_2,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (o_delta1, _) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_gamma,
             c_beta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (n_delta2, _) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_gamma,
             c_beta,
@@ -702,7 +702,7 @@ impl Gln {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_1,
             c_alpha,
             n_pos,
@@ -713,40 +713,40 @@ impl Gln {
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_2,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_delta, c_delta_orientation) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_3,
             c_gamma,
             c_beta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (o_eps1, _) = find_atom_placement(
             c_delta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_delta,
             c_gamma,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (n_eps2, _) = find_atom_placement(
             c_delta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_delta,
             c_gamma,
@@ -789,7 +789,7 @@ impl Pro {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             0.,
             c_alpha,
             n_pos,
@@ -800,22 +800,22 @@ impl Pro {
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             0.,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_delta, _) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             0.,
             c_gamma,
             c_beta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
         CoordsPro {
@@ -839,7 +839,7 @@ impl Ile {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_1,
             c_alpha,
             n_pos,
@@ -850,11 +850,11 @@ impl Ile {
         let (c_gamma1, _) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
@@ -872,11 +872,11 @@ impl Ile {
         let (c_delta, _) = find_atom_placement(
             c_gamma2_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_gamma2,
             c_beta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
@@ -902,7 +902,7 @@ impl Leu {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_1,
             c_alpha,
             n_pos,
@@ -913,29 +913,29 @@ impl Leu {
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_2,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_delta1, _) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_gamma,
             c_beta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_delta2, _) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_gamma,
             c_beta,
@@ -965,7 +965,7 @@ impl Tyr {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_1,
             c_alpha,
             n_pos,
@@ -976,29 +976,29 @@ impl Tyr {
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_2,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_delta1, c_delta1_orientation) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_gamma,
             c_beta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_delta2, c_delta2_orientation) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_gamma,
             c_beta,
@@ -1009,22 +1009,22 @@ impl Tyr {
         let (c_eps1, c_eps1_orientation) = find_atom_placement(
             c_delta1_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             0.,
             c_delta1,
             c_gamma,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_eps2, c_eps2_orientation) = find_atom_placement(
             c_delta2_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             0.,
             c_delta2,
             c_gamma,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
@@ -1032,22 +1032,22 @@ impl Tyr {
         let (c_zeta, c_zeta_orientation) = find_atom_placement(
             c_eps1_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_eps1,
             c_delta1,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (o_eta, _) = find_atom_placement(
             c_zeta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_zeta,
             c_eps2,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
@@ -1082,7 +1082,7 @@ impl Trp {
         let (c_beta, c_beta_orientation) = find_atom_placement(
             c_alpha_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_1,
             c_alpha,
             n_pos,
@@ -1093,11 +1093,11 @@ impl Trp {
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_2,
             c_beta,
             c_alpha,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
@@ -1106,22 +1106,22 @@ impl Trp {
         let (c_delta1, c_delta1_orientation) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_gamma,
             c_beta,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (n_delta2, n_delta2_orientation) = find_atom_placement(
             c_delta1_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_delta1,
             c_gamma,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
@@ -1129,7 +1129,7 @@ impl Trp {
         let (c_eps1, c_eps1_orientation) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_gamma,
             c_beta,
@@ -1142,18 +1142,18 @@ impl Trp {
         let (c_eps2, c_eps2_orientation) = find_atom_placement(
             c_eps1_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_eps1,
             c_gamma,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_zeta1, c_zeta1_orientation) = find_atom_placement(
             c_eps1_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             // TAU_DIV2,
             self.χ_3, // todo: How do you sort out this hinge?
             c_eps1,
@@ -1165,34 +1165,34 @@ impl Trp {
         let (c_zeta2, c_zeta2_orientation) = find_atom_placement(
             c_eps2_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             self.χ_3, // todo: How do you sort out this hinge?
             // 0., // todo: How do you sort out this hinge?
             c_eps2,
             c_eps1,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_eta1, _) = find_atom_placement(
             c_zeta1_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             0.,
             c_zeta1,
             c_eps1,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 
         let (c_eta2, _) = find_atom_placement(
             c_zeta2_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             TAU_DIV2,
             c_zeta2,
             c_eps2,
-            unsafe { SIDECHAIN_BOND_OUT1 },
+            SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
 

@@ -56,12 +56,14 @@ pub struct BackboneCoords {
     /// Oxygen atom bonded to C'
     pub o: Vec3,
     /// HYdrogen atom bonded to N.
+    pub h_cα: Vec3,
     pub h_n: Vec3,
     pub cα_orientation: Quaternion,
     pub cp_orientation: Quaternion,
     pub n_next_orientation: Quaternion,
     // todo: Do we want h and o orientations/
     pub o_orientation: Quaternion,
+    pub h_cα_orientation: Quaternion,
     pub h_n_orientation: Quaternion,
 }
 
@@ -258,6 +260,17 @@ impl Residue {
             LEN_CP_O,
         );
 
+        let (h_cα, h_cα_orientation) = find_atom_placement(
+            cα_orientation,
+            H_CALPHA_BOND,
+            Vec3::new(0., 1., 0.), // arbitrary, since H doesn't continue the chain
+            0.,                    // arbitrary
+            cp,
+            cα,
+            unsafe { CALPHA_H_BOND },
+            LEN_CALPHA_H,
+        );
+
         let (h_n, h_n_orientation) = find_atom_placement(
             n_orientation,
             H_N_BOND,
@@ -276,11 +289,13 @@ impl Residue {
             cp,
             n_next,
             o,
+            h_cα,
             h_n,
             cα_orientation,
             cp_orientation,
             n_next_orientation,
             o_orientation,
+            h_cα_orientation,
             h_n_orientation,
         }
     }

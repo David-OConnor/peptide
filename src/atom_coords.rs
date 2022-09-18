@@ -94,7 +94,7 @@ impl ProteinCoords {
             let bb_coords = res.backbone_cart_coords(prev_n_posit, prev_n_or, prev_cp_posit);
 
             add_atom(
-                BackboneRole::H_N,
+                BackboneRole::HN,
                 bb_coords.h_n,
                 bb_coords.h_n_orientation,
                 &mut backbone,
@@ -113,11 +113,23 @@ impl ProteinCoords {
                 &mut atom_id,
             );
 
+            add_atom(
+                BackboneRole::HCα,
+                bb_coords.h_cα,
+                bb_coords.h_cα_orientation,
+                &mut backbone,
+                1,
+                residue_id,
+                &mut atom_id,
+            );
+
             c_alpha_posit = backbone[atom_id - 1].position;
             c_alpha_or = backbone[atom_id - 1].orientation;
 
             // Add sidechains
             match &res.sidechain {
+                // The first atom of each sidechain is back 2, to skip over the H bonded
+                // to calpha.
                 Sidechain::Arg(angles) => {
                     let sc_coords = angles.sidechain_cart_coords(
                         bb_coords.cα,
@@ -130,7 +142,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         residue_id,
                         &mut atom_id,
                     );
@@ -201,7 +213,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         residue_id,
                         &mut atom_id,
                     );
@@ -254,7 +266,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         residue_id,
                         &mut atom_id,
                     );
@@ -298,7 +310,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         residue_id,
                         &mut atom_id,
                     );
@@ -359,7 +371,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         residue_id,
                         &mut atom_id,
                     );
@@ -403,7 +415,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         residue_id,
                         &mut atom_id,
                     );
@@ -457,7 +469,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         residue_id,
                         &mut atom_id,
                     );
@@ -492,7 +504,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         residue_id,
                         &mut atom_id,
                     );
@@ -536,7 +548,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         residue_id,
                         &mut atom_id,
                     );
@@ -580,7 +592,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         residue_id,
                         &mut atom_id,
                     );
@@ -660,7 +672,7 @@ impl ProteinCoords {
                         sc_coords.c_beta,
                         sc_coords.c_beta_orientation,
                         &mut backbone,
-                        1,
+                        2,
                         residue_id,
                         &mut atom_id,
                     );
