@@ -322,15 +322,15 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
 
             // let color = Color::rgb(color_a.0, color_a.1, color_a.2).into();
 
-            let (bond_len, bond_mesh) = match atom.role {
-                BackboneRole::N => (LEN_CP_N as f32, 2),
-                BackboneRole::Cα => (LEN_N_CALPHA as f32, 2),
-                BackboneRole::Cp => (LEN_CALPHA_CP as f32, 2),
-                BackboneRole::O => (LEN_CP_O as f32, 2),
-                BackboneRole::H_N => (LEN_N_H as f32, 2),
-                BackboneRole::CSidechain => (LEN_SC as f32, 3),
-                BackboneRole::OSidechain => (LEN_SC as f32, 3),
-                BackboneRole::NSidechain => (LEN_SC as f32, 3),
+            let (bond_len, bond_mesh, bond_color) = match atom.role {
+                BackboneRole::N => (LEN_CP_N as f32, 2, BOND_COLOR_BACKBONE),
+                BackboneRole::Cα => (LEN_N_CALPHA as f32, 2, BOND_COLOR_BACKBONE),
+                BackboneRole::Cp => (LEN_CALPHA_CP as f32, 2, BOND_COLOR_BACKBONE),
+                BackboneRole::O => (LEN_CP_O as f32, 2, BOND_COLOR_BACKBONE),
+                BackboneRole::H_N => (LEN_N_H as f32, 2, BOND_COLOR_BACKBONE),
+                BackboneRole::CSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+                BackboneRole::OSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+                BackboneRole::NSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
             };
 
             // todo: Sidechain mesh and color.
@@ -340,7 +340,7 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
                 vec3_to_f32(bond_center_position),
                 quat_to_f32(bond_orientation),
                 1.,
-                render::BOND_COLOR_BACKBONE,
+                bond_color,
                 BOND_SHINYNESS,
             ));
         }

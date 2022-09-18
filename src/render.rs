@@ -7,7 +7,7 @@ use lin_alg2::f64::{Quaternion, Vec3};
 pub const BACKGROUND_COLOR: (f32, f32, f32) = (0.9, 0.9, 0.9);
 
 pub const BOND_COLOR_BACKBONE: (f32, f32, f32) = (0.2, 0.2, 0.2);
-pub const BOND_COLOR_SIDECHAIN: (f32, f32, f32) = (0.6, 0.6, 0.8);
+pub const BOND_COLOR_SIDECHAIN: (f32, f32, f32) = (0.7, 0.65, 0.5);
 
 // Atom colors
 pub const CALPHA_COLOR: (f32, f32, f32) = (0.2, 0.8, 0.2);

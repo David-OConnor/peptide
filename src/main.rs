@@ -7,6 +7,7 @@
 
 // Pymol cheater
 // `fetch 1l2y` - Download and display a protein from its PDB identifier
+// `get_angle 4/n,4/c,4/ca` - Find the angle between 3 bonds.
 
 // todo: Instead of fixed DT,use a dynamic DT based on frame time subtraction
 

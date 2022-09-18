@@ -1,7 +1,6 @@
 //! This module contains code for calculating atom coordinates from dihedral angles.
 //! It solves the *forward kinematics problem*.
 //!
-//! https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2810841/
 
 use std::{f64::consts::TAU, fmt};
 

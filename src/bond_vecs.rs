@@ -1,5 +1,7 @@
 //! Code for generating bond vectors for an atom.
 
+// [Includes some common bond angles](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2810841/)
+
 use std::f64::consts::TAU;
 
 use lin_alg2::f64::{Quaternion, Vec3};
@@ -15,16 +17,17 @@ pub const LEN_N_H: f64 = 1.0; // angstrom // todo placeholder!
 // Ideal bond angles. There are an approximation; from averages. Consider replacing with something
 // more robust later. All angles are in radians. We use degrees with math to match common sources.
 // R indicates the side chain.
-pub const BOND_ANGLE_N_CALPHA_CP: f64 = 121.7 * TAU / 360.; // This is to Calpha and C'.
-pub const BOND_ANGLE_N_CALPHA_H: f64 = 120. * TAU / 360.; // todo: Placeholder; not real data
+pub const BOND_ANGLE_N_CP_CALPHA: f64 = 121.7 * TAU / 360.; // This is to Calpha and C'.
+pub const BOND_ANGLE_N_CP_H: f64 = 120. * TAU / 360.; // todo: Placeholder; not real data
 
-// todo: n hydrogen
 // Bond from the Calpha atom
-
 pub const BOND_ANGLE_CALPHA_N_R: f64 = 110.6 * TAU / 360.;
-pub const BOND_ANGLE_CALPHA_R_CP: f64 = 110.6 * TAU / 360.;
+// pub const BOND_ANGLE_CALPHA_R_CP: f64 = 110.6 * TAU / 360.;
 pub const BOND_ANGLE_CALPHA_N_CP: f64 = 111.0 * TAU / 360.;
-// todo: calpha hydrogen
+pub const BOND_ANGLE_CALPHA_N_H: f64 = 109.5 * TAU / 360.; // todo: Placeholder; Find this.
+
+// todo: It would be more consistent to base all bonds off one (eg N), but the value we
+// todo found for the sidechain is from CP. Ideally, get CALPHA_N_R.
 
 // Bonds from the C' atom
 // Note that these bonds add up to exactly 360, so these must be along
@@ -101,11 +104,7 @@ pub static mut SIDECHAIN_BOND_TO_PREV: Vec3 = Vec3 {
     z: 0.,
 };
 
-pub static mut SIDECHAIN_BOND_OUT1: Vec3 = Vec3 {
-    x: 0.,
-    y: 0.,
-    z: 0.,
-};
+pub const SIDECHAIN_BOND_OUT1: Vec3 = ANCHOR_BOND_VEC;
 
 pub static mut SIDECHAIN_BOND_OUT2: Vec3 = Vec3 {
     x: 0.,
@@ -133,17 +132,23 @@ pub fn init_local_bond_vecs() {
     // skip this and use a known orthonormal vec to it like 0, 1, 0.
 
     // let normal_cα = Vec3::new(0., 1., 0.).cross(CALPHA_CP_BOND);
+
+    // We use this normal plane for all rotations if the bond are in plane. We use it for
+    // the first rotation if not.
     let normal_plane = Vec3::new(0., 1., 0.);
 
+    // The first bond vectors are defined as the anchor vec. These are Calpha's CP bond, Cp's N bond,
+    // and N's Calpha bond. This is also the first sidechain bond out.
+
     unsafe {
+        // Find the second bond vectors. The initial anchor bonds (eg `CALPHA_CP_BOND`) are rotated
+        // along the (underconstrained) normal plane above.
         CALPHA_N_BOND = find_vec_in_plane(CALPHA_CP_BOND, BOND_ANGLE_CALPHA_N_CP, normal_plane);
         CP_CALPHA_BOND = find_vec_in_plane(CP_N_BOND, BOND_ANGLE_CP_CALPHA_N, normal_plane);
-        N_CP_BOND = find_vec_in_plane(N_CALPHA_BOND, BOND_ANGLE_N_CALPHA_CP, normal_plane);
-
+        N_CP_BOND = find_vec_in_plane(N_CALPHA_BOND, BOND_ANGLE_N_CP_CALPHA, normal_plane);
         // todo: We don't have actual H measurements; using a dummy angle for now.
         N_H_BOND = find_vec_in_plane(N_CALPHA_BOND, TAU * 2. / 3., normal_plane);
 
-        SIDECHAIN_BOND_OUT1 = ANCHOR_BOND_VEC;
         SIDECHAIN_BOND_OUT2 = find_vec_in_plane(ANCHOR_BOND_VEC, TAU / 3., normal_plane);
         SIDECHAIN_BOND_TO_PREV = find_vec_in_plane(ANCHOR_BOND_VEC, TAU * 2. / 3., normal_plane);
 
@@ -151,36 +156,50 @@ pub fn init_local_bond_vecs() {
         // todo taking an iterative approach based on that above. Long-term, you should
         // todo be able to calculate one of 2 valid choices (for carbon).
 
-        // The CP ON angle must be within this (radians) to stop the process.
-        // The other 2 angles should be ~exactly.
-        const EPS: f64 = 0.01;
+        CALPHA_R_BOND = find_third_bond_vec(
+            CALPHA_CP_BOND,
+            BOND_ANGLE_CALPHA_N_CP,
+            BOND_ANGLE_CALPHA_N_R,
+            normal_plane,
+        );
 
-        // This approach performs a number of calculations at runtime, at init only. Correct
-        // solution for now, since axis=0 turns out to be correct, given the bonds from the CP atom
-        // are in a circle.
-        for axis in 0..10 {
-            let r1 = Quaternion::from_axis_angle(CP_CALPHA_BOND, axis as f64 / 20.);
-            let normal = r1.rotate_vec(normal_plane);
+        // todo: The other ones.
 
-            // Set exactly to one vector; find the other through iterating the normal angles.
-            let r2 = Quaternion::from_axis_angle(normal, BOND_ANGLE_CP_CALPHA_O);
+        /// Find the third bond by iterating over rotation axes, and using the one that provides
+        /// the closest match. For each rotation axis, we apply one bond angle as a constraint, and
+        /// attempt to minimize the second one.
+        fn find_third_bond_vec(
+            bond1: Vec3,
+            // bond2: Vec3,
+            angle_1_2: f64,
+            angle_1_3: f64,
+            starting_plane_norm: Vec3,
+        ) -> Vec3 {
+            // The angle between bond 2 and 3 must be within this (radians) to find our result.
+            const EPS: f64 = 0.01;
+            const NUM_AXES: usize = 10; // todo?
+            const AXIS_DIV: usize = 20; // todo?
 
-            CP_O_BOND = r2.rotate_vec(CP_CALPHA_BOND);
+            let mut result = Vec3::new_zero();
 
-            // todo: Quick/sloppy. Also, exits on satisfying CP_O_bond; not this. For now,
-            // todo appears to produce the correct result.
-            CALPHA_R_BOND = r2.rotate_vec(CALPHA_N_BOND);
+            for axis in 0..NUM_AXES {
+                let iterated_plane_norm =
+                    find_vec_in_plane(bond1, axis as f64 / NUM_AXES, starting_plane_norm);
 
-            // let angle_calpha_o = (CP_CALPHA_BOND.dot(CP_O_BOND)).acos();
-            // let angle_calpha_n = (CP_CALPHA_BOND.dot(CP_N_BOND)).acos();
-            let angle_n_o = (CP_N_BOND.dot(CP_O_BOND)).acos();
+                // Rotate bond 1 around one of the available constraints: the bond angle between bonds
+                // 1 and 2.
+                result = find_vec_in_plane(bond1, angle_1_3, iterated_plane_norm);
 
-            // SIDECHAIN_BOND_OUT1 = CALPHA_R_BOND;
+                // Measure the other constraint; the angle between bond 1 and our bond3 candidate.
+                let angle_1_3_meas = (bond1.dot(result)).acos();
 
-            // Of note, our first value (axis = 0) seems to be the answer here?!
-            if (angle_n_o - BOND_ANGLE_CP_O_N).abs() < EPS {
-                break;
+                // Compare the other constraint against the target; the bond 1-3 angle.
+                if (angle_1_3_meas - angle_1_3).abs() < EPS {
+                    break;
+                }
             }
+
+            result
         }
     }
 
