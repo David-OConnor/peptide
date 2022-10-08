@@ -8,25 +8,25 @@ use std::{
 };
 
 use graphics::{
-    self, lighting, Camera, DeviceEvent, ElementState, Entity, InputSettings, Lighting, Mesh, Scene,
+    self, Camera, DeviceEvent, ElementState, Entity, InputSettings, Lighting, Mesh, Scene,
+    UiSettings,
 };
-
 use lin_alg2::{
     self,
     f64::{Quaternion, Vec3},
 };
 
+use crate::types::{ProteinDescription, State};
 use crate::{
     atom_coords::{AtomCoords, ProteinCoords},
     bond_vecs::{LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA, LEN_N_H},
     chem_definitions::BackboneRole,
-    kinematics::ProteinDescription,
+    gui,
     render::{
         self, ACTIVE_COLOR_ATOM, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
         BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS,
     },
     sidechain::LEN_SC,
-    State,
 };
 
 // todo: Temp until we sort out how to use Fn traits vice function pointers.
@@ -43,7 +43,7 @@ static mut state: State = unsafe {
         protein_coords: ProteinCoords {
             atoms_backbone: Vec::new(),
         },
-        active_residue: 0,
+        active_residue: 1,
         cam: render::Camera {
             position: Vec3 {
                 x: 0.,
@@ -84,13 +84,14 @@ fn device_event_handler(
 ) -> bool {
     // todo: Higher level api from winit or otherwise instead of scancode?
     let mut changed = false;
+    let mut active_res_changed = false;
 
     // We count starting at 1, per chem conventions.
     let ar_i = unsafe { state.active_residue } - 1;
     // code shortener
     let mut active_res = unsafe { &mut state.protein_descrip.residues[ar_i] };
 
-    let mut rotation_amt = crate::BOND_ROTATION_SPEED * dt as f64;
+    let rotation_amt = crate::BOND_ROTATION_SPEED * dt as f64;
 
     unsafe {
         match event {
@@ -101,53 +102,64 @@ fn device_event_handler(
                         2 => {
                             state.active_residue = 1;
                             changed = true;
+                            active_res_changed = true;
                         }
                         3 => {
                             state.active_residue = 2;
                             changed = true;
+                            active_res_changed = true;
                         }
                         4 => {
                             state.active_residue = 3;
                             changed = true;
+                            active_res_changed = true;
                         }
                         5 => {
                             state.active_residue = 4;
                             changed = true;
+                            active_res_changed = true;
                         }
                         6 => {
                             state.active_residue = 5;
                             changed = true;
+                            active_res_changed = true;
                         }
                         7 => {
                             state.active_residue = 6;
                             changed = true;
+                            active_res_changed = true;
                         }
                         8 => {
                             state.active_residue = 7;
                             changed = true;
+                            active_res_changed = true;
                         }
                         9 => {
                             state.active_residue = 8;
                             changed = true;
+                            active_res_changed = true;
                         }
                         10 => {
                             state.active_residue = 9;
                             changed = true;
+                            active_res_changed = true;
                         }
                         // todo: Why are these scan codes for up/down so high??
                         57_416 => {
                             // Up arrow
                             if state.active_residue != state.protein_descrip.residues.len() {
                                 state.active_residue += 1;
+                                changed = true;
+                                active_res_changed = true;
                             }
-                            changed = true;
                         }
                         57_424 => {
                             // Down arrow
                             if state.active_residue != 1 {
                                 state.active_residue -= 1;
+                                changed = true;
+                                active_res_changed = true;
                             }
-                            changed = true;
                         }
                         20 => {
                             // T
@@ -226,6 +238,18 @@ fn device_event_handler(
         unsafe {
             state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
             scene.entities = generate_entities(&state.protein_coords.atoms_backbone);
+        }
+    }
+
+    if active_res_changed {
+        unsafe {
+            gui::ACTIVE_RES_ID = state.active_residue;
+
+            // let aa_name = format!("{}", state.protein_descrip.residues[state.active_residue].sidechain);
+            let aa_name = state.protein_descrip.residues[state.active_residue]
+                .sidechain
+                .aa_name();
+            gui::ACTIVE_RES_AA_NAME = &aa_name;
         }
     }
 
@@ -363,6 +387,10 @@ pub unsafe fn run() {
     state.protein_descrip = crate::init_protein();
     state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
 
+    // todo: Temp code here for UI due to temp use of static muts
+    gui::PROT_NAME = &state.protein_descrip.name;
+    gui::PDB_IDENT = &state.protein_descrip.pdb_ident;
+
     // Render our atoms.
     let entities = generate_entities(&state.protein_coords.atoms_backbone);
 
@@ -382,9 +410,13 @@ pub unsafe fn run() {
         entities,
         camera: Camera::default(),
         lighting: Lighting::default(),
+        background_color: render::BACKGROUND_COLOR,
+        window_size: (900., 600.),
+        window_title: "Peptide".to_owned(),
     };
 
     let input_settings = InputSettings::default();
+    let ui_settings = UiSettings::default();
 
     // let deh = |device_event, scene: &mut _| {
     //     device_event_handler(device_event, &mut state, &mut scene);
@@ -392,7 +424,14 @@ pub unsafe fn run() {
     //     None
     // };
 
-    graphics::run(scene, input_settings, render_handler, device_event_handler);
+    graphics::run(
+        scene,
+        input_settings,
+        ui_settings,
+        render_handler,
+        device_event_handler,
+        gui::draw_ui,
+    );
     // graphics::run(scene, input_settings, render_handler, Box::new(device_event_handler));
 }
 

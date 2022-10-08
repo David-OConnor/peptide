@@ -9,12 +9,13 @@ use std::{
     str,
 };
 
+use lin_alg2::f64::Vec3;
+
+use crate::types::ProteinDescription;
 use crate::{
-    kinematics::{ProteinDescription, Residue},
+    kinematics::Residue,
     sidechain::{self, Sidechain},
 };
-
-use lin_alg2::f64::Vec3;
 
 // todo: A bit of a sloppy way
 const NAME_START_I: usize = 0;

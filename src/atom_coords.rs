@@ -1,8 +1,9 @@
 //! This module contains respresentations of atom coords.
 
-use crate::{chem_definitions::BackboneRole, kinematics::ProteinDescription, sidechain::Sidechain};
-
 use lin_alg2::f64::{Quaternion, Vec3};
+
+use crate::types::ProteinDescription;
+use crate::{chem_definitions::BackboneRole, sidechain::Sidechain};
 
 const Q_I: Quaternion = Quaternion {
     w: 1.,
@@ -87,8 +88,8 @@ impl ProteinCoords {
         let mut prev_cp_posit = Vec3::new(1., 1., 0.).to_normalized();
 
         // We store c_alpha posit and orientation for anchoring the sidechain
-        let mut c_alpha_posit = Vec3::new_zero();
-        let mut c_alpha_or = Q_I;
+        // let mut c_alpha_posit = Vec3::new_zero();
+        // let mut c_alpha_or = Q_I;
 
         for res in &descrip.residues {
             let bb_coords = res.backbone_cart_coords(prev_n_posit, prev_n_or, prev_cp_posit);
@@ -113,6 +114,9 @@ impl ProteinCoords {
                 &mut atom_id,
             );
 
+            // c_alpha_posit = backbone[atom_id - 1].position;
+            // c_alpha_or = backbone[atom_id - 1].orientation;
+
             add_atom(
                 BackboneRole::HCα,
                 bb_coords.h_cα,
@@ -122,9 +126,6 @@ impl ProteinCoords {
                 residue_id,
                 &mut atom_id,
             );
-
-            c_alpha_posit = backbone[atom_id - 1].position;
-            c_alpha_or = backbone[atom_id - 1].orientation;
 
             // Add sidechains
             match &res.sidechain {

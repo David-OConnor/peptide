@@ -1,4 +1,4 @@
-//! This file contains render code that's engine agnostic.
+//! This file contains render code that's engine agnostic. Configuration, etc.
 
 use crate::chem_definitions::BackboneRole;
 
@@ -22,14 +22,12 @@ pub const H_COLOR: (f32, f32, f32) = (0.8, 0.8, 0.8);
 // but brighter in the avg with the atom color.
 pub const ACTIVE_COLOR_ATOM: (f32, f32, f32) = (2., 1., 0.3);
 
-pub const LIGHT_INTENSITY: f32 = 5_000.0;
-
 // Shinyness affects specular intensity.
 pub const ATOM_SHINYNESS: f32 = 1.;
 pub const BOND_SHINYNESS: f32 = 1.;
 
-pub const BOND_RADIUS_BACKBONE: f32 = 0.09;
-pub const BOND_RADIUS_SIDECHAIN: f32 = 0.03;
+pub const BOND_RADIUS_BACKBONE: f32 = 0.10;
+pub const BOND_RADIUS_SIDECHAIN: f32 = 0.025;
 pub const BOND_N_SIDES: usize = 10;
 
 // These sensitivities are in units (position), or radians (orientation) per second.
@@ -41,24 +39,6 @@ pub const RUN_FACTOR: f64 = 5.;
 
 // Render size of an atom, on a [polyhedron] side.
 pub const SIDE_LEN: f32 = 0.4;
-
-pub const DT: f64 = 1. / 60.;
-
-pub const UP_VEC: Vec3 = Vec3 {
-    x: 0.,
-    y: 1.,
-    z: 0.,
-};
-pub const RIGHT_VEC: Vec3 = Vec3 {
-    x: 1.,
-    y: 0.,
-    z: 0.,
-};
-pub const FWD_VEC: Vec3 = Vec3 {
-    x: 0.,
-    y: 0.,
-    z: 1.,
-};
 
 pub struct Camera {
     pub position: Vec3,

@@ -1,57 +1,46 @@
-use winit::{
-    event::{DeviceEvent, Event, KeyboardInput, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
-};
+use egui;
 
 const WINDOW_TITLE: &str = "Peptide info";
 const WINDOW_SIZE_X: f32 = 900.0;
 const WINDOW_SIZE_Y: f32 = 600.0;
 
-pub fn setup() {
-    let event_loop = EventLoop::new();
-    let window = WindowBuilder::new()
-        .with_title(WINDOW_TITLE)
-        .with_inner_size(winit::dpi::LogicalSize::new(WINDOW_SIZE_X, WINDOW_SIZE_Y))
-        .build(&event_loop)
-        .unwrap();
+// todo: Quick and dirty here, just like in `render_gpu`. Probably avoidable
+// todo by using Fn traits instead of `fn` pointers.
+pub static mut PROT_NAME: &'static str = "";
+pub static mut PDB_IDENT: &'static str = "";
+pub static mut ACTIVE_RES_ID: usize = 1;
+pub static mut ACTIVE_RES_AA_NAME: &'static str = "";
 
-    event_loop.run(move |event, _, control_flow| {
-        *control_flow = ControlFlow::Poll;
+/// This function draws the (immediate-mode) GUI. We're currently editing it
+/// from the main program by modifying the `static mut` variables above.
+/// [UI items](https://docs.rs/egui/latest/egui/struct.Ui.html#method.heading)
+pub fn draw_ui(ctx: &egui::Context) {
+    unsafe {
+        // let mut aa_name = "Amino Acid: ".to_owned().push_str("");
 
-        match event {
-            Event::MainEventsCleared => window.request_redraw(),
-            Event::DeviceEvent { event, .. } => {}
-            Event::WindowEvent {
-                ref event,
-                window_id,
-                // } if window_id == window.id() && !state.input(event) => {
-            } if window_id == window.id() => {
-                match event {
-                    // todo: Put back for window-closing.
-                    // #[cfg(not(target_arch="wasm32"))]
-                    WindowEvent::CloseRequested
-                    // | WindowEvent::KeyboardInput {
-                    //     input:
-                    //     KeyboardInput {
-                    //         state: ElementState::Pressed,
-                    //         virtual_keycode: Some(VirtualKeyCode::Escape),
-                    //         ..
-                    //     },
-                    //     ..
-                    => *control_flow = ControlFlow::Exit,
-                    WindowEvent::Resized(physical_size) => {
-                        // state.resize(*physical_size);
-                    }
-                    WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                        // state.resize(**new_inner_size);
-                    }
-                    _ => {}
-                }
+        let mut age = 20;
+
+        let panel = egui::SidePanel::left(0); // ID must be unique among panels.
+        panel.show(ctx, |ui| {
+            // ui.heading("Peptide");
+
+            // ui.label("Protein: ".to_owned().push_str(prot_name));
+            ui.label(format!("Protein: {PROT_NAME}. PDB: {PDB_IDENT}"));
+
+            ui.label(format!("Active Residue: {ACTIVE_RES_ID}"));
+
+            ui.label(ACTIVE_RES_AA_NAME);
+
+            ui.horizontal(|ui| {
+                ui.label("Label with edit?");
+                // ui.text_edit_singleline(&mut aa_name);
+            });
+
+            ui.add(egui::Slider::new(&mut age, 0..=120).text("age"));
+
+            if ui.button("Click each year").clicked() {
+                // Perform action here.
             }
-
-            Event::RedrawRequested(window_id) if window_id == window.id() => {}
-            _ => {}
-        }
-    });
+        });
+    }
 }

@@ -2,10 +2,8 @@
 
 use core::f64::consts::TAU;
 
-use crate::{
-    kinematics::{ProteinDescription, Residue},
-    sidechain::Sidechain,
-};
+use crate::types::ProteinDescription;
+use crate::{kinematics::Residue, sidechain::Sidechain};
 
 fn to_rad(deg: f64) -> f64 {
     deg * TAU / 360.

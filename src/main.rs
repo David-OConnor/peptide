@@ -5,6 +5,27 @@
 //! [A paper on modelling proteins](https://cnx.org/contents/9cMfjngH@6.3:WjXbYFJI@15/Representing-Proteins-in-Silico-and-Protein-Forward-Kinematics)
 //! [Article on hydrogen bond modelling](https://www.nature.com/articles/ncomms6803)
 
+// todo: Consider starting with a known folded protein, applying heat, and seeing how
+// todo it unfolds; this may provide some insight. Perhaps it's a reversal??
+
+// todo: Examine this approach as a basic force model?:
+// "We use the hydrophobic/polar (HP)
+// model.19 In the HP lattice model, a protein is represented
+// as a self-avoiding chain of hydrophobic (P) and hydro-
+// philic (H) residues living on a two-dimensional square
+// lattice.19 For a given conformation, each pair of non-
+// bonded hydrophobic residues in contact contributes one
+// unit of favorable energy, e. The HP model is exactly enu-
+// merable, and therefore allows us to know for sure
+// whether a search method reaches the true global mini-
+// mum, or just a local minimum, and yet the model
+// presents a search problem that has the same challenges
+// a protein has—the folding process seeks a single lowest
+// energy native state in a conformational space that grows
+// exponentially with chain length, and its complexity
+// arises from steric constraints due to chain connectivity
+// and excluded volume, and energetic roughness."
+
 // Pymol cheater
 // `fetch 1l2y` - Download and display a protein from its PDB identifier
 // `get_angle 4/n,4/c,4/ca` - Find the angle between 3 bonds.
@@ -23,6 +44,13 @@
 
 use std::{f64::consts::TAU, thread};
 
+use atom_coords::ProteinCoords;
+use kinematics::Residue;
+use lin_alg2::f64::{Quaternion, Vec3};
+use render::Camera;
+use sidechain::Sidechain;
+use types::ProteinDescription;
+
 mod atom_coords;
 mod bond_vecs;
 mod chem_definitions;
@@ -33,62 +61,12 @@ mod render;
 mod render_wgpu;
 mod save_load;
 mod sidechain;
-
-use atom_coords::ProteinCoords;
-use kinematics::{ProteinDescription, Residue};
-use render::Camera;
-use sidechain::Sidechain;
-
-use lin_alg2::f64::{Quaternion, Vec3};
-
-use eframe::egui;
+mod simulate;
+mod types;
 
 // todo: model the oxygen double-bounded to Cp next.
 
 const BOND_ROTATION_SPEED: f64 = 1.; // radians/s
-
-// #[derive(Clone, Copy)]
-// enum CarbonBond {
-//     // todo: Come back to what these mean for the 3 backbone atoms
-//     A,
-//     B,
-//     C,
-//     D,
-// }
-
-/// Store our atom descriptions here, for global state the renderer can access.
-struct State {
-    /// Descriptions of each amino acid, including its name, and bond angles.
-    pub protein_descrip: ProteinDescription,
-    /// Stored coordinates, calculated in `coord_gen`.
-    pub protein_coords: ProteinCoords,
-    /// Residue id that's selected for rotation. Starts at 1.
-    pub active_residue: usize,
-    /// Camera position and orientation
-    /// todo: DO we want this? Probably not.
-    pub cam: Camera,
-}
-
-impl Default for State {
-    // Required for Bevy init
-    fn default() -> Self {
-        Self {
-            protein_descrip: ProteinDescription {
-                name: "".to_owned(),
-                pdb_ident: "".to_owned(),
-                residues: Vec::new(),
-            },
-            protein_coords: ProteinCoords {
-                atoms_backbone: Vec::new(),
-            },
-            active_residue: 1,
-            cam: Camera {
-                position: Vec3::new(0., 0., 7.),
-                orientation: Quaternion::new_identity(),
-            },
-        }
-    }
-}
 
 /// Set up our protein; passed to our initial render state.
 fn init_protein() -> ProteinDescription {
@@ -128,54 +106,11 @@ fn init_protein() -> ProteinDescription {
     proteins::make_trp_cage()
 }
 
-struct MyApp {
-    name: String,
-    age: u32,
-}
-
-impl Default for MyApp {
-    fn default() -> Self {
-        Self {
-            name: "Arthur".to_owned(),
-            age: 42,
-        }
-    }
-}
-
-impl eframe::App for MyApp {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("My egui Application");
-            ui.horizontal(|ui| {
-                ui.label("Your name: ");
-                ui.text_edit_singleline(&mut self.name);
-            });
-            ui.add(egui::Slider::new(&mut self.age, 0..=120).text("age"));
-            if ui.button("Click each year").clicked() {
-                self.age += 1;
-            }
-            ui.label(format!("Hello '{}', age {}", self.name, self.age));
-        });
-    }
-}
-
 fn main() {
     bond_vecs::init_local_bond_vecs();
-
-    // thread::spawn(|| {
-    //     gui::setup();
-    // });
 
     // todo: unsafe here is temp due to not getting Fn closure support working.
     unsafe {
         render_wgpu::run();
     }
-
-    //
-    // let options = eframe::NativeOptions::default();
-    // eframe::run_native(
-    //     "My egui App",
-    //     options,
-    //     Box::new(|_cc| Box::new(MyApp::default())),
-    // );
 }

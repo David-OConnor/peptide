@@ -218,17 +218,22 @@ pub fn init_local_bond_vecs() {
             rot_plane_norm,
         );
 
-        println!("CALPHA_R_BOND {:?}", CALPHA_R_BOND);
+        // println!("CALPHA_R_BOND {:?}", CALPHA_R_BOND);
+        // println!("CALPHA_N_BOND {:?}", CALPHA_N_BOND);
+        // println!("CALPHA_CP_BOND {:?}", CALPHA_CP_BOND);
 
         // todo: This is a 4th bond, and you don't have angles to it... this is a temp hack.
         CALPHA_H_BOND = find_third_bond_vec(
             CALPHA_CP_BOND,
             CALPHA_N_BOND,
-            // todo: These value are placeholders.
-            60. * TAU / 360.,
-            300. * TAU / 360.,
+            // todo: These value are placeholders; they produce rough, but OK results.
+            -120. * TAU / 360.,
+            120. * TAU / 360.,
             rot_plane_norm,
         );
+
+        // todo temp
+        // CALPHA_H_BOND = Vec3::new(0.7, -1., 1.).to_normalized();
 
         CP_O_BOND = find_third_bond_vec(
             CP_N_BOND,

@@ -141,13 +141,13 @@ impl fmt::Display for Sidechain {
             Self::Sec(aa) => {
                 write!(f, "Sec (U)\nχ1: {:.2}τ", aa.χ_1 / TAU)
             }
-            Self::Gly(aa) => {
+            Self::Gly(_aa) => {
                 write!(f, "Gly (G)")
             }
             Self::Pro(aa) => {
                 write!(f, "Pro (P)")
             }
-            Self::Ala(aa) => {
+            Self::Ala(_aa) => {
                 write!(f, "Ala (A)")
             }
             Self::Val(aa) => {
@@ -208,6 +208,32 @@ impl fmt::Display for Sidechain {
 }
 
 impl Sidechain {
+    pub fn aa_name(&self) -> &str {
+        match self {
+            Self::Arg(_) => "Arg (R)",
+            Self::His(_) => "His (H)",
+            Self::Lys(_) => "Lys (K)",
+            Self::Asp(_) => "Asp (D)",
+            Self::Glu(_) => "Glu (E)",
+            Self::Ser(_) => "Ser (S)",
+            Self::Thr(_) => "Thr (T)",
+            Self::Asn(_) => "Asn (N)",
+            Self::Gln(_) => "Gln (Q)",
+            Self::Cys(_) => "Cys (C)",
+            Self::Sec(_) => "Sec (U)",
+            Self::Gly(_) => "Gly (G)",
+            Self::Pro(_) => "Pro (P)",
+            Self::Ala(_) => "Ala (A)",
+            Self::Val(_) => "Val (V)",
+            Self::Ile(_) => "Ile (I)",
+            Self::Leu(_) => "Leu (L)",
+            Self::Met(_) => "Met (M)",
+            Self::Phe(_) => "Phe (F)",
+            Self::Tyr(_) => "Tyr (Y)",
+            Self::Trp(_) => "Trp (W)",
+        }
+    }
+
     pub fn add_to_χ1(&mut self, val: f64) {
         match self {
             Self::Arg(aa) => aa.χ_1 += val,
@@ -771,9 +797,9 @@ impl Gln {
 impl Gly {
     pub fn sidechain_cart_coords(
         &self,
-        c_alpha: Vec3,
-        c_alpha_orientation: Quaternion,
-        n_pos: Vec3,
+        _c_alpha: Vec3,
+        _c_alpha_orientation: Quaternion,
+        _n_pos: Vec3,
     ) -> CoordsGly {
         CoordsGly {}
     }

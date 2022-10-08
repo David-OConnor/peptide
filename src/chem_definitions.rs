@@ -14,16 +14,16 @@ pub enum AtomType {
 
 impl AtomType {
     // todo: What is the significance of this? It's a bit nebulous
-    pub fn _charge(&self) -> f64 {
-        match self {
-            Self::C => 4.,
-            Self::N => -3.,
-            Self::H => 1.,
-            Self::O => -2.,
-            Self::P => 0., // (5., 3., -3.)
-            Self::S => 0., // (-2., 2., 4., 6.)
-        }
-    }
+    // pub fn _charge(&self) -> f64 {
+    //     match self {
+    //         Self::C => 4.,
+    //         Self::N => -3.,
+    //         Self::H => 1.,
+    //         Self::O => -2.,
+    //         Self::P => 0., // (5., 3., -3.)
+    //         Self::S => 0., // (-2., 2., 4., 6.)
+    //     }
+    // }
 }
 
 #[derive(Clone, Copy, Debug)]
