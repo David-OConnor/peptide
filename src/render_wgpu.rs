@@ -83,7 +83,9 @@ fn device_event_handler(
     dt: f32, // in seconds
 ) -> bool {
     // todo: Higher level api from winit or otherwise instead of scancode?
-    let mut changed = false;
+    let mut coords_changed = false;
+    let mut active_res_backbone_changed = false;
+    let mut active_res_sidechain_changed = false;
     let mut active_res_changed = false;
 
     // We count starting at 1, per chem conventions.
@@ -101,55 +103,55 @@ fn device_event_handler(
                     match key.scancode {
                         2 => {
                             state.active_residue = 1;
-                            changed = true;
+                            coords_changed = true;
                             active_res_changed = true;
                         }
                         3 => {
                             state.active_residue = 2;
-                            changed = true;
+                            coords_changed = true;
                             active_res_changed = true;
                         }
                         4 => {
                             state.active_residue = 3;
-                            changed = true;
+                            coords_changed = true;
                             active_res_changed = true;
                         }
                         5 => {
                             state.active_residue = 4;
-                            changed = true;
+                            coords_changed = true;
                             active_res_changed = true;
                         }
                         6 => {
                             state.active_residue = 5;
-                            changed = true;
+                            coords_changed = true;
                             active_res_changed = true;
                         }
                         7 => {
                             state.active_residue = 6;
-                            changed = true;
+                            coords_changed = true;
                             active_res_changed = true;
                         }
                         8 => {
                             state.active_residue = 7;
-                            changed = true;
+                            coords_changed = true;
                             active_res_changed = true;
                         }
                         9 => {
                             state.active_residue = 8;
-                            changed = true;
+                            coords_changed = true;
                             active_res_changed = true;
                         }
                         10 => {
                             state.active_residue = 9;
-                            changed = true;
+                            coords_changed = true;
                             active_res_changed = true;
                         }
                         // todo: Why are these scan codes for up/down so high??
                         57_416 => {
                             // Up arrow
-                            if state.active_residue != state.protein_descrip.residues.len() - 1 {
+                            if state.active_residue != state.protein_descrip.residues.len() {
                                 state.active_residue += 1;
-                                changed = true;
+                                coords_changed = true;
                                 active_res_changed = true;
                             }
                         }
@@ -157,74 +159,85 @@ fn device_event_handler(
                             // Down arrow
                             if state.active_residue != 1 {
                                 state.active_residue -= 1;
-                                changed = true;
+                                coords_changed = true;
                                 active_res_changed = true;
                             }
                         }
                         20 => {
                             // T
                             active_res.φ += rotation_amt;
-                            changed = true;
+                            active_res_backbone_changed = true;
+                            coords_changed = true;
                         }
                         34 => {
                             // G
                             active_res.φ -= rotation_amt;
-                            changed = true;
+                            active_res_backbone_changed = true;
+                            coords_changed = true;
                         }
                         21 => {
                             // Y
                             active_res.ψ += rotation_amt;
-                            changed = true;
+                            active_res_backbone_changed = true;
+                            coords_changed = true;
                         }
                         35 => {
                             // H
                             active_res.ψ -= rotation_amt;
-                            changed = true;
+                            active_res_backbone_changed = true;
+                            coords_changed = true;
                         }
                         22 => {
                             // U
                             active_res.ω += rotation_amt;
-                            changed = true;
+                            active_res_backbone_changed = true;
+                            coords_changed = true;
                         }
                         36 => {
                             // J
                             active_res.ω -= rotation_amt;
-                            changed = true;
+                            active_res_backbone_changed = true;
+                            coords_changed = true;
                         }
                         23 => {
                             // I
                             active_res.sidechain.add_to_χ1(rotation_amt);
-                            changed = true;
+                            active_res_sidechain_changed = true;
+                            coords_changed = true;
                         }
                         37 => {
                             // K
                             active_res.sidechain.add_to_χ1(-rotation_amt);
-                            changed = true;
+                            active_res_sidechain_changed = true;
+                            coords_changed = true;
                         }
                         24 => {
                             // O
                             active_res.sidechain.add_to_χ2(rotation_amt);
-                            changed = true;
+                            active_res_sidechain_changed = true;
+                            coords_changed = true;
                         }
                         38 => {
                             // L
                             active_res.sidechain.add_to_χ2(-rotation_amt);
-                            changed = true;
+                            active_res_sidechain_changed = true;
+                            coords_changed = true;
                         }
                         36 => {
                             // P
                             active_res.sidechain.add_to_χ3(rotation_amt);
-                            changed = true;
+                            active_res_sidechain_changed = true;
+                            coords_changed = true;
                         }
                         39 => {
                             // ;
                             active_res.sidechain.add_to_χ3(-rotation_amt);
-                            changed = true;
+                            active_res_sidechain_changed = true;
+                            coords_changed = true;
                         }
-                        29 => {
-                            // Left ctrl
-                            println!("Active res id: {}\n{}", state.active_residue, active_res);
-                        }
+                        // 29 => {
+                        //     // Left ctrl
+                        // }
                         // todo: Sidechain dihedral angles
                         _ => {}
                     }
@@ -233,27 +246,37 @@ fn device_event_handler(
             _ => {}
         }
     }
-    if changed {
-        // Recalculate coordinates now that we've updated our bond angles
-        unsafe {
+
+    unsafe {
+        if coords_changed {
+            // Recalculate coordinates now that we've updated our bond angles
             state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
             scene.entities = generate_entities(&state.protein_coords.atoms_backbone);
         }
-    }
 
-    if active_res_changed {
-        unsafe {
+        if active_res_changed {
             gui::ACTIVE_RES_ID = state.active_residue;
 
             // let aa_name = format!("{}", state.protein_descrip.residues[state.active_residue].sidechain);
             let aa_name =
-            gui::ACTIVE_RES_AA_NAME = &state.protein_descrip.residues[state.active_residue]
-                .sidechain
-                .aa_name();
+                gui::ACTIVE_RES_AA_NAME = &state.protein_descrip.residues[state.active_residue - 1]
+                    .sidechain
+                    .aa_name();
+
+            gui::ACTIVE_RES_PSI = state.protein_descrip.residues[state.active_residue - 1].φ;
+            gui::ACTIVE_RES_PHI = state.protein_descrip.residues[state.active_residue - 1].ψ;
+            gui::ACTIVE_RES_OMEGA = state.protein_descrip.residues[state.active_residue - 1].ω;
+        }
+
+        if active_res_backbone_changed {
+            // todo: Break this out by psi, phi etc instead of always updating all?
+            gui::ACTIVE_RES_PSI = state.protein_descrip.residues[state.active_residue - 1].φ;
+            gui::ACTIVE_RES_PHI = state.protein_descrip.residues[state.active_residue - 1].ψ;
+            gui::ACTIVE_RES_OMEGA = state.protein_descrip.residues[state.active_residue - 1].ω;
         }
     }
 
-    changed
+    coords_changed
 }
 
 fn render_handler() -> Option<Vec<Entity>> {

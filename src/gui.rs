@@ -1,3 +1,5 @@
+use core::f64::consts::TAU;
+
 use egui;
 
 const WINDOW_TITLE: &str = "Peptide info";
@@ -13,6 +15,9 @@ pub static mut PROT_NAME: &'static str = "";
 pub static mut PDB_IDENT: &'static str = "";
 pub static mut ACTIVE_RES_ID: usize = 1;
 pub static mut ACTIVE_RES_AA_NAME: &'static str = "";
+pub static mut ACTIVE_RES_PHI: f64 = 0.;
+pub static mut ACTIVE_RES_PSI: f64 = 0.;
+pub static mut ACTIVE_RES_OMEGA: f64 = 0.;
 
 /// This function draws the (immediate-mode) GUI. We're currently editing it
 /// from the main program by modifying the `static mut` variables above.
@@ -37,7 +42,11 @@ pub fn draw_ui(ctx: &egui::Context) {
                 // ui.text_edit_singleline(&mut aa_name);
             });
 
-            // ui.add(egui::Slider::new(&mut age, 0..=120).text("age"));
+            // todo: Put the display in terms of Tau.
+            ui.add(egui::Slider::new(&mut ACTIVE_RES_PHI, 0.0..=TAU).text("φ"));
+            ui.add(egui::Slider::new(&mut ACTIVE_RES_PSI, 0.0..=TAU).text("ψ"));
+            ui.add(egui::Slider::new(&mut ACTIVE_RES_OMEGA, 0.0..=TAU).text("ω"));
+
             //
             // if ui.button("Click each year").clicked() {
             //     // Perform action here.
