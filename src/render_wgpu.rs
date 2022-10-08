@@ -147,7 +147,7 @@ fn device_event_handler(
                         // todo: Why are these scan codes for up/down so high??
                         57_416 => {
                             // Up arrow
-                            if state.active_residue != state.protein_descrip.residues.len() {
+                            if state.active_residue != state.protein_descrip.residues.len() - 1 {
                                 state.active_residue += 1;
                                 changed = true;
                                 active_res_changed = true;
@@ -246,10 +246,10 @@ fn device_event_handler(
             gui::ACTIVE_RES_ID = state.active_residue;
 
             // let aa_name = format!("{}", state.protein_descrip.residues[state.active_residue].sidechain);
-            let aa_name = state.protein_descrip.residues[state.active_residue]
+            let aa_name =
+            gui::ACTIVE_RES_AA_NAME = &state.protein_descrip.residues[state.active_residue]
                 .sidechain
                 .aa_name();
-            gui::ACTIVE_RES_AA_NAME = &aa_name;
         }
     }
 
@@ -390,6 +390,9 @@ pub unsafe fn run() {
     // todo: Temp code here for UI due to temp use of static muts
     gui::PROT_NAME = &state.protein_descrip.name;
     gui::PDB_IDENT = &state.protein_descrip.pdb_ident;
+    gui::ACTIVE_RES_AA_NAME = &state.protein_descrip.residues[state.active_residue]
+        .sidechain
+        .aa_name();
 
     // Render our atoms.
     let entities = generate_entities(&state.protein_coords.atoms_backbone);
