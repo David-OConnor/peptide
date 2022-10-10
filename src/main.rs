@@ -64,6 +64,8 @@ mod sidechain;
 mod simulate;
 mod types;
 
+use crate::types::State;
+
 // todo: model the oxygen double-bounded to Cp next.
 
 const BOND_ROTATION_SPEED: f64 = 1.; // radians/s
@@ -109,8 +111,16 @@ fn init_protein() -> ProteinDescription {
 fn main() {
     bond_vecs::init_local_bond_vecs();
 
+    let protein_descrip = crate::init_protein();
+
+    let state = State {
+        protein_descrip,
+        protein_coords: ProteinCoords::from_descrip(&protein_descrip),
+        ..Default::default()
+    };
+
     // todo: unsafe here is temp due to not getting Fn closure support working.
     unsafe {
-        render_wgpu::run();
+        render_wgpu::run(state);
     }
 }

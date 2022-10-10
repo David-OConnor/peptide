@@ -11,50 +11,26 @@ const WINDOW_SIZE_Y: f32 = 600.0;
 // Note: This is draggable.
 const SIDE_PANEL_SIZE: f32 = 400.;
 
-// todo: Quick and dirty here, just like in `render_gpu`. Probably avoidable
-// todo by using Fn traits instead of `fn` pointers.
-pub static mut PROT_NAME: &'static str = "";
-pub static mut PDB_IDENT: &'static str = "";
-
-pub static mut ACTIVE_RES_ID: usize = 1;
-pub static mut ACTIVE_RES_AA_NAME: &'static str = "";
-
-pub static mut ACTIVE_RES_PHI: f64 = 0.;
-pub static mut ACTIVE_RES_PSI: f64 = 0.;
-pub static mut ACTIVE_RES_OMEGA: f64 = 0.;
-
-pub static mut ACTIVE_RES_XI_1: Option<f64> = None;
-pub static mut ACTIVE_RES_XI_2: Option<f64> = None;
-pub static mut ACTIVE_RES_XI_3: Option<f64> = None;
-pub static mut ACTIVE_RES_XI_4: Option<f64> = None;
-pub static mut ACTIVE_RES_XI_5: Option<f64> = None;
-
-// todo: This is giving us lifetime issues.
-/// Initialize our static muts, which we currently (temporarily...) use to manage UI state.
-pub unsafe fn init_statics(state: &State) {
-    // todo: Temp code here for UI due to temp use of static muts
-    //
-    //     // let state = state_.clone(); // dodges lifetime issues.
-    //
-    //     PROT_NAME = &state.protein_descrip.name;
-    //     PDB_IDENT = &state.protein_descrip.pdb_ident;
-    //
-    //     ACTIVE_RES_ID = state.active_residue;
-    //
-    //     ACTIVE_RES_AA_NAME = state.protein_descrip.residues[state.active_residue - 1]
-    //         .sidechain
-    //         .aa_name();
-    //
-    //     ACTIVE_RES_PSI = state.protein_descrip.residues[state.active_residue - 1].φ;
-    //     ACTIVE_RES_PHI = state.protein_descrip.residues[state.active_residue - 1].ψ;
-    //     ACTIVE_RES_OMEGA = state.protein_descrip.residues[state.active_residue - 1].ω;
+#[derive(Clone, Default)] // todo: Remove `Clone` a/r
+pub struct UiState {
+    pub prot_name: String,
+    pub pdb_ident: String,
+    pub active_res_id: usize,
+    pub active_res_aa_name: String,
+    pub active_res_φ: f64,
+    pub active_res_ψ: f64,
+    pub active_res_ω: f64,
+    pub active_res_χ1: Option<f64>,
+    pub active_res_χ2: Option<f64>,
+    pub active_res_χ3: Option<f64>,
+    pub active_res_χ4: Option<f64>,
+    pub active_res_χ5: Option<f64>,
 }
 
-/// This function draws the (immediate-mode) GUI. We're currently editing it
-/// from the main program by modifying the `static mut` variables above.
+/// This function draws the (immediate-mode) GUI.
 /// [UI items](https://docs.rs/egui/latest/egui/struct.Ui.html#method.heading)
-pub fn draw_ui(ctx: &egui::Context) {
-    unsafe {
+pub fn run(mut state: UiState) -> Box<dyn Fn(&egui::Context)> {
+    Box::new(move |ctx: &egui::Context| {
         let panel = egui::SidePanel::left(0) // ID must be unique among panels.
             .default_width(SIDE_PANEL_SIZE);
 
@@ -63,11 +39,13 @@ pub fn draw_ui(ctx: &egui::Context) {
             ui.spacing_mut().item_spacing = egui::vec2(10.0, 12.0);
 
             // ui.label("Protein: ".to_owned().push_str(prot_name));
-            ui.heading(format!("Protein: {PROT_NAME}. PDB: {PDB_IDENT}"));
+            ui.heading(format!(
+                "Protein: {state.prot_name}. PDB: {state.pdb_ident}"
+            ));
 
-            ui.label(format!("Active Residue: {ACTIVE_RES_ID}"));
+            ui.label(format!("Active Residue: {state.active_res_id}"));
 
-            ui.label(ACTIVE_RES_AA_NAME);
+            ui.label(state.active_res_aa_name);
 
             ui.horizontal(|ui| {
                 // ui.text_edit_singleline(&mut aa_name);
@@ -99,32 +77,32 @@ pub fn draw_ui(ctx: &egui::Context) {
             //     })
             //     .text("ψ"),
             // );
-            ui.add(egui::Slider::new(&mut ACTIVE_RES_PSI, 0.0..=TAU).text("ψ"));
+            ui.add(egui::Slider::new(&mut state.active_res_ψ, 0.0..=TAU).text("ψ"));
 
-            ui.add(egui::Slider::new(&mut ACTIVE_RES_PHI, 0.0..=TAU).text("φ"));
-            ui.add(egui::Slider::new(&mut ACTIVE_RES_OMEGA, 0.0..=TAU).text("ω"));
+            ui.add(egui::Slider::new(&mut state.active_res_φ, 0.0..=TAU).text("φ"));
+            ui.add(egui::Slider::new(&mut state.active_res_ω, 0.0..=TAU).text("ω"));
 
             ui.label("Sidechain dihedral angles:");
 
-            if let Some(mut χ) = ACTIVE_RES_XI_1 {
+            if let Some(mut χ) = state.active_res_χ1 {
                 ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ1"));
             }
-            if let Some(mut χ) = ACTIVE_RES_XI_2 {
+            if let Some(mut χ) = state.active_res_χ2 {
                 ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ2"));
             }
-            if let Some(mut χ) = ACTIVE_RES_XI_3 {
+            if let Some(mut χ) = state.active_res_χ3 {
                 ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ3"));
             }
-            if let Some(mut χ) = ACTIVE_RES_XI_4 {
+            if let Some(mut χ) = state.active_res_χ4 {
                 ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ4"));
             }
-            if let Some(mut χ) = ACTIVE_RES_XI_5 {
+            if let Some(mut χ) = state.active_res_χ5 {
                 ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ5"));
             }
 
             // if ui.button("Click each year").clicked() {
-                // Perform action here.
+            // Perform action here.
             // }
         });
-    }
+    })
 }
