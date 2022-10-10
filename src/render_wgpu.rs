@@ -1,6 +1,7 @@
 //! This module contains code for use with our custom renderer.
 
 use std::{
+    f64::consts::TAU,
     // boxed::Box,
     mem,
     rc::Rc,
@@ -29,11 +30,9 @@ use crate::{
     sidechain::LEN_SC,
 };
 
-// todo: Temp until we sort out how to use Fn traits vice function pointers.
-// static mut state: State = unsafe { mem::zeroed() };
-
 // todo: Use a mutex instead of static mut here.
-static mut state: State = unsafe {
+// todo: pub for access in `gui`.
+pub static mut STATE: State = unsafe {
     State {
         protein_descrip: ProteinDescription {
             name: String::new(),
@@ -78,7 +77,6 @@ fn quat_to_f32(q: Quaternion) -> lin_alg2::f32::Quaternion {
 // todo: Don't make dependency import winit? rexport etc?
 fn device_event_handler(
     event: DeviceEvent,
-    // state: &mut State,
     scene: &mut Scene,
     dt: f32, // in seconds
 ) -> bool {
@@ -89,9 +87,9 @@ fn device_event_handler(
     let mut active_res_changed = false;
 
     // We count starting at 1, per chem conventions.
-    let ar_i = unsafe { state.active_residue } - 1;
+    let ar_i = unsafe { STATE.active_residue } - 1;
     // code shortener
-    let mut active_res = unsafe { &mut state.protein_descrip.residues[ar_i] };
+    let mut active_res = unsafe { &mut STATE.protein_descrip.residues[ar_i] };
 
     let rotation_amt = crate::BOND_ROTATION_SPEED * dt as f64;
 
@@ -102,63 +100,63 @@ fn device_event_handler(
                     // todo: These should probably be every 10 residues.
                     match key.scancode {
                         2 => {
-                            state.active_residue = 1;
+                            STATE.active_residue = 1;
                             coords_changed = true;
                             active_res_changed = true;
                         }
                         3 => {
-                            state.active_residue = 2;
+                            STATE.active_residue = 2;
                             coords_changed = true;
                             active_res_changed = true;
                         }
                         4 => {
-                            state.active_residue = 3;
+                            STATE.active_residue = 3;
                             coords_changed = true;
                             active_res_changed = true;
                         }
                         5 => {
-                            state.active_residue = 4;
+                            STATE.active_residue = 4;
                             coords_changed = true;
                             active_res_changed = true;
                         }
                         6 => {
-                            state.active_residue = 5;
+                            STATE.active_residue = 5;
                             coords_changed = true;
                             active_res_changed = true;
                         }
                         7 => {
-                            state.active_residue = 6;
+                            STATE.active_residue = 6;
                             coords_changed = true;
                             active_res_changed = true;
                         }
                         8 => {
-                            state.active_residue = 7;
+                            STATE.active_residue = 7;
                             coords_changed = true;
                             active_res_changed = true;
                         }
                         9 => {
-                            state.active_residue = 8;
+                            STATE.active_residue = 8;
                             coords_changed = true;
                             active_res_changed = true;
                         }
                         10 => {
-                            state.active_residue = 9;
+                            STATE.active_residue = 9;
                             coords_changed = true;
                             active_res_changed = true;
                         }
                         // todo: Why are these scan codes for up/down so high??
                         57_416 => {
                             // Up arrow
-                            if state.active_residue != state.protein_descrip.residues.len() {
-                                state.active_residue += 1;
+                            if STATE.active_residue != STATE.protein_descrip.residues.len() {
+                                STATE.active_residue += 1;
                                 coords_changed = true;
                                 active_res_changed = true;
                             }
                         }
                         57_424 => {
                             // Down arrow
-                            if state.active_residue != 1 {
-                                state.active_residue -= 1;
+                            if STATE.active_residue != 1 {
+                                STATE.active_residue -= 1;
                                 coords_changed = true;
                                 active_res_changed = true;
                             }
@@ -250,38 +248,67 @@ fn device_event_handler(
     unsafe {
         if coords_changed {
             // Recalculate coordinates now that we've updated our bond angles
-            state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
-            scene.entities = generate_entities(&state.protein_coords.atoms_backbone);
+            STATE.protein_coords = ProteinCoords::from_descrip(&STATE.protein_descrip);
+            scene.entities = generate_entities(&STATE.protein_coords.atoms_backbone);
         }
 
         if active_res_changed {
-            gui::ACTIVE_RES_ID = state.active_residue;
+            gui::ACTIVE_RES_ID = STATE.active_residue;
 
             // let aa_name = format!("{}", state.protein_descrip.residues[state.active_residue].sidechain);
-            let aa_name =
-                gui::ACTIVE_RES_AA_NAME = &state.protein_descrip.residues[state.active_residue - 1]
-                    .sidechain
-                    .aa_name();
-
-            gui::ACTIVE_RES_PSI = state.protein_descrip.residues[state.active_residue - 1].φ;
-            gui::ACTIVE_RES_PHI = state.protein_descrip.residues[state.active_residue - 1].ψ;
-            gui::ACTIVE_RES_OMEGA = state.protein_descrip.residues[state.active_residue - 1].ω;
+            // let aa_name =
+            gui::ACTIVE_RES_AA_NAME = &STATE.protein_descrip.residues[STATE.active_residue - 1]
+                .sidechain
+                .aa_name();
         }
 
-        if active_res_backbone_changed {
+        if active_res_changed || active_res_backbone_changed {
             // todo: Break this out by psi, phi etc instead of always updating all?
-            gui::ACTIVE_RES_PSI = state.protein_descrip.residues[state.active_residue - 1].φ;
-            gui::ACTIVE_RES_PHI = state.protein_descrip.residues[state.active_residue - 1].ψ;
-            gui::ACTIVE_RES_OMEGA = state.protein_descrip.residues[state.active_residue - 1].ω;
+            let res = &STATE.protein_descrip.residues[STATE.active_residue - 1];
+
+            gui::ACTIVE_RES_PSI = res.φ;
+            gui::ACTIVE_RES_PHI = res.ψ;
+            gui::ACTIVE_RES_OMEGA = res.ω;
+
+            // todo: Only do this for backbone changd; not acive res
+            // Note: We use modulus here to make integrating with the GUI
+            // easier, ie clamping the range between 0 and TAU.
+
+            // Clamp to > 0
+            if active_res.φ < 0. {
+                active_res.φ += TAU;
+            }
+            if active_res.ψ < 0. {
+                active_res.ψ += TAU;
+            }
+            if active_res.ω < 0. {
+                active_res.ω += TAU;
+            }
+
+            // Clamp to < TAU
+            active_res.φ = (active_res.φ) % TAU;
+            active_res.ψ = (active_res.ψ) % TAU;
+            active_res.ω = (active_res.ω) % TAU;
+        }
+
+        if active_res_changed || active_res_sidechain_changed {
+            // todo: Break this out by psi, phi etc instead of always updating all?
+            let sc = &STATE.protein_descrip.residues[STATE.active_residue - 1].sidechain;
+
+            gui::ACTIVE_RES_XI_1 = sc.get_χ1();
+            gui::ACTIVE_RES_XI_2 = sc.get_χ2();
+            gui::ACTIVE_RES_XI_3 = sc.get_χ3();
+            gui::ACTIVE_RES_XI_4 = sc.get_χ4();
+            gui::ACTIVE_RES_XI_5 = sc.get_χ5();
         }
     }
 
     coords_changed
 }
 
-fn render_handler() -> Option<Vec<Entity>> {
-    // fn render_handler(scene: &mut Scene) -> Option<Vec<Entity>> {
-    None
+fn render_handler(scene: &mut Scene) -> bool {
+    // todo: This may be where you need to update the render after changing a slider
+    false
 }
 
 /// todo: Use a vec with vec ops instead?
@@ -305,7 +332,7 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
     let mut cp_id = 0;
 
     for (id, atom) in atoms_backbone.iter().enumerate() {
-        let atom_color = if unsafe { state.active_residue } == atom.residue_id {
+        let atom_color = if unsafe { STATE.active_residue } == atom.residue_id {
             avg_colors(ACTIVE_COLOR_ATOM, atom.role.render_color())
         } else {
             atom.role.render_color()
@@ -354,7 +381,7 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
             // Calculate the position of the bond mesh: This is the cylinder's z point,
             // half way between the 2 atoms it connects.
 
-            let atom_prev = unsafe { &state.protein_coords.atoms_backbone[atom_prev_id] };
+            let atom_prev = unsafe { &STATE.protein_coords.atoms_backbone[atom_prev_id] };
 
             let bond_center_position = (atom.position + atom_prev.position) * 0.5;
             let bond_dir = (atom.position - atom_prev.position).to_normalized();
@@ -403,24 +430,38 @@ pub unsafe fn run() {
     // let mut state = State::default();
     // let state = Rc::new(Mutex::new(State::default());
     // todo: Initialize our static mut; bit of a hack
-    state = State::default();
+    STATE = State::default();
 
     // Initialize the render state here.
 
-    state.protein_descrip = crate::init_protein();
-    state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
+    STATE.protein_descrip = crate::init_protein();
+    STATE.protein_coords = ProteinCoords::from_descrip(&STATE.protein_descrip);
 
-    // todo: Temp code here for UI due to temp use of static muts
-    gui::PROT_NAME = &state.protein_descrip.name;
-    gui::PDB_IDENT = &state.protein_descrip.pdb_ident;
-    gui::ACTIVE_RES_AA_NAME = &state.protein_descrip.residues[state.active_residue]
-        .sidechain
-        .aa_name();
+    // let state = gui::init_statics(&state); // todo: lifetime issues with this
+
+    gui::PROT_NAME = &STATE.protein_descrip.name;
+    gui::PDB_IDENT = &STATE.protein_descrip.pdb_ident;
+
+    gui::ACTIVE_RES_ID = STATE.active_residue;
+
+    let res = &STATE.protein_descrip.residues[STATE.active_residue - 1];
+
+    gui::ACTIVE_RES_AA_NAME = res.sidechain.aa_name();
+
+    gui::ACTIVE_RES_PSI = res.φ;
+    gui::ACTIVE_RES_PHI = res.ψ;
+    gui::ACTIVE_RES_OMEGA = res.ω;
+
+    gui::ACTIVE_RES_XI_1 = res.sidechain.get_χ1();
+    gui::ACTIVE_RES_XI_2 = res.sidechain.get_χ2();
+    gui::ACTIVE_RES_XI_3 = res.sidechain.get_χ3();
+    gui::ACTIVE_RES_XI_4 = res.sidechain.get_χ4();
+    gui::ACTIVE_RES_XI_5 = res.sidechain.get_χ5();
 
     // Render our atoms.
-    let entities = generate_entities(&state.protein_coords.atoms_backbone);
+    let entities = generate_entities(&STATE.protein_coords.atoms_backbone);
 
-    let mut scene = Scene {
+    let scene = Scene {
         meshes: vec![
             // Mesh::new_tetrahedron(render::SIDE_LEN),
             Mesh::new_box(
@@ -454,11 +495,10 @@ pub unsafe fn run() {
         scene,
         input_settings,
         ui_settings,
-        render_handler,
-        device_event_handler,
-        gui::draw_ui,
+        Box::new(render_handler),
+        Box::new(device_event_handler),
+        Box::new(gui::draw_ui),
     );
-    // graphics::run(scene, input_settings, render_handler, Box::new(device_event_handler));
 }
 
 // todo: Use state cam? Should it be in `Scene`?

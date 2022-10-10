@@ -234,6 +234,72 @@ impl Sidechain {
         }
     }
 
+    pub fn get_χ1(&self) -> Option<f64> {
+        match self {
+            Self::Arg(aa) => Some(aa.χ_1),
+            Self::His(aa) => Some(aa.χ_1),
+            Self::Lys(aa) => Some(aa.χ_1),
+            Self::Asp(aa) => Some(aa.χ_1),
+            Self::Glu(aa) => Some(aa.χ_1),
+            Self::Ser(aa) => Some(aa.χ_1),
+            Self::Thr(aa) => Some(aa.χ_1),
+            Self::Asn(aa) => Some(aa.χ_1),
+            Self::Gln(aa) => Some(aa.χ_1),
+            Self::Cys(aa) => Some(aa.χ_1),
+            Self::Sec(aa) => Some(aa.χ_1),
+            Self::Val(aa) => Some(aa.χ_1),
+            Self::Ile(aa) => Some(aa.χ_1),
+            Self::Leu(aa) => Some(aa.χ_1),
+            Self::Met(aa) => Some(aa.χ_1),
+            Self::Phe(aa) => Some(aa.χ_1),
+            Self::Tyr(aa) => Some(aa.χ_1),
+            Self::Trp(aa) => Some(aa.χ_1),
+            _ => None,
+        }
+    }
+
+    pub fn get_χ2(&self) -> Option<f64> {
+        match self {
+            Self::Arg(aa) => Some(aa.χ_2),
+            Self::His(aa) => Some(aa.χ_2),
+            Self::Lys(aa) => Some(aa.χ_2),
+            Self::Asp(aa) => Some(aa.χ_2),
+            Self::Glu(aa) => Some(aa.χ_2),
+            Self::Asn(aa) => Some(aa.χ_2),
+            Self::Gln(aa) => Some(aa.χ_2),
+            Self::Ile(aa) => Some(aa.χ_2),
+            Self::Leu(aa) => Some(aa.χ_2),
+            Self::Met(aa) => Some(aa.χ_2),
+            Self::Phe(aa) => Some(aa.χ_2),
+            Self::Tyr(aa) => Some(aa.χ_2),
+            Self::Trp(aa) => Some(aa.χ_2),
+            _ => None,
+        }
+    }
+    pub fn get_χ3(&self) -> Option<f64> {
+        match self {
+            Self::Arg(aa) => Some(aa.χ_3),
+            Self::Lys(aa) => Some(aa.χ_3),
+            Self::Glu(aa) => Some(aa.χ_3),
+            Self::Gln(aa) => Some(aa.χ_3),
+            Self::Met(aa) => Some(aa.χ_3),
+            _ => None,
+        }
+    }
+    pub fn get_χ4(&self) -> Option<f64> {
+        match self {
+            Self::Arg(aa) => Some(aa.χ_4),
+            Self::Lys(aa) => Some(aa.χ_4),
+            _ => None,
+        }
+    }
+    pub fn get_χ5(&self) -> Option<f64> {
+        match self {
+            Self::Arg(aa) => Some(aa.χ_5),
+            _ => None,
+        }
+    }
+
     pub fn add_to_χ1(&mut self, val: f64) {
         match self {
             Self::Arg(aa) => aa.χ_1 += val,

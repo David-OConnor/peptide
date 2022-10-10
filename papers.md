@@ -6,4 +6,4 @@ https://en.wikipedia.org/wiki/Protein_folding
 
 https://en.wikipedia.org/wiki/Dihedral_angle
 
-[Info on changing dihedral angles using PyMol](https://stackoverflow.com/questions/19958043/change-dihedral-angles-using-the-mouse-in-pymol)
+[Info on changing dihedral angles using PyMol](https://stackoverflow.com/questions/19958043/change-dihedral-angles-using-the-m      ouse-in-pymol)
