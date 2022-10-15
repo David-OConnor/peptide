@@ -457,7 +457,7 @@ impl ProteinCoords {
                         &mut atom_id,
                     );
                 }
-                Sidechain::Gly(angles) => {} // No sidechain on Gly
+                Sidechain::Gly(_angles) => {} // No sidechain on Gly
                 Sidechain::Pro(angles) => {
                     let sc_coords = angles.sidechain_cart_coords(
                         bb_coords.cα,

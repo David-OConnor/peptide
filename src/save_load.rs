@@ -3,19 +3,15 @@
 //! In the future, we may change to a human-readable format.
 
 use std::{
-    f32::consts::TAU,
     fs::File,
-    io::{self, BufReader, BufWriter, Read, Write},
+    io::{BufReader, BufWriter, Read, Write},
     str,
 };
 
 use lin_alg2::f64::Vec3;
 
 use crate::types::ProteinDescription;
-use crate::{
-    kinematics::Residue,
-    sidechain::{self, Sidechain},
-};
+use crate::{kinematics::Residue, sidechain::Sidechain};
 
 // todo: A bit of a sloppy way
 const NAME_START_I: usize = 0;

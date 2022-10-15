@@ -1,25 +1,19 @@
 //! This module contains code for use with our custom renderer.
 
-use std::{
-    f64::consts::TAU,
-    // boxed::Box,
-    mem,
-    rc::Rc,
-    sync::Mutex,
-};
+use std::f64::consts::TAU;
 
 use graphics::{
-    self, Camera, ControlScheme, DeviceEvent, ElementState, Entity, InputSettings, Lighting, Mesh,
-    Scene, UiSettings,
+    self, ControlScheme, DeviceEvent, ElementState, Entity, InputSettings, LightType, Lighting,
+    Mesh, PointLight, Scene, UiSettings,
 };
 use lin_alg2::{
     self,
+    f32::Vec3 as Vec3F32,
     f64::{Quaternion, Vec3},
 };
 
-use crate::types::{ProteinDescription, State};
 use crate::{
-    atom_coords::{AtomCoords, ProteinCoords},
+    atom_coords::ProteinCoords,
     bond_vecs::{LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA, LEN_N_H},
     chem_definitions::BackboneRole,
     gui,
@@ -28,7 +22,12 @@ use crate::{
         BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS,
     },
     sidechain::LEN_SC,
+    types::State,
 };
+
+const WINDOW_TITLE: &str = "Peptide";
+const WINDOW_SIZE_X: f32 = 900.0;
+const WINDOW_SIZE_Y: f32 = 600.0;
 
 // The length-wise axis of our graphics engine's cylinder mesh.
 const BOND_MODEL_AXIS: Vec3 = Vec3 {
@@ -45,32 +44,23 @@ fn quat_to_f32(q: Quaternion) -> lin_alg2::f32::Quaternion {
     lin_alg2::f32::Quaternion::new(q.w as f32, q.x as f32, q.y as f32, q.z as f32)
 }
 
-fn make_event_handler(
-    // todo: state, state_ui, or both??
-    state: State, // todo can you get this working usign a ref?
-    state_ui: StateUi, // todo can you get this working usign a ref?
-    // event: DeviceEvent,
-    // scene: &mut Scene,
-    // dt: f32, // in seconds
-) -> Box<dyn Fn(
-    DeviceEvent,
-    &mut Scene,
-    f32
-) -> bool> {
-    // todo: Higher level api from winit or otherwise instead of scancode?
-    let mut coords_changed = false;
-    let mut active_res_backbone_changed = false;
-    let mut active_res_sidechain_changed = false;
-    let mut active_res_changed = false;
+fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) -> (bool, bool) {
+    // Box::new(move |event: DeviceEvent, scene: &mut Scene, dt: f32| {
+    move |state: &mut State, event: DeviceEvent, scene: &mut Scene, dt: f32| {
+        // todo: Higher level api from winit or otherwise instead of scancode?
+        let mut scene_changed = false;
+        let mut active_res_backbone_changed = false;
+        let mut active_res_sidechain_changed = false;
+        let mut active_res_changed = false;
+        let mut lighting_changed = false;
 
-    // We count starting at 1, per chem conventions.
-    let ar_i = unsafe { state.active_residue } - 1;
-    // code shortener
-    let mut active_res = unsafe { &mut state.protein_descrip.residues[ar_i] };
+        // We count starting at 1, per chem conventions.
+        let ar_i = state.active_residue - 1;
+        // code shortener
 
-    let rotation_amt = crate::BOND_ROTATION_SPEED * dt as f64;
+        let mut active_res = &mut state.protein_descrip.residues[ar_i];
+        let rotation_amt = crate::BOND_ROTATION_SPEED * dt as f64;
 
-    Box::new(move |devent: DeviceEvent, scene; &mut Scene, dt: f32| {
         match event {
             DeviceEvent::Key(key) => {
                 if key.state == ElementState::Pressed {
@@ -78,47 +68,47 @@ fn make_event_handler(
                     match key.scancode {
                         2 => {
                             state.active_residue = 1;
-                            coords_changed = true;
+                            scene_changed = true;
                             active_res_changed = true;
                         }
                         3 => {
                             state.active_residue = 2;
-                            coords_changed = true;
+                            scene_changed = true;
                             active_res_changed = true;
                         }
                         4 => {
                             state.active_residue = 3;
-                            coords_changed = true;
+                            scene_changed = true;
                             active_res_changed = true;
                         }
                         5 => {
                             state.active_residue = 4;
-                            coords_changed = true;
+                            scene_changed = true;
                             active_res_changed = true;
                         }
                         6 => {
                             state.active_residue = 5;
-                            coords_changed = true;
+                            scene_changed = true;
                             active_res_changed = true;
                         }
                         7 => {
                             state.active_residue = 6;
-                            coords_changed = true;
+                            scene_changed = true;
                             active_res_changed = true;
                         }
                         8 => {
                             state.active_residue = 7;
-                            coords_changed = true;
+                            scene_changed = true;
                             active_res_changed = true;
                         }
                         9 => {
                             state.active_residue = 8;
-                            coords_changed = true;
+                            scene_changed = true;
                             active_res_changed = true;
                         }
                         10 => {
                             state.active_residue = 9;
-                            coords_changed = true;
+                            scene_changed = true;
                             active_res_changed = true;
                         }
                         // todo: Why are these scan codes for up/down so high??
@@ -126,7 +116,7 @@ fn make_event_handler(
                             // Up arrow
                             if state.active_residue != state.protein_descrip.residues.len() {
                                 state.active_residue += 1;
-                                coords_changed = true;
+                                scene_changed = true;
                                 active_res_changed = true;
                             }
                         }
@@ -134,7 +124,7 @@ fn make_event_handler(
                             // Down arrow
                             if state.active_residue != 1 {
                                 state.active_residue -= 1;
-                                coords_changed = true;
+                                scene_changed = true;
                                 active_res_changed = true;
                             }
                         }
@@ -142,73 +132,73 @@ fn make_event_handler(
                             // T
                             active_res.φ += rotation_amt;
                             active_res_backbone_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         34 => {
                             // G
                             active_res.φ -= rotation_amt;
                             active_res_backbone_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         21 => {
                             // Y
                             active_res.ψ += rotation_amt;
                             active_res_backbone_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         35 => {
                             // H
                             active_res.ψ -= rotation_amt;
                             active_res_backbone_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         22 => {
                             // U
                             active_res.ω += rotation_amt;
                             active_res_backbone_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         36 => {
                             // J
                             active_res.ω -= rotation_amt;
                             active_res_backbone_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         23 => {
                             // I
                             active_res.sidechain.add_to_χ1(rotation_amt);
                             active_res_sidechain_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         37 => {
                             // K
                             active_res.sidechain.add_to_χ1(-rotation_amt);
                             active_res_sidechain_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         24 => {
                             // O
                             active_res.sidechain.add_to_χ2(rotation_amt);
                             active_res_sidechain_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         38 => {
                             // L
                             active_res.sidechain.add_to_χ2(-rotation_amt);
                             active_res_sidechain_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         36 => {
                             // P
                             active_res.sidechain.add_to_χ3(rotation_amt);
                             active_res_sidechain_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         39 => {
                             // ;
                             active_res.sidechain.add_to_χ3(-rotation_amt);
                             active_res_sidechain_changed = true;
-                            coords_changed = true;
+                            scene_changed = true;
                         }
                         // 29 => {
                         //     // Left ctrl
@@ -221,67 +211,87 @@ fn make_event_handler(
             _ => {}
         }
 
-        if coords_changed {
+        if scene_changed {
             // Recalculate coordinates now that we've updated our bond angles
-            STATE.protein_coords = ProteinCoords::from_descrip(&STATE.protein_descrip);
-            scene.entities = generate_entities(&STATE.protein_coords.atoms_backbone);
+            state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
+            // scene.entities = generate_entities(&state, &state.protein_coords.atoms_backbone);
+            scene.entities = generate_entities(&state);
         }
 
         if active_res_changed {
-            state_ui.active_res_id = state.active_residue;
+            state.ui.active_res_id = state.active_residue;
 
             // let aa_name = format!("{}", state.protein_descrip.residues[state.active_residue].sidechain);
             // let aa_name =
-            ui_state.active_res_aa_name = &state.protein_descrip.residues[state.active_residue - 1]
+            state.ui.active_res_aa_name = state.protein_descrip.residues[ar_i]
                 .sidechain
-                .aa_name();
+                .aa_name()
+                .to_owned();
+
+            // Set the light location to the backbone N atom of the active residue.
+            let active_n_posit = state
+                .protein_coords
+                .atoms_backbone
+                .iter()
+                .find(|a| a.residue_id == state.active_residue && a.role == BackboneRole::N)
+                .unwrap()
+                .position;
+
+            scene.lighting.point_lights[0].position = Vec3F32::new(
+                active_n_posit.x as f32,
+                active_n_posit.y as f32,
+                active_n_posit.z as f32,
+            );
+            lighting_changed = true;
         }
 
         if active_res_changed || active_res_backbone_changed {
             // todo: Break this out by psi, phi etc instead of always updating all?
-            let res = &state.protein_descrip.residues[STATE.active_residue - 1];
+            let res = &state.protein_descrip.residues[state.active_residue - 1];
 
-            gui.active_res_φ = res.φ;
-            gui.active_res_ψ = res.ψ;
-            gui.active_res_ω = res.ω;
+            state.ui.active_res_φ = res.φ;
+            state.ui.active_res_ψ = res.ψ;
+            state.ui.active_res_ω = res.ω;
 
             // todo: Only do this for backbone changd; not acive res
             // Note: We use modulus here to make integrating with the GUI
             // easier, ie clamping the range between 0 and TAU.
 
+            // todo: we used `active_res` code shortener before, but having trouble now.
             // Clamp to > 0
-            if active_res.φ < 0. {
-                active_res.φ += TAU;
+            if state.protein_descrip.residues[ar_i].φ < 0. {
+                state.protein_descrip.residues[ar_i].φ += TAU;
             }
-            if active_res.ψ < 0. {
-                active_res.ψ += TAU;
+            if state.protein_descrip.residues[ar_i].ψ < 0. {
+                state.protein_descrip.residues[ar_i].ψ += TAU;
             }
-            if active_res.ω < 0. {
-                active_res.ω += TAU;
+            if state.protein_descrip.residues[ar_i].ω < 0. {
+                state.protein_descrip.residues[ar_i].ω += TAU;
             }
 
             // Clamp to < TAU
-            active_res.φ = (active_res.φ) % TAU;
-            active_res.ψ = (active_res.ψ) % TAU;
-            active_res.ω = (active_res.ω) % TAU;
+            state.protein_descrip.residues[ar_i].φ = (state.protein_descrip.residues[ar_i].φ) % TAU;
+            state.protein_descrip.residues[ar_i].ψ = (state.protein_descrip.residues[ar_i].ψ) % TAU;
+            state.protein_descrip.residues[ar_i].ω = (state.protein_descrip.residues[ar_i].ω) % TAU;
         }
 
         if active_res_changed || active_res_sidechain_changed {
             // todo: Break this out by psi, phi etc instead of always updating all?
-            let sc = &state.protein_descrip.residues[STATE.active_residue - 1].sidechain;
+            let sc = &state.protein_descrip.residues[state.active_residue - 1].sidechain;
 
-            gui.active_res_χ1 = sc.get_χ1();
-            gui.active_res_χ2 = sc.get_χ2();
-            gui.active_res_χ3 = sc.get_χ3();
-            gui.active_res_χ4 = sc.get_χ4();
-            gui.active_res_χ5 = sc.get_χ5();
+            state.ui.active_res_χ1 = sc.get_χ1();
+            state.ui.active_res_χ2 = sc.get_χ2();
+            state.ui.active_res_χ3 = sc.get_χ3();
+            state.ui.active_res_χ4 = sc.get_χ4();
+            state.ui.active_res_χ5 = sc.get_χ5();
         }
 
-        coords_changed
-    })
+        (scene_changed, lighting_changed)
+        // })
+    }
 }
 
-fn render_handler(scene: &mut Scene) -> bool {
+fn render_handler(_state: &mut State, _scene: &mut Scene) -> bool {
     // todo: This may be where you need to update the render after changing a slider
     false
 }
@@ -298,7 +308,9 @@ fn avg_colors(color1: (f32, f32, f32), color2: (f32, f32, f32)) -> (f32, f32, f3
 }
 
 /// Generates entities from protein coordinates.
-fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
+/// todo: don't take both state and atoms_backbone, since ab is part of state.
+// fn generate_entities(state: &State, atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
+fn generate_entities(state: &State) -> Vec<Entity> {
     let mut result = Vec::new();
 
     // Store cα and c' so we can properly assign bonds after sidechains.
@@ -306,8 +318,8 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
     let mut cα_id = 1; // Residue 0, index 1 for first Cα
     let mut cp_id = 0;
 
-    for (id, atom) in atoms_backbone.iter().enumerate() {
-        let atom_color = if unsafe { STATE.active_residue } == atom.residue_id {
+    for (id, atom) in state.protein_coords.atoms_backbone.iter().enumerate() {
+        let atom_color = if state.active_residue == atom.residue_id {
             avg_colors(ACTIVE_COLOR_ATOM, atom.role.render_color())
         } else {
             atom.role.render_color()
@@ -401,13 +413,13 @@ fn generate_entities(atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
 }
 
 /// The entry point for our renderer.
-pub fn run(state: State) {
+pub fn run(mut state: State) {
     let res = &state.protein_descrip.residues[state.active_residue - 1];
 
     // Initialize the GUI state here.
-    let ui_state = gui::UiState {
-        prot_name: state.protein_descrip.name,
-        pdb_ident: state.protein_descrip.pdb_ident,
+    state.ui = gui::StateUi {
+        prot_name: state.protein_descrip.name.clone(),
+        pdb_ident: state.protein_descrip.pdb_ident.clone(),
         active_res_id: state.active_residue,
         active_res_aa_name: res.sidechain.aa_name().to_owned(),
         active_res_ψ: res.ψ,
@@ -421,7 +433,8 @@ pub fn run(state: State) {
     };
 
     // Render our atoms.
-    let entities = generate_entities(&state.protein_coords.atoms_backbone);
+    // let entities = generate_entities(&state, &state.protein_coords.atoms_backbone);
+    let entities = generate_entities(&state);
 
     let scene = Scene {
         meshes: vec![
@@ -437,10 +450,21 @@ pub fn run(state: State) {
             Mesh::new_cylinder(1.2, render::BOND_RADIUS_SIDECHAIN, render::BOND_N_SIDES),
         ],
         entities,
-        lighting: Lighting::default(),
+        lighting: Lighting {
+            ambient_color: [1., 1., 1., 0.5],
+            ambient_intensity: 0.15,
+            point_lights: vec![PointLight {
+                type_: LightType::Omnidirectional,
+                position: Vec3F32::new_zero(),
+                diffuse_color: [1., 1., 1., 0.5],
+                specular_color: [1., 1., 1., 0.5],
+                diffuse_intensity: 100.,
+                specular_intensity: 10.,
+            }],
+        },
         background_color: render::BACKGROUND_COLOR,
-        window_size: (900., 600.),
-        window_title: "Peptide".to_owned(),
+        window_size: (WINDOW_SIZE_X, WINDOW_SIZE_Y),
+        window_title: WINDOW_TITLE.to_owned(),
         ..Default::default()
     };
 
@@ -450,25 +474,19 @@ pub fn run(state: State) {
     };
     let ui_settings = UiSettings::default();
 
-    // let deh = |device_event, scene: &mut _| {
-    //     device_event_handler(device_event, &mut state, &mut scene);
-    //     println!("TEST");
-    //     None
-    // };
-
-    // todo: Try using uncloned state and see if it works, or if you can get it to work.
-    let state2 = state.clone();
-    let state_ui3 = ui_state.clone();
-    let state_ui2 = ui_state.clone();
+    // Of note, these functions could be used directly, vice as closures.
+    // Leaving them as closure-creators now for flexibility.
+    let event_handler = make_event_handler();
+    let gui_handler = gui::run();
 
     graphics::run(
+        state,
         scene,
         input_settings,
         ui_settings,
-        // todo: How to mutable states here work? How can these mutate the state??
-        Box::new(render_handler),
-        Box::new(make_event_handler(state2, state_ui2)),
-        gui::run(state_ui3),
+        render_handler,
+        event_handler,
+        gui_handler,
     );
 }
 

@@ -4,7 +4,8 @@ use crate::chem_definitions::BackboneRole;
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
-pub const BACKGROUND_COLOR: (f32, f32, f32) = (0.9, 0.9, 0.9);
+// pub const BACKGROUND_COLOR: (f32, f32, f32) = (0.9, 0.9, 0.9);
+pub const BACKGROUND_COLOR: (f32, f32, f32) = (0., 0., 0.);
 
 pub const BOND_COLOR_BACKBONE: (f32, f32, f32) = (0.2, 0.2, 0.2);
 pub const BOND_COLOR_SIDECHAIN: (f32, f32, f32) = (0.7, 0.65, 0.5);
@@ -40,6 +41,7 @@ pub const RUN_FACTOR: f64 = 5.;
 // Render size of an atom, on a [polyhedron] side.
 pub const SIDE_LEN: f32 = 0.4;
 
+// todo: Do we want this in addition to the render lib's cam?
 pub struct Camera {
     pub position: Vec3,
     pub orientation: Quaternion,

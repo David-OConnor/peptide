@@ -6,12 +6,7 @@ use std::{f64::consts::TAU, fmt};
 
 use lin_alg2::f64::{self, Quaternion, Vec3};
 
-use crate::{
-    bond_vecs::*,
-    chem_definitions::{AminoAcidType, AtomType, BackboneRole},
-    sidechain::{self, Sidechain},
-    types::BackboneCoords,
-};
+use crate::{bond_vecs::*, sidechain::Sidechain, types::BackboneCoords};
 
 /// Calculate the dihedral angle between 4 atoms.
 fn calc_dihedral_angle(bond_middle: Vec3, bond_adjacent1: Vec3, bond_adjacent2: Vec3) -> f64 {

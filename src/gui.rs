@@ -2,17 +2,13 @@ use core::f64::consts::TAU;
 
 use egui;
 
-use crate::{render_wgpu::STATE, types::State};
-
-const WINDOW_TITLE: &str = "Peptide info";
-const WINDOW_SIZE_X: f32 = 900.0;
-const WINDOW_SIZE_Y: f32 = 600.0;
+use crate::types::State;
 
 // Note: This is draggable.
 const SIDE_PANEL_SIZE: f32 = 400.;
 
-#[derive(Clone, Default)] // todo: Remove `Clone` a/r
-pub struct UiState {
+#[derive(Default)]
+pub struct StateUi {
     pub prot_name: String,
     pub pdb_ident: String,
     pub active_res_id: usize,
@@ -27,10 +23,28 @@ pub struct UiState {
     pub active_res_χ5: Option<f64>,
 }
 
+//fn make_event_handler(
+//     state: &mut State,
+// ) -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) -> bool {
+//     // todo: Higher level api from winit or otherwise instead of scancode?
+//     let mut coords_changed = false;
+//     let mut active_res_backbone_changed = false;
+//     let mut active_res_sidechain_changed = false;
+//     let mut active_res_changed = false;
+//
+//     // We count starting at 1, per chem conventions.
+//     let ar_i = state.active_residue - 1;
+//     // code shortener
+//
+//     // Box::new(move |event: DeviceEvent, scene: &mut Scene, dt: f32| {
+//     move |state: &mut State, event: DeviceEvent, scene: &mut Scene, dt: f32| {
+
 /// This function draws the (immediate-mode) GUI.
 /// [UI items](https://docs.rs/egui/latest/egui/struct.Ui.html#method.heading)
-pub fn run(mut state: UiState) -> Box<dyn Fn(&egui::Context)> {
-    Box::new(move |ctx: &egui::Context| {
+pub fn run() -> impl FnMut(&mut State, &egui::Context) {
+    move |state: &mut State, ctx: &egui::Context| {
+        // pub fn run(mut state: StateUi) -> dyn FnMut(&egui::Context) {
+        // Box::new(move |ctx: &egui::Context| {
         let panel = egui::SidePanel::left(0) // ID must be unique among panels.
             .default_width(SIDE_PANEL_SIZE);
 
@@ -40,12 +54,13 @@ pub fn run(mut state: UiState) -> Box<dyn Fn(&egui::Context)> {
 
             // ui.label("Protein: ".to_owned().push_str(prot_name));
             ui.heading(format!(
-                "Protein: {state.prot_name}. PDB: {state.pdb_ident}"
+                "Protein: {}. PDB: {}",
+                state.ui.prot_name, state.ui.pdb_ident
             ));
 
-            ui.label(format!("Active Residue: {state.active_res_id}"));
+            ui.label(format!("Active Residue: {}", state.ui.active_res_id));
 
-            ui.label(state.active_res_aa_name);
+            ui.label(&state.ui.active_res_aa_name);
 
             ui.horizontal(|ui| {
                 // ui.text_edit_singleline(&mut aa_name);
@@ -64,8 +79,8 @@ pub fn run(mut state: UiState) -> Box<dyn Fn(&egui::Context)> {
             //         // } else
             //         //
             //         // {
-            //         let ar_i = STATE.active_residue - 1;
-            //         let mut active_res = &mut STATE.protein_descrip.residues[ar_i];
+            //         let ar_i = state.ui.active_residue - 1;
+            //         let mut active_res = &mut state.ui.protein_descrip.residues[ar_i];
             //
             //         // todo: This line is causing problems... might be STATIC_MUT-induced UB.
             //         // active_res.ψ = v.unwrap_or(0.2); // todo: What causes this to be `None`?
@@ -77,32 +92,31 @@ pub fn run(mut state: UiState) -> Box<dyn Fn(&egui::Context)> {
             //     })
             //     .text("ψ"),
             // );
-            ui.add(egui::Slider::new(&mut state.active_res_ψ, 0.0..=TAU).text("ψ"));
+            ui.add(egui::Slider::new(&mut state.ui.active_res_ψ, 0.0..=TAU).text("ψ"));
 
-            ui.add(egui::Slider::new(&mut state.active_res_φ, 0.0..=TAU).text("φ"));
-            ui.add(egui::Slider::new(&mut state.active_res_ω, 0.0..=TAU).text("ω"));
+            ui.add(egui::Slider::new(&mut state.ui.active_res_φ, 0.0..=TAU).text("φ"));
+            ui.add(egui::Slider::new(&mut state.ui.active_res_ω, 0.0..=TAU).text("ω"));
 
             ui.label("Sidechain dihedral angles:");
 
-            if let Some(mut χ) = state.active_res_χ1 {
+            if let Some(mut χ) = state.ui.active_res_χ1 {
                 ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ1"));
             }
-            if let Some(mut χ) = state.active_res_χ2 {
+            if let Some(mut χ) = state.ui.active_res_χ2 {
                 ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ2"));
             }
-            if let Some(mut χ) = state.active_res_χ3 {
+            if let Some(mut χ) = state.ui.active_res_χ3 {
                 ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ3"));
             }
-            if let Some(mut χ) = state.active_res_χ4 {
+            if let Some(mut χ) = state.ui.active_res_χ4 {
                 ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ4"));
             }
-            if let Some(mut χ) = state.active_res_χ5 {
+            if let Some(mut χ) = state.ui.active_res_χ5 {
                 ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ5"));
             }
 
             // if ui.button("Click each year").clicked() {
             // Perform action here.
-            // }
         });
-    })
+    }
 }

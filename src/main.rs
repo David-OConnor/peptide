@@ -42,13 +42,6 @@
 
 // Doe sfolding begin starting at the end extruded?
 
-use std::{f64::consts::TAU, thread};
-
-use atom_coords::ProteinCoords;
-use kinematics::Residue;
-use lin_alg2::f64::{Quaternion, Vec3};
-use render::Camera;
-use sidechain::Sidechain;
 use types::ProteinDescription;
 
 mod atom_coords;
@@ -72,11 +65,11 @@ const BOND_ROTATION_SPEED: f64 = 1.; // radians/s
 
 /// Set up our protein; passed to our initial render state.
 fn init_protein() -> ProteinDescription {
-    let φ_helix = -0.715584993317675;
-    let ψ_helix = -0.715584993317675;
-
-    let φ_sheet = -140. * TAU / 360.;
-    let ψ_sheet = 135. * TAU / 360.;
+    // let φ_helix = -0.715584993317675;
+    // let ψ_helix = -0.715584993317675;
+    //
+    // let φ_sheet = -140. * TAU / 360.;
+    // let ψ_sheet = 135. * TAU / 360.;
 
     // let mut residues = Vec::new();
     // for i in 0..4 {
@@ -111,16 +104,7 @@ fn init_protein() -> ProteinDescription {
 fn main() {
     bond_vecs::init_local_bond_vecs();
 
-    let protein_descrip = crate::init_protein();
+    let state = State::new(crate::init_protein());
 
-    let state = State {
-        protein_descrip,
-        protein_coords: ProteinCoords::from_descrip(&protein_descrip),
-        ..Default::default()
-    };
-
-    // todo: unsafe here is temp due to not getting Fn closure support working.
-    unsafe {
-        render_wgpu::run(state);
-    }
+    render_wgpu::run(state);
 }

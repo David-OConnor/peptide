@@ -7,7 +7,6 @@ use std::{f64::consts::TAU, fmt};
 
 use crate::{
     bond_vecs::*,
-    chem_definitions::{AminoAcidType, AtomType},
     // todo: Find actual bonds / angles; these are temp!
     kinematics::find_atom_placement,
 };

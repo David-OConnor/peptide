@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use crate::{atom_coords::ProteinCoords, kinematics::Residue, render::Camera};
+use crate::{atom_coords::ProteinCoords, gui::StateUi, kinematics::Residue, render::Camera};
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
@@ -83,29 +83,46 @@ pub struct State {
     /// Camera position and orientation
     /// todo: DO we want this? Probably not.
     pub cam: Camera,
+    pub ui: StateUi,
 }
 
-impl Default for State {
-    fn default() -> Self {
+// impl Default for State {
+//     fn default() -> Self {
+//         Self {
+//             protein_descrip: ProteinDescription {
+//                 name: "".to_owned(),
+//                 pdb_ident: "".to_owned(),
+//                 residues: Vec::new(),
+//             },
+//             protein_coords: ProteinCoords {
+//                 atoms_backbone: Vec::new(),
+//             },
+//             active_residue: 1,
+//             cam: Camera {
+//                 position: Vec3::new(0., 0., 7.),
+//                 orientation: Quaternion::new_identity(),
+//             },
+//         }
+//     }
+// }
+
+impl State {
+    /// Create state from a protein description
+    pub fn new(protein_descrip: ProteinDescription) -> Self {
+        let protein_coords = ProteinCoords::from_descrip(&protein_descrip);
+
         Self {
-            protein_descrip: ProteinDescription {
-                name: "".to_owned(),
-                pdb_ident: "".to_owned(),
-                residues: Vec::new(),
-            },
-            protein_coords: ProteinCoords {
-                atoms_backbone: Vec::new(),
-            },
+            protein_descrip,
+            protein_coords,
             active_residue: 1,
             cam: Camera {
                 position: Vec3::new(0., 0., 7.),
                 orientation: Quaternion::new_identity(),
             },
+            ui: Default::default(),
         }
     }
-}
 
-impl State {
     /// Change the amino acid sequence.
     pub fn change_sequence(
         &mut self,

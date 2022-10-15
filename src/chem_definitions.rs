@@ -81,7 +81,7 @@ impl AminoAcidType {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 /// The positional role of an atom in an amino acid
 /// todo: We've overloaded this to include sidechains too! Consider
 /// todo how you'd prefer to handle this.
