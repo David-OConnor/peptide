@@ -214,19 +214,18 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
         if scene_changed {
             // Recalculate coordinates now that we've updated our bond angles
             state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
-            // scene.entities = generate_entities(&state, &state.protein_coords.atoms_backbone);
             scene.entities = generate_entities(&state);
         }
 
         if active_res_changed {
-            state.ui.active_res_id = state.active_residue;
-
-            // let aa_name = format!("{}", state.protein_descrip.residues[state.active_residue].sidechain);
-            // let aa_name =
-            state.ui.active_res_aa_name = state.protein_descrip.residues[ar_i]
-                .sidechain
-                .aa_name()
-                .to_owned();
+            // state.ui.active_res_id = state.active_residue;
+            //
+            // // let aa_name = format!("{}", state.protein_descrip.residues[state.active_residue].sidechain);
+            // // let aa_name =
+            // state.ui.active_res_aa_name = state.protein_descrip.residues[ar_i]
+            //     .sidechain
+            //     .aa_name()
+            //     .to_owned();
 
             // Set the light location to the backbone N atom of the active residue.
             let active_n_posit = state
@@ -249,9 +248,9 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
             // todo: Break this out by psi, phi etc instead of always updating all?
             let res = &state.protein_descrip.residues[state.active_residue - 1];
 
-            state.ui.active_res_φ = res.φ;
-            state.ui.active_res_ψ = res.ψ;
-            state.ui.active_res_ω = res.ω;
+            // state.ui.active_res_φ = res.φ;
+            // state.ui.active_res_ψ = res.ψ;
+            // state.ui.active_res_ω = res.ω;
 
             // todo: Only do this for backbone changd; not acive res
             // Note: We use modulus here to make integrating with the GUI
@@ -275,16 +274,16 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
             state.protein_descrip.residues[ar_i].ω = (state.protein_descrip.residues[ar_i].ω) % TAU;
         }
 
-        if active_res_changed || active_res_sidechain_changed {
-            // todo: Break this out by psi, phi etc instead of always updating all?
-            let sc = &state.protein_descrip.residues[state.active_residue - 1].sidechain;
-
-            state.ui.active_res_χ1 = sc.get_χ1();
-            state.ui.active_res_χ2 = sc.get_χ2();
-            state.ui.active_res_χ3 = sc.get_χ3();
-            state.ui.active_res_χ4 = sc.get_χ4();
-            state.ui.active_res_χ5 = sc.get_χ5();
-        }
+        // if active_res_changed || active_res_sidechain_changed {
+        //     // todo: Break this out by psi, phi etc instead of always updating all?
+        //     // let sc = &state.protein_descrip.residues[state.active_residue - 1].sidechain;
+        //     //
+        //     // state.ui.active_res_χ1 = sc.get_χ1();
+        //     // state.ui.active_res_χ2 = sc.get_χ2();
+        //     // state.ui.active_res_χ3 = sc.get_χ3();
+        //     // state.ui.active_res_χ4 = sc.get_χ4();
+        //     // state.ui.active_res_χ5 = sc.get_χ5();
+        // }
 
         (scene_changed, lighting_changed)
         // })
@@ -310,7 +309,7 @@ fn avg_colors(color1: (f32, f32, f32), color2: (f32, f32, f32)) -> (f32, f32, f3
 /// Generates entities from protein coordinates.
 /// todo: don't take both state and atoms_backbone, since ab is part of state.
 // fn generate_entities(state: &State, atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
-fn generate_entities(state: &State) -> Vec<Entity> {
+pub fn generate_entities(state: &State) -> Vec<Entity> {
     let mut result = Vec::new();
 
     // Store cα and c' so we can properly assign bonds after sidechains.
@@ -417,20 +416,20 @@ pub fn run(mut state: State) {
     let res = &state.protein_descrip.residues[state.active_residue - 1];
 
     // Initialize the GUI state here.
-    state.ui = gui::StateUi {
-        prot_name: state.protein_descrip.name.clone(),
-        pdb_ident: state.protein_descrip.pdb_ident.clone(),
-        active_res_id: state.active_residue,
-        active_res_aa_name: res.sidechain.aa_name().to_owned(),
-        active_res_ψ: res.ψ,
-        active_res_φ: res.φ,
-        active_res_ω: res.ω,
-        active_res_χ1: res.sidechain.get_χ1(),
-        active_res_χ2: res.sidechain.get_χ2(),
-        active_res_χ3: res.sidechain.get_χ3(),
-        active_res_χ4: res.sidechain.get_χ4(),
-        active_res_χ5: res.sidechain.get_χ5(),
-    };
+    // state.ui = gui::StateUi {
+    //     // prot_name: state.protein_descrip.name.clone(),
+    //     // pdb_ident: state.protein_descrip.pdb_ident.clone(),
+    //     // active_res_id: state.active_residue,
+    //     // active_res_aa_name: res.sidechain.aa_name().to_owned(),
+    //     // active_res_ψ: res.ψ,
+    //     // active_res_φ: res.φ,
+    //     // active_res_ω: res.ω,
+    //     active_res_χ1: res.sidechain.get_χ1(),
+    //     active_res_χ2: res.sidechain.get_χ2(),
+    //     active_res_χ3: res.sidechain.get_χ3(),
+    //     active_res_χ4: res.sidechain.get_χ4(),
+    //     active_res_χ5: res.sidechain.get_χ5(),
+    // };
 
     // Render our atoms.
     // let entities = generate_entities(&state, &state.protein_coords.atoms_backbone);
@@ -456,10 +455,10 @@ pub fn run(mut state: State) {
             point_lights: vec![PointLight {
                 type_: LightType::Omnidirectional,
                 position: Vec3F32::new_zero(),
-                diffuse_color: [1., 1., 1., 0.5],
-                specular_color: [1., 1., 1., 0.5],
+                diffuse_color: [0.3, 0.3, 0.3, 0.5],
+                specular_color: [1., 1., 0.7, 0.5],
                 diffuse_intensity: 100.,
-                specular_intensity: 10.,
+                specular_intensity: 100.,
             }],
         },
         background_color: render::BACKGROUND_COLOR,

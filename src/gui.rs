@@ -2,25 +2,17 @@ use core::f64::consts::TAU;
 
 use egui;
 
-use crate::types::State;
+use graphics::Scene;
+
+
+use crate::{types::State, render_wgpu, atom_coords::ProteinCoords};
 
 // Note: This is draggable.
 const SIDE_PANEL_SIZE: f32 = 400.;
 
+// todo: Unused
 #[derive(Default)]
-pub struct StateUi {
-    pub prot_name: String,
-    pub pdb_ident: String,
-    pub active_res_id: usize,
-    pub active_res_aa_name: String,
-    pub active_res_φ: f64,
-    pub active_res_ψ: f64,
-    pub active_res_ω: f64,
-    pub active_res_χ1: Option<f64>,
-    pub active_res_χ2: Option<f64>,
-    pub active_res_χ3: Option<f64>,
-    pub active_res_χ4: Option<f64>,
-    pub active_res_χ5: Option<f64>,
+pub struct _StateUi {
 }
 
 //fn make_event_handler(
@@ -39,12 +31,30 @@ pub struct StateUi {
 //     // Box::new(move |event: DeviceEvent, scene: &mut Scene, dt: f32| {
 //     move |state: &mut State, event: DeviceEvent, scene: &mut Scene, dt: f32| {
 
+fn angle_slider(val: &mut f64, label: &str, scene_changed: &mut bool, ui: &mut egui::Ui) {
+    ui.add(
+        // todo: Make the sliders wider.
+        egui::Slider::from_get_set(0.0..=TAU, |v| {
+            if let Some(v_) = v {
+                *val = v_;
+                *scene_changed = true;
+            }
+
+            *val
+        })
+            .text(label),
+    );
+}
+
 /// This function draws the (immediate-mode) GUI.
 /// [UI items](https://docs.rs/egui/latest/egui/struct.Ui.html#method.heading)
-pub fn run() -> impl FnMut(&mut State, &egui::Context) {
-    move |state: &mut State, ctx: &egui::Context| {
+pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> bool {
+    move |state: &mut State, ctx: &egui::Context, scene: &mut Scene| {
         // pub fn run(mut state: StateUi) -> dyn FnMut(&egui::Context) {
         // Box::new(move |ctx: &egui::Context| {
+
+        let mut scene_changed = false;
+
         let panel = egui::SidePanel::left(0) // ID must be unique among panels.
             .default_width(SIDE_PANEL_SIZE);
 
@@ -55,12 +65,16 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context) {
             // ui.label("Protein: ".to_owned().push_str(prot_name));
             ui.heading(format!(
                 "Protein: {}. PDB: {}",
-                state.ui.prot_name, state.ui.pdb_ident
+                state.protein_descrip.name, state.protein_descrip.pdb_ident
             ));
 
-            ui.label(format!("Active Residue: {}", state.ui.active_res_id));
+            let ar_i = state.active_residue - 1;
 
-            ui.label(&state.ui.active_res_aa_name);
+            ui.label(format!("Active Residue: {}", state.active_residue));
+
+            ui.label(state.protein_descrip.residues[ar_i]
+                .sidechain
+                .aa_name());
 
             ui.horizontal(|ui| {
                 // ui.text_edit_singleline(&mut aa_name);
@@ -70,53 +84,45 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context) {
 
             // todo: Put the display in terms of Tau.
 
-            // todo: Ask or otherwise investigate about `from_get_set` vs `new`,
-            // todo with not creating a get/set loop.
-            // ui.add(
-            //     egui::Slider::from_get_set(0.0..=TAU, |v| {
-            //         // if v.is_none() {
-            //         // //     return 0., // todo???
-            //         // } else
-            //         //
-            //         // {
-            //         let ar_i = state.ui.active_residue - 1;
-            //         let mut active_res = &mut state.ui.protein_descrip.residues[ar_i];
-            //
-            //         // todo: This line is causing problems... might be STATIC_MUT-induced UB.
-            //         // active_res.ψ = v.unwrap_or(0.2); // todo: What causes this to be `None`?
-            //
-            //         // ACTIVE_RES_PSI = active_res.ψ;
-            //
-            //         // ACTIVE_RES_PSI
-            //         0.
-            //     })
-            //     .text("ψ"),
-            // );
-            ui.add(egui::Slider::new(&mut state.ui.active_res_ψ, 0.0..=TAU).text("ψ"));
+            let mut active_res = &mut state.protein_descrip.residues[ar_i];
 
-            ui.add(egui::Slider::new(&mut state.ui.active_res_φ, 0.0..=TAU).text("φ"));
-            ui.add(egui::Slider::new(&mut state.ui.active_res_ω, 0.0..=TAU).text("ω"));
+            // We use this syntax instead of the more concise `new` syntax, so we know
+            // if we need to change the scene.
+            angle_slider(&mut active_res.ψ, "ψ", &mut scene_changed, ui);
+            angle_slider(&mut active_res.φ, "φ", &mut scene_changed, ui);
+            angle_slider(&mut active_res.ω, "ω", &mut scene_changed, ui);
 
             ui.label("Sidechain dihedral angles:");
 
-            if let Some(mut χ) = state.ui.active_res_χ1 {
-                ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ1"));
+            let mut sc = &mut active_res.sidechain;
+
+            if let Some(mut χ) = sc.get_mut_χ1() {
+                angle_slider(χ, "χ1", &mut scene_changed, ui);
             }
-            if let Some(mut χ) = state.ui.active_res_χ2 {
-                ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ2"));
+            if let Some(mut χ) = sc.get_mut_χ2() {
+                angle_slider(χ, "χ2", &mut scene_changed, ui);
             }
-            if let Some(mut χ) = state.ui.active_res_χ3 {
-                ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ3"));
+            if let Some(mut χ) = sc.get_mut_χ3() {
+                angle_slider(χ, "χ3", &mut scene_changed, ui);
             }
-            if let Some(mut χ) = state.ui.active_res_χ4 {
-                ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ4"));
+            if let Some(mut χ) = sc.get_mut_χ4() {
+                angle_slider(χ, "χ4", &mut scene_changed, ui);
             }
-            if let Some(mut χ) = state.ui.active_res_χ5 {
-                ui.add(egui::Slider::new(&mut χ, 0.0..=TAU).text("χ5"));
+            if let Some(mut χ) = sc.get_mut_χ5() {
+                angle_slider(χ, "χ5", &mut scene_changed, ui);
             }
 
             // if ui.button("Click each year").clicked() {
             // Perform action here.
         });
+
+        if scene_changed {
+            // Recalculate coordinates now that we've updated our bond angles
+            state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
+            scene.entities = render_wgpu::generate_entities(&state);
+        }
+
+        // todo: ONly rue if you've changed a slider.
+        scene_changed
     }
 }

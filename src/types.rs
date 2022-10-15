@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use crate::{atom_coords::ProteinCoords, gui::StateUi, kinematics::Residue, render::Camera};
+use crate::{atom_coords::ProteinCoords, kinematics::Residue, render::Camera};
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
@@ -83,7 +83,7 @@ pub struct State {
     /// Camera position and orientation
     /// todo: DO we want this? Probably not.
     pub cam: Camera,
-    pub ui: StateUi,
+    // pub ui: StateUi,
 }
 
 // impl Default for State {
@@ -119,7 +119,7 @@ impl State {
                 position: Vec3::new(0., 0., 7.),
                 orientation: Quaternion::new_identity(),
             },
-            ui: Default::default(),
+            // ui: Default::default(),
         }
     }
 

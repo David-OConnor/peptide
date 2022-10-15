@@ -299,6 +299,72 @@ impl Sidechain {
         }
     }
 
+    pub fn get_mut_χ1(&mut self) -> Option<&mut f64> {
+        match self {
+            Self::Arg(aa) => Some(&mut aa.χ_1),
+            Self::His(aa) => Some(&mut aa.χ_1),
+            Self::Lys(aa) => Some(&mut aa.χ_1),
+            Self::Asp(aa) => Some(&mut aa.χ_1),
+            Self::Glu(aa) => Some(&mut aa.χ_1),
+            Self::Ser(aa) => Some(&mut aa.χ_1),
+            Self::Thr(aa) => Some(&mut aa.χ_1),
+            Self::Asn(aa) => Some(&mut aa.χ_1),
+            Self::Gln(aa) => Some(&mut aa.χ_1),
+            Self::Cys(aa) => Some(&mut aa.χ_1),
+            Self::Sec(aa) => Some(&mut aa.χ_1),
+            Self::Val(aa) => Some(&mut aa.χ_1),
+            Self::Ile(aa) => Some(&mut aa.χ_1),
+            Self::Leu(aa) => Some(&mut aa.χ_1),
+            Self::Met(aa) => Some(&mut aa.χ_1),
+            Self::Phe(aa) => Some(&mut aa.χ_1),
+            Self::Tyr(aa) => Some(&mut aa.χ_1),
+            Self::Trp(aa) => Some(&mut aa.χ_1),
+            _ => None,
+        }
+    }
+
+    pub fn get_mut_χ2(&mut self) -> Option<&mut f64> {
+        match self {
+            Self::Arg(aa) => Some(&mut aa.χ_2),
+            Self::His(aa) => Some(&mut aa.χ_2),
+            Self::Lys(aa) => Some(&mut aa.χ_2),
+            Self::Asp(aa) => Some(&mut aa.χ_2),
+            Self::Glu(aa) => Some(&mut aa.χ_2),
+            Self::Asn(aa) => Some(&mut aa.χ_2),
+            Self::Gln(aa) => Some(&mut aa.χ_2),
+            Self::Ile(aa) => Some(&mut aa.χ_2),
+            Self::Leu(aa) => Some(&mut aa.χ_2),
+            Self::Met(aa) => Some(&mut aa.χ_2),
+            Self::Phe(aa) => Some(&mut aa.χ_2),
+            Self::Tyr(aa) => Some(&mut aa.χ_2),
+            Self::Trp(aa) => Some(&mut aa.χ_2),
+            _ => None,
+        }
+    }
+    pub fn get_mut_χ3(&mut self) -> Option<&mut f64> {
+        match self {
+            Self::Arg(aa) => Some(&mut aa.χ_3),
+            Self::Lys(aa) => Some(&mut aa.χ_3),
+            Self::Glu(aa) => Some(&mut aa.χ_3),
+            Self::Gln(aa) => Some(&mut aa.χ_3),
+            Self::Met(aa) => Some(&mut aa.χ_3),
+            _ => None,
+        }
+    }
+    pub fn get_mut_χ4(&mut self) -> Option<&mut f64> {
+        match self {
+            Self::Arg(aa) => Some(&mut aa.χ_4),
+            Self::Lys(aa) => Some(&mut aa.χ_4),
+            _ => None,
+        }
+    }
+    pub fn get_mut_χ5(&mut self) -> Option<&mut f64> {
+        match self {
+            Self::Arg(aa) => Some(&mut aa.χ_5),
+            _ => None,
+        }
+    }
+
     pub fn add_to_χ1(&mut self, val: f64) {
         match self {
             Self::Arg(aa) => aa.χ_1 += val,
@@ -364,6 +430,72 @@ impl Sidechain {
             _ => (),
         }
     }
+
+    // pub fn set_χ1(&mut self, val: f64) {
+    //     match self {
+    //         Self::Arg(aa) => aa.χ_1 = val,
+    //         Self::His(aa) => aa.χ_1 = val,
+    //         Self::Lys(aa) => aa.χ_1 = val,
+    //         Self::Asp(aa) => aa.χ_1 = val,
+    //         Self::Glu(aa) => aa.χ_1 = val,
+    //         Self::Ser(aa) => aa.χ_1 = val,
+    //         Self::Thr(aa) => aa.χ_1 = val,
+    //         Self::Asn(aa) => aa.χ_1 = val,
+    //         Self::Gln(aa) => aa.χ_1 = val,
+    //         Self::Cys(aa) => aa.χ_1 = val,
+    //         Self::Sec(aa) => aa.χ_1 = val,
+    //         Self::Val(aa) => aa.χ_1 = val,
+    //         Self::Ile(aa) => aa.χ_1 = val,
+    //         Self::Leu(aa) => aa.χ_1 = val,
+    //         Self::Met(aa) => aa.χ_1 = val,
+    //         Self::Phe(aa) => aa.χ_1 = val,
+    //         Self::Tyr(aa) => aa.χ_1 = val,
+    //         Self::Trp(aa) => aa.χ_1 = val,
+    //         _ => (),
+    //     }
+    // }
+    //
+    // pub fn set_χ2(&mut self, val: f64) {
+    //     match self {
+    //         Self::Arg(aa) => aa.χ_2 = val,
+    //         Self::His(aa) => aa.χ_2 = val,
+    //         Self::Lys(aa) => aa.χ_2 = val,
+    //         Self::Asp(aa) => aa.χ_2 = val,
+    //         Self::Glu(aa) => aa.χ_2 = val,
+    //         Self::Asn(aa) => aa.χ_2 = val,
+    //         Self::Gln(aa) => aa.χ_2 = val,
+    //         Self::Ile(aa) => aa.χ_2 = val,
+    //         Self::Leu(aa) => aa.χ_2 = val,
+    //         Self::Met(aa) => aa.χ_2 = val,
+    //         Self::Phe(aa) => aa.χ_2 = val,
+    //         Self::Tyr(aa) => aa.χ_2 = val,
+    //         Self::Trp(aa) => aa.χ_2 = val,
+    //         _ => (),
+    //     }
+    // }
+    // pub fn set_χ3(&mut self, val: f64) {
+    //     match self {
+    //         Self::Arg(aa) => aa.χ_3 = val,
+    //         Self::Lys(aa) => aa.χ_3 = val,
+    //         Self::Glu(aa) => aa.χ_3 = val,
+    //         Self::Gln(aa) => aa.χ_3 = val,
+    //         Self::Met(aa) => aa.χ_3 = val,
+    //         _ => (),
+    //     }
+    // }
+    // pub fn set_χ4(&mut self, val: f64) {
+    //     match self {
+    //         Self::Arg(aa) => aa.χ_4 = val,
+    //         Self::Lys(aa) => aa.χ_4 = val,
+    //         _ => (),
+    //     }
+    // }
+    // pub fn set_χ5(&mut self, val: f64) {
+    //     match self {
+    //         Self::Arg(aa) => aa.χ_5 = val,
+    //         _ => (),
+    //     }
+    // }
 }
 
 impl Arg {
