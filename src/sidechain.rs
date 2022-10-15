@@ -7,6 +7,7 @@ use std::{f64::consts::TAU, fmt};
 
 use crate::{
     bond_vecs::*,
+    chem_definitions::AminoAcidType,
     // todo: Find actual bonds / angles; these are temp!
     kinematics::find_atom_placement,
 };
@@ -36,7 +37,7 @@ pub const LEN_SC: f64 = 1.53;
 
 // todo: Gauche+ and trans etc for beta C. EG opposite C' or opposite N?
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Sidechain {
     Arg(Arg),
     His(His),
@@ -207,6 +208,33 @@ impl fmt::Display for Sidechain {
 }
 
 impl Sidechain {
+    /// todo: Instead of this, many impl partial eq in a way that makes sense?
+    pub fn aa_type(&self) -> AminoAcidType {
+        match self {
+            Self::Arg(_) => AminoAcidType::Arg,
+            Self::His(_) => AminoAcidType::His,
+            Self::Lys(_) => AminoAcidType::Lys,
+            Self::Asp(_) => AminoAcidType::Asp,
+            Self::Glu(_) => AminoAcidType::Glu,
+            Self::Ser(_) => AminoAcidType::Ser,
+            Self::Thr(_) => AminoAcidType::Thr,
+            Self::Asn(_) => AminoAcidType::Arg,
+            Self::Gln(_) => AminoAcidType::Gln,
+            Self::Cys(_) => AminoAcidType::Arg,
+            Self::Sec(_) => AminoAcidType::Arg,
+            Self::Gly(_) => AminoAcidType::Arg,
+            Self::Pro(_) => AminoAcidType::Arg,
+            Self::Ala(_) => AminoAcidType::Arg,
+            Self::Val(_) => AminoAcidType::Arg,
+            Self::Ile(_) => AminoAcidType::Arg,
+            Self::Leu(_) => AminoAcidType::Arg,
+            Self::Met(_) => AminoAcidType::Arg,
+            Self::Phe(_) => AminoAcidType::Arg,
+            Self::Tyr(_) => AminoAcidType::Arg,
+            Self::Trp(_) => AminoAcidType::Arg,
+        }
+    }
+
     pub fn aa_name(&self) -> &str {
         match self {
             Self::Arg(_) => "Arg (R)",
@@ -1643,7 +1671,7 @@ pub struct CoordsTrp {
 // `χ_1` for each is for the bond between the c_alpha, and the first atom in the
 // sidechain (eg c_bravo)
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Arg {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1664,7 +1692,7 @@ impl Default for Arg {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct His {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1679,7 +1707,7 @@ impl Default for His {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Lys {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1698,7 +1726,7 @@ impl Default for Lys {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Asp {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1713,7 +1741,7 @@ impl Default for Asp {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Glu {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1730,7 +1758,7 @@ impl Default for Glu {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Ser {
     pub χ_1: f64,
 }
@@ -1741,7 +1769,7 @@ impl Default for Ser {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Thr {
     pub χ_1: f64,
 }
@@ -1752,7 +1780,7 @@ impl Default for Thr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Asn {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1767,7 +1795,7 @@ impl Default for Asn {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Gln {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1784,7 +1812,7 @@ impl Default for Gln {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Cys {
     pub χ_1: f64,
 }
@@ -1795,7 +1823,7 @@ impl Default for Cys {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Sec {
     pub χ_1: f64,
 }
@@ -1806,16 +1834,16 @@ impl Default for Sec {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Gly {}
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Pro {}
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Ala {}
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Val {
     pub χ_1: f64,
 }
@@ -1826,7 +1854,7 @@ impl Default for Val {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Ile {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1841,7 +1869,7 @@ impl Default for Ile {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Leu {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1856,7 +1884,7 @@ impl Default for Leu {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Met {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1873,7 +1901,7 @@ impl Default for Met {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Phe {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1888,7 +1916,7 @@ impl Default for Phe {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Tyr {
     pub χ_1: f64,
     pub χ_2: f64,
@@ -1903,7 +1931,7 @@ impl Default for Tyr {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Trp {
     pub χ_1: f64,
     pub χ_2: f64,

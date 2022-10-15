@@ -3,11 +3,12 @@
 use std::f64::consts::TAU;
 
 use graphics::{
-    self, ControlScheme, DeviceEvent, ElementState, Entity, InputSettings, LightType, Lighting,
-    Mesh, PointLight, Scene, UiSettings,
+    self, Camera, ControlScheme, DeviceEvent, ElementState, Entity, InputSettings, LightType,
+    Lighting, Mesh, PointLight, Scene, UiSettings,
 };
 use lin_alg2::{
     self,
+    f32::Quaternion as QuatF32,
     f32::Vec3 as Vec3F32,
     f64::{Quaternion, Vec3},
 };
@@ -436,6 +437,11 @@ pub fn run(mut state: State) {
             Mesh::new_cylinder(1.2, render::BOND_RADIUS_SIDECHAIN, render::BOND_N_SIDES),
         ],
         entities,
+        camera: Camera {
+            position: Vec3F32::new(0., 0., -30.),
+            // orientation: QuatF32::from
+            ..Default::default()
+        },
         lighting: Lighting {
             ambient_color: [1., 1., 1., 0.5],
             ambient_intensity: 0.10,
@@ -458,7 +464,7 @@ pub fn run(mut state: State) {
                     specular_color: [1., 1., 0.7, 0.5],
                     diffuse_intensity: 100.,
                     specular_intensity: 100.,
-                }
+                },
             ],
         },
         background_color: render::BACKGROUND_COLOR,

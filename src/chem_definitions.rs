@@ -26,7 +26,7 @@ impl AtomType {
     // }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 /// Our order follows this Wikipedia example:
 /// https://upload.wikimedia.org/wikipedia/commons/4/4f/ProteinogenicAminoAcids.svg
 pub enum AminoAcidType {

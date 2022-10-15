@@ -4,18 +4,24 @@ use egui;
 
 use graphics::Scene;
 
-
-use crate::{types::State, chem_definitions::BackboneRole, render_wgpu, atom_coords::ProteinCoords};
+use crate::{
+    atom_coords::ProteinCoords,
+    chem_definitions::{AminoAcidType, BackboneRole},
+    render_wgpu,
+    sidechain::Sidechain,
+    types::State,
+};
 
 // Note: This is draggable.
 const SIDE_PANEL_SIZE: f32 = 400.;
+
+const SPACE_BETWEEN_SECTIONS: f32 = 20.;
 
 use lin_alg2::f32::Vec3;
 
 // todo: Unused
 #[derive(Default)]
-pub struct _StateUi {
-}
+pub struct _StateUi {}
 
 //fn make_event_handler(
 //     state: &mut State,
@@ -45,7 +51,7 @@ fn angle_slider(val: &mut f64, label: &str, scene_changed: &mut bool, ui: &mut e
 
             *val
         })
-            .text(label),
+        .text(label),
     );
 }
 
@@ -80,6 +86,8 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
             .default_width(SIDE_PANEL_SIZE);
 
         panel.show(ctx, |ui| {
+            let ar_i = state.active_residue - 1;
+
             // println!("{:?}", ui.spacing());
             ui.spacing_mut().item_spacing = egui::vec2(10.0, 12.0);
 
@@ -93,20 +101,18 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
                 state.protein_descrip.name, state.protein_descrip.pdb_ident
             ));
 
-            let ar_i = state.active_residue - 1;
-
             // todo: Is this the right way for text input?
             // ui.add(egui::TextEdit::singleline(&mut my_string))
             let mut res_entry = state.active_residue.to_string();
             // ui.text_edit_singleline(&mut res_entry);
 
-            ui.label(format!("Active Residue: {}", state.active_residue));
+            // ui.label(format!("Active Residue: {}", state.active_residue));
 
             ui.horizontal(|ui| {
-                ui.label("Change active: res:");
+                ui.label("Active residue:");
 
-                let response = ui.add(egui::TextEdit::singleline(&mut res_entry)
-                    .desired_width(30.));
+                let response =
+                    ui.add(egui::TextEdit::singleline(&mut res_entry).desired_width(30.));
                 if response.changed() {
                     let num = res_entry.parse::<usize>().unwrap_or(1);
                     if num < state.protein_descrip.residues.len() + 1 {
@@ -139,13 +145,77 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
                 }
             });
 
+            ui.label(state.protein_descrip.residues[ar_i].sidechain.aa_name());
+
+            // todo: Maybe a pure enum?
+            let mut selected = state.protein_descrip.residues[ar_i].sidechain.aa_type();
+
+            // todo: A bit of your API mismatch between AminoAcidType and SideChain
+            // todo come out here. Consider just using Sidechain, and making Partial Eq
+            // todo match top level only?
+            egui::ComboBox::from_id_source(0)
+                .selected_text(format!("{:?}", selected))
+                .show_ui(ui, |ui| {
+                    // todo: Code shortener
+                    ui.selectable_value(&mut selected, AminoAcidType::Arg, "Arg");
+                    ui.selectable_value(&mut selected, AminoAcidType::His, "His");
+                    ui.selectable_value(&mut selected, AminoAcidType::Lys, "Lys");
+                    ui.selectable_value(&mut selected, AminoAcidType::Asp, "Asp");
+                    ui.selectable_value(&mut selected, AminoAcidType::Glu, "Glu");
+                    ui.selectable_value(&mut selected, AminoAcidType::Ser, "Ser");
+                    ui.selectable_value(&mut selected, AminoAcidType::Thr, "Thr");
+                    ui.selectable_value(&mut selected, AminoAcidType::Asn, "Asn");
+                    ui.selectable_value(&mut selected, AminoAcidType::Gln, "Gln");
+                    ui.selectable_value(&mut selected, AminoAcidType::Cys, "Cys");
+                    ui.selectable_value(&mut selected, AminoAcidType::Sec, "Sec");
+                    ui.selectable_value(&mut selected, AminoAcidType::Gly, "Gly");
+                    ui.selectable_value(&mut selected, AminoAcidType::Pro, "Pro");
+                    ui.selectable_value(&mut selected, AminoAcidType::Ala, "Ala");
+                    ui.selectable_value(&mut selected, AminoAcidType::Val, "Val");
+                    ui.selectable_value(&mut selected, AminoAcidType::Ile, "Ile");
+                    ui.selectable_value(&mut selected, AminoAcidType::Leu, "Leu");
+                    ui.selectable_value(&mut selected, AminoAcidType::Met, "Met");
+                    ui.selectable_value(&mut selected, AminoAcidType::Phe, "Phe");
+                    ui.selectable_value(&mut selected, AminoAcidType::Tyr, "Tyr");
+                    ui.selectable_value(&mut selected, AminoAcidType::Trp, "Trp");
+                });
+
+            // println!("SEL: {:?}", selected);
+
+            if selected != state.protein_descrip.residues[ar_i].sidechain.aa_type() {
+                let sc = &mut state.protein_descrip.residues[ar_i].sidechain;
+                *sc = match selected {
+                    AminoAcidType::Arg => Sidechain::Arg(Default::default()),
+                    AminoAcidType::His => Sidechain::His(Default::default()),
+                    AminoAcidType::Lys => Sidechain::Lys(Default::default()),
+                    AminoAcidType::Asp => Sidechain::Asp(Default::default()),
+                    AminoAcidType::Glu => Sidechain::Glu(Default::default()),
+                    AminoAcidType::Ser => Sidechain::Ser(Default::default()),
+                    AminoAcidType::Thr => Sidechain::Thr(Default::default()),
+                    AminoAcidType::Asn => Sidechain::Asn(Default::default()),
+                    AminoAcidType::Gln => Sidechain::Gln(Default::default()),
+                    AminoAcidType::Cys => Sidechain::Cys(Default::default()),
+                    AminoAcidType::Sec => Sidechain::Sec(Default::default()),
+                    AminoAcidType::Gly => Sidechain::Gly(Default::default()),
+                    AminoAcidType::Pro => Sidechain::Pro(Default::default()),
+                    AminoAcidType::Ala => Sidechain::Ala(Default::default()),
+                    AminoAcidType::Val => Sidechain::Val(Default::default()),
+                    AminoAcidType::Ile => Sidechain::Ile(Default::default()),
+                    AminoAcidType::Leu => Sidechain::Leu(Default::default()),
+                    AminoAcidType::Met => Sidechain::Met(Default::default()),
+                    AminoAcidType::Phe => Sidechain::Phe(Default::default()),
+                    AminoAcidType::Tyr => Sidechain::Tyr(Default::default()),
+                    AminoAcidType::Trp => Sidechain::Trp(Default::default()),
+                };
+
+                scene_changed = true;
+            }
+
             // if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
             //     // …
             // }
 
-            ui.label(state.protein_descrip.residues[ar_i]
-                .sidechain
-                .aa_name());
+            ui.add_space(SPACE_BETWEEN_SECTIONS);
 
             ui.horizontal(|ui| {
                 // ui.text_edit_singleline(&mut aa_name);
@@ -189,6 +259,8 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
             state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
             scene.entities = render_wgpu::generate_entities(&state);
         }
+
+        // todo: Sequence editor, where you can easily see and edit the whole sequence.
 
         // todo: ONly rue if you've changed a slider.
         (scene_changed, lighting_changed)
