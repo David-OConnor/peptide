@@ -227,20 +227,7 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
             //     .aa_name()
             //     .to_owned();
 
-            // Set the light location to the backbone N atom of the active residue.
-            let active_n_posit = state
-                .protein_coords
-                .atoms_backbone
-                .iter()
-                .find(|a| a.residue_id == state.active_residue && a.role == BackboneRole::N)
-                .unwrap()
-                .position;
-
-            scene.lighting.point_lights[0].position = Vec3F32::new(
-                active_n_posit.x as f32,
-                active_n_posit.y as f32,
-                active_n_posit.z as f32,
-            );
+            gui::change_lit_res(state, scene);
             lighting_changed = true;
         }
 
@@ -451,15 +438,28 @@ pub fn run(mut state: State) {
         entities,
         lighting: Lighting {
             ambient_color: [1., 1., 1., 0.5],
-            ambient_intensity: 0.15,
-            point_lights: vec![PointLight {
-                type_: LightType::Omnidirectional,
-                position: Vec3F32::new_zero(),
-                diffuse_color: [0.3, 0.3, 0.3, 0.5],
-                specular_color: [1., 1., 0.7, 0.5],
-                diffuse_intensity: 100.,
-                specular_intensity: 100.,
-            }],
+            ambient_intensity: 0.10,
+            // Light from above. The sun?
+            point_lights: vec![
+                // Light from above. The sun?
+                PointLight {
+                    type_: LightType::Omnidirectional,
+                    position: Vec3F32::new(0., 100., 0.),
+                    diffuse_color: [0.6, 0.4, 0.3, 1.],
+                    specular_color: [0.6, 0.4, 0.3, 1.],
+                    diffuse_intensity: 10_000.,
+                    specular_intensity: 10_000.,
+                },
+                // The light on the active residue. Moves
+                PointLight {
+                    type_: LightType::Omnidirectional,
+                    position: Vec3F32::new_zero(),
+                    diffuse_color: [0.3, 0.3, 0.3, 0.5],
+                    specular_color: [1., 1., 0.7, 0.5],
+                    diffuse_intensity: 100.,
+                    specular_intensity: 100.,
+                }
+            ],
         },
         background_color: render::BACKGROUND_COLOR,
         window_size: (WINDOW_SIZE_X, WINDOW_SIZE_Y),
