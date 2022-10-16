@@ -10,8 +10,10 @@ use std::{
 
 use lin_alg2::f64::Vec3;
 
-use crate::types::ProteinDescription;
-use crate::{kinematics::Residue, sidechain::Sidechain};
+use crate::{
+    sidechain::Sidechain,
+    types::{ProteinDescription, Residue},
+};
 
 // todo: A bit of a sloppy way
 const NAME_START_I: usize = 0;

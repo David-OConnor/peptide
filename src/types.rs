@@ -1,8 +1,8 @@
 //! This module contains structs that describe our proteins and render states.
 
-use std::fmt;
+use std::{f64::consts::TAU, fmt};
 
-use crate::{atom_coords::ProteinCoords, kinematics::Residue, render::Camera};
+use crate::{atom_coords::ProteinCoords, proteins, render::Camera, sidechain::Sidechain};
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
@@ -140,6 +140,64 @@ impl State {
 
         if let Some(r) = residues {
             self.protein_descrip.residues = r;
+        }
+    }
+}
+
+/// An amino acid in a protein structure, including all dihedral angles required to determine
+/// the conformation. Includes backbone and side chain dihedral angles. Doesn't store coordinates,
+/// but coordinates can be generated using forward kinematics from the angles.
+#[derive(Debug)]
+pub struct Residue {
+    /// Dihedral angle between C' and N
+    /// Tor (Cα, C, N, Cα) is the ω torsion angle
+    /// Assumed to be TAU/2 for most cases
+    pub ω: f64,
+    /// Dihedral angle between Cα and N.
+    /// Tor (C, N, Cα, C) is the φ torsion angle
+    pub φ: f64,
+    /// Dihedral angle, between Cα and C'
+    ///  Tor (N, Cα, C, N) is the ψ torsion angle
+    pub ψ: f64,
+    /// Contains the χ angles that define t
+    pub sidechain: Sidechain,
+    pub dipole: Vec3,
+}
+
+impl Default for Residue {
+    /// This is what new AAs are added as.
+    fn default() -> Self {
+        Self {
+            ω: TAU / 2.,
+            φ: proteins::PHI_SHEET,
+            ψ: proteins::PSI_SHEET,
+            sidechain: Sidechain::Arg(Default::default()),
+            dipole: Vec3::new_zero(),
+        }
+    }
+}
+
+impl fmt::Display for Residue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}\nω: {:.2}τ, φ: {:.2}τ ψ: {:.2}τ\n",
+            self.sidechain,
+            self.ω / TAU,
+            self.φ / TAU,
+            self.ψ / TAU
+        )
+    }
+}
+
+impl Residue {
+    pub fn new(ω: f64, φ: f64, ψ: f64, sidechain: Sidechain) -> Self {
+        Self {
+            ω,
+            φ,
+            ψ,
+            sidechain,
+            dipole: Vec3::new_zero(),
         }
     }
 }

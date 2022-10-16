@@ -30,6 +30,10 @@ const WINDOW_TITLE: &str = "Peptide";
 const WINDOW_SIZE_X: f32 = 900.0;
 const WINDOW_SIZE_Y: f32 = 600.0;
 
+// Changes the far end of the frustrum; try to have this shortly past the farthest
+// view distance you expect. Possible to make this dynamic?
+const RENDER_DIST: f32 = 200.;
+
 // The length-wise axis of our graphics engine's cylinder mesh.
 const BOND_MODEL_AXIS: Vec3 = Vec3 {
     x: 0.,
@@ -439,6 +443,7 @@ pub fn run(mut state: State) {
         entities,
         camera: Camera {
             position: Vec3F32::new(0., 0., -30.),
+            far: RENDER_DIST,
             // orientation: QuatF32::from
             ..Default::default()
         },

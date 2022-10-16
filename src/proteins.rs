@@ -2,8 +2,10 @@
 
 use core::f64::consts::TAU;
 
-use crate::types::ProteinDescription;
-use crate::{kinematics::Residue, sidechain::Sidechain};
+use crate::{
+    sidechain::Sidechain,
+    types::{ProteinDescription, Residue},
+};
 
 fn to_rad(deg: f64) -> f64 {
     deg * TAU / 360.
@@ -17,6 +19,12 @@ fn to_rad(deg: f64) -> f64 {
 // psi: get_dihedral 1/n,1/ca,1/c,2/n
 
 // Get all backbone dihedral angles: phi_psi 1l2y
+
+pub const PHI_HELIX: f64 = -0.715584993317675;
+pub const PSI_HELIX: f64 = -0.715584993317675;
+
+pub const PHI_SHEET: f64 = -140. * TAU / 360.;
+pub const PSI_SHEET: f64 = 135. * TAU / 360.;
 
 /// https://www.rcsb.org/sequence/1L2Y
 pub fn make_trp_cage() -> ProteinDescription {

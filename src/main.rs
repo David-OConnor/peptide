@@ -65,12 +65,6 @@ const BOND_ROTATION_SPEED: f64 = 1.; // radians/s
 
 /// Set up our protein; passed to our initial render state.
 fn init_protein() -> ProteinDescription {
-    // let φ_helix = -0.715584993317675;
-    // let ψ_helix = -0.715584993317675;
-    //
-    // let φ_sheet = -140. * TAU / 360.;
-    // let ψ_sheet = 135. * TAU / 360.;
-
     // let mut residues = Vec::new();
     // for i in 0..4 {
     //     residues.push(

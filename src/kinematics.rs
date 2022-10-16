@@ -2,11 +2,15 @@
 //! It solves the *forward kinematics problem*.
 //!
 
-use std::{f64::consts::TAU, fmt};
+use std::f64::consts::TAU;
 
 use lin_alg2::f64::{self, Quaternion, Vec3};
 
-use crate::{bond_vecs::*, sidechain::Sidechain, types::BackboneCoords};
+use crate::{
+    bond_vecs::*,
+    sidechain::Sidechain,
+    types::{BackboneCoords, Residue},
+};
 
 /// Calculate the dihedral angle between 4 atoms.
 fn calc_dihedral_angle(bond_middle: Vec3, bond_adjacent1: Vec3, bond_adjacent2: Vec3) -> f64 {
@@ -91,50 +95,7 @@ pub fn find_atom_placement(
     (position, dihedral_rotation * bond_alignment_rotation)
 }
 
-/// An amino acid in a protein structure, including all dihedral angles required to determine
-/// the conformation. Includes backbone and side chain dihedral angles. Doesn't store coordinates,
-/// but coordinates can be generated using forward kinematics from the angles.
-#[derive(Debug)]
-pub struct Residue {
-    /// Dihedral angle between C' and N
-    /// Tor (Cα, C, N, Cα) is the ω torsion angle
-    /// Assumed to be TAU/2 for most cases
-    pub ω: f64,
-    /// Dihedral angle between Cα and N.
-    /// Tor (C, N, Cα, C) is the φ torsion angle
-    pub φ: f64,
-    /// Dihedral angle, between Cα and C'
-    ///  Tor (N, Cα, C, N) is the ψ torsion angle
-    pub ψ: f64,
-    /// Contains the χ angles that define t
-    pub sidechain: Sidechain,
-    pub dipole: Vec3,
-}
-
-impl fmt::Display for Residue {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}\nω: {:.2}τ, φ: {:.2}τ ψ: {:.2}τ\n",
-            self.sidechain,
-            self.ω / TAU,
-            self.φ / TAU,
-            self.ψ / TAU
-        )
-    }
-}
-
 impl Residue {
-    pub fn new(ω: f64, φ: f64, ψ: f64, sidechain: Sidechain) -> Self {
-        Self {
-            ω,
-            φ,
-            ψ,
-            sidechain,
-            dipole: Vec3::new_zero(),
-        }
-    }
-
     /// Generate cartesian coordinates of points from diahedral angles and bond lengths. Starts with
     /// N, and ends with C'. This is solving the *forward kinematics problem*.
     /// Accepts position, and orientation of the N atom that starts this segment.
