@@ -14,8 +14,16 @@ use crate::{
 
 // Note: This is draggable.
 const SIDE_PANEL_SIZE: f32 = 400.;
+const SLIDER_WIDTH: f32 = 160.;
 
 const SPACE_BETWEEN_SECTIONS: f32 = 20.;
+
+const WINDOW_MARGIN: egui::style::Margin = egui::style::Margin { // todo not working
+    left: 10.,
+    right: 10.,
+    top: 10.,
+    bottom: 30.,
+};
 
 use lin_alg2::f32::Vec3;
 
@@ -273,6 +281,8 @@ fn add_sequence_editor(ui: &mut egui::Ui, state: &mut State, scene_changed: &mut
                 add_aa_selector(ui, state, scene_changed, ar_i, aa_type, sel_id);
             });
         }
+
+        ui.spacing_mut().window_margin = WINDOW_MARGIN;
     });
 }
 
@@ -289,13 +299,18 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
         let panel = egui::SidePanel::left(0) // ID must be unique among panels.
             .default_width(SIDE_PANEL_SIZE);
 
+        // ctx.set_mar
+
         panel.show(ctx, |ui| {
             // println!("{:?}", ui.spacing());
             ui.spacing_mut().item_spacing = egui::vec2(10.0, 12.0);
 
             // todo: Wider values on larger windows?
             // todo: Delegate the numbers etc here to consts etc.
-            ui.spacing_mut().slider_width = 160.0;
+            ui.spacing_mut().slider_width = SLIDER_WIDTH;
+
+
+            // ui.spacing_mut().window_margin = WINDOW_MARGIN; // todo not working
 
             // ui.label("Protein: ".to_owned().push_str(prot_name));
             ui.heading(format!(
@@ -319,17 +334,19 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
             ui.add_space(SPACE_BETWEEN_SECTIONS);
 
             add_sequence_editor(ui, state, &mut scene_changed);
+
+            // ui.add_space(SPACE_BETWEEN_SECTIONS); // todo: Not working to add margin.
         });
 
         if scene_changed {
-            // Recalculate coordinates now that we've updated our bond angles
+            // Recalculate coordinates, eg if we've changed an angle, or AA.
             state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
             scene.entities = render_wgpu::generate_entities(&state);
         }
 
         // todo: Sequence editor, where you can easily see and edit the whole sequence.
 
-        // todo: ONly rue if you've changed a slider.
+        // todo: Only true if you've changed a slider.
         (scene_changed, lighting_changed)
     }
 }
