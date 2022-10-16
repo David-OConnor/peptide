@@ -85,7 +85,7 @@ impl AminoAcidType {
 /// The positional role of an atom in an amino acid
 /// todo: We've overloaded this to include sidechains too! Consider
 /// todo how you'd prefer to handle this.
-pub enum BackboneRole {
+pub enum AtomRole {
     N,
     /// The carbon attom that attaches to the side chain.
     Cα,
@@ -97,9 +97,11 @@ pub enum BackboneRole {
     CSidechain,
     OSidechain,
     NSidechain,
+    SSidechain,
+    SeSidechain,
 }
 
-impl BackboneRole {
+impl AtomRole {
     pub fn atom_type(&self) -> AtomType {
         match self {
             Self::N => AtomType::N,

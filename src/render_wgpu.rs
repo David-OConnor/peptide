@@ -19,7 +19,7 @@ use lin_alg2::{
 use crate::{
     atom_coords::ProteinCoords,
     bond_vecs::{LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA, LEN_N_H},
-    chem_definitions::BackboneRole,
+    chem_definitions::AtomRole,
     gui,
     render::{
         self, ACTIVE_COLOR_ATOM, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
@@ -361,7 +361,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
         };
 
         let atom_mesh = match atom.role {
-            BackboneRole::N | BackboneRole::Cα | BackboneRole::Cp | BackboneRole::O => 0,
+            AtomRole::N | AtomRole::Cα | AtomRole::Cp | AtomRole::O => 0,
             _ => 1,
         };
 
@@ -379,25 +379,25 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
         if id != 0 {
             // Find the previous atom in the chain: The one that connects to this.
             let atom_prev_id = match atom.role {
-                BackboneRole::N => {
+                AtomRole::N => {
                     n_id = id;
                     cp_id
                 }
-                BackboneRole::Cα => {
+                AtomRole::Cα => {
                     cα_id = id;
                     n_id
                 }
-                BackboneRole::CSidechain | BackboneRole::OSidechain | BackboneRole::NSidechain => {
+                AtomRole::CSidechain | AtomRole::OSidechain | AtomRole::NSidechain | AtomRole::SSidechain | AtomRole::SeSidechain => {
                     // This assumes the prev atom added before the sidechain was Cα.
                     id - atom.sidechain_bond_step
                 }
-                BackboneRole::Cp => {
+                AtomRole::Cp => {
                     cp_id = id;
                     cα_id
                 }
-                BackboneRole::O => cp_id,
-                BackboneRole::HCα => cα_id,
-                BackboneRole::HN => n_id,
+                AtomRole::O => cp_id,
+                AtomRole::HCα => cα_id,
+                AtomRole::HN => n_id,
             };
 
             // Calculate the position of the bond mesh: This is the cylinder's z point,
@@ -411,7 +411,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             let bond_orientation = Quaternion::from_unit_vecs(BOND_MODEL_AXIS, bond_dir);
 
             let color_a = match atom.role {
-                BackboneRole::CSidechain | BackboneRole::OSidechain | BackboneRole::NSidechain => {
+                AtomRole::CSidechain | AtomRole::OSidechain | AtomRole::NSidechain => {
                     BOND_COLOR_SIDECHAIN
                 }
                 _ => BOND_COLOR_BACKBONE,
@@ -420,15 +420,17 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             // let color = Color::rgb(color_a.0, color_a.1, color_a.2).into();
 
             let (bond_len, bond_mesh, bond_color) = match atom.role {
-                BackboneRole::N => (LEN_CP_N as f32, 2, BOND_COLOR_BACKBONE),
-                BackboneRole::Cα => (LEN_N_CALPHA as f32, 2, BOND_COLOR_BACKBONE),
-                BackboneRole::Cp => (LEN_CALPHA_CP as f32, 2, BOND_COLOR_BACKBONE),
-                BackboneRole::O => (LEN_CP_O as f32, 2, BOND_COLOR_BACKBONE),
-                BackboneRole::HCα => (LEN_CALPHA_H as f32, 2, BOND_COLOR_BACKBONE),
-                BackboneRole::HN => (LEN_N_H as f32, 2, BOND_COLOR_BACKBONE),
-                BackboneRole::CSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
-                BackboneRole::OSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
-                BackboneRole::NSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+                AtomRole::N => (LEN_CP_N as f32, 2, BOND_COLOR_BACKBONE),
+                AtomRole::Cα => (LEN_N_CALPHA as f32, 2, BOND_COLOR_BACKBONE),
+                AtomRole::Cp => (LEN_CALPHA_CP as f32, 2, BOND_COLOR_BACKBONE),
+                AtomRole::O => (LEN_CP_O as f32, 2, BOND_COLOR_BACKBONE),
+                AtomRole::HCα => (LEN_CALPHA_H as f32, 2, BOND_COLOR_BACKBONE),
+                AtomRole::HN => (LEN_N_H as f32, 2, BOND_COLOR_BACKBONE),
+                AtomRole::CSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+                AtomRole::OSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+                AtomRole::NSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+                AtomRole::SSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+                AtomRole::SeSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
             };
 
             // todo: Sidechain mesh and color.
@@ -493,7 +495,7 @@ pub fn run(mut state: State) {
         },
         lighting: Lighting {
             ambient_color: [1., 1., 1., 0.5],
-            ambient_intensity: 0.10,
+            ambient_intensity: 0.05,
             // Light from above. The sun?
             point_lights: vec![
                 // Light from above. The sun?
@@ -502,8 +504,8 @@ pub fn run(mut state: State) {
                     position: Vec3F32::new(0., 100., 0.),
                     diffuse_color: [0.6, 0.4, 0.3, 1.],
                     specular_color: [0.6, 0.4, 0.3, 1.],
-                    diffuse_intensity: 10_000.,
-                    specular_intensity: 10_000.,
+                    diffuse_intensity: 15_000.,
+                    specular_intensity: 15_000.,
                 },
                 // The light on the active residue. Moves
                 PointLight {

@@ -638,6 +638,100 @@ impl Arg {
     }
 }
 
+impl His {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsHis {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (c_gamma, c_gamma_orientation) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            self.χ_2,
+            c_beta,
+            c_alpha,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (c_delta1, c_delta1_orientation) = find_atom_placement(
+            c_gamma_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            c_gamma,
+            c_beta,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (n_delta2, n_delta2_orientation) = find_atom_placement(
+            c_gamma_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            c_gamma,
+            c_beta,
+            unsafe { SIDECHAIN_BOND_OUT2 },
+            LEN_SC,
+        );
+
+        let (n_eps1, n_eps1_orientation) = find_atom_placement(
+            c_delta1_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            0.,
+            c_delta1,
+            c_gamma,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (c_eps2, c_eps2_orientation) = find_atom_placement(
+            n_delta2_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            0.,
+            n_delta2,
+            c_gamma,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        // todo: These bond vecs are wrong! Needs to be tighter angles
+        // todo due to there only being 5 atoms in the ring.
+
+        CoordsHis {
+            c_beta,
+            c_gamma,
+            c_delta1,
+            n_delta2,
+            n_eps1,
+            c_eps2,
+
+            c_beta_orientation,
+            c_gamma_orientation,
+            c_delta1_orientation,
+            n_delta2_orientation,
+            // n_eps1_orientation,
+            // c_eps2_orientation,
+        }
+    }
+}
+
 impl Lys {
     // todo: Equiv from `backbone_cart_coords`.
     pub fn sidechain_cart_coords(
@@ -788,6 +882,88 @@ impl Asp {
 
             c_beta_orientation,
             c_gamma_orientation,
+        }
+    }
+}
+
+impl Glu {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsGlu {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (c_gamma, c_gamma_orientation) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            self.χ_2,
+            c_beta,
+            c_alpha,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (c_delta, c_delta_orientation) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            self.χ_3,
+            c_gamma,
+            c_beta,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (o_eps1, _) = find_atom_placement(
+            c_gamma_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            c_delta,
+            c_gamma,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (o_eps2, _) = find_atom_placement(
+            c_gamma_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            c_delta,
+            c_gamma,
+            unsafe { SIDECHAIN_BOND_OUT2 },
+            LEN_SC,
+        );
+
+        CoordsGlu {
+            c_beta,
+            c_gamma,
+            c_delta,
+            o_eps1,
+            o_eps2,
+
+            c_beta_orientation,
+            c_gamma_orientation,
+            c_delta_orientation,
         }
     }
 }
@@ -1019,6 +1195,90 @@ impl Gln {
     }
 }
 
+impl Cys {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsCys {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (s_gamma, _) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        CoordsCys {
+            c_beta,
+            s_gamma,
+
+            c_beta_orientation,
+        }
+    }
+}
+
+impl Sec {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsSec {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (se_gamma, _) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        CoordsSec {
+            c_beta,
+            se_gamma,
+
+            c_beta_orientation,
+        }
+    }
+}
+
 impl Gly {
     pub fn sidechain_cart_coords(
         &self,
@@ -1076,6 +1336,80 @@ impl Pro {
 
             c_beta_orientation,
             c_gamma_orientation,
+        }
+    }
+}
+
+impl Ala {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsAla {
+        let (c_beta, _c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        CoordsAla {
+            c_beta,
+        }
+    }
+}
+
+impl Val {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsVal {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (c_gamma1, _) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (c_gamma2, _) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { SIDECHAIN_BOND_OUT2 },
+            LEN_SC,
+        );
+
+        CoordsVal {
+            c_beta,
+            c_gamma1,
+            c_gamma2,
+
+            c_beta_orientation
         }
     }
 }
@@ -1202,6 +1536,176 @@ impl Leu {
 
             c_beta_orientation,
             c_gamma_orientation,
+        }
+    }
+}
+
+impl Met {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsMet {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
+            // (world space)
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (c_gamma, c_gamma_orientation) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            self.χ_2,
+            c_beta,
+            c_alpha,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (s_delta, s_delta_orientation) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            self.χ_3,
+            c_gamma,
+            c_beta,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (c_eps, _) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            s_delta,
+            c_gamma,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        CoordsMet {
+            c_beta,
+            c_gamma,
+            s_delta,
+            c_eps,
+
+            c_beta_orientation,
+            c_gamma_orientation,
+            s_delta_orientation,
+        }
+    }
+}
+
+impl Phe {
+    pub fn sidechain_cart_coords(
+        &self,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
+    ) -> CoordsPhe {
+        let (c_beta, c_beta_orientation) = find_atom_placement(
+            c_alpha_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            self.χ_1,
+            c_alpha,
+            n_pos,
+            unsafe { CALPHA_R_BOND },
+            LEN_SC,
+        );
+
+        let (c_gamma, c_gamma_orientation) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            self.χ_2,
+            c_beta,
+            c_alpha,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (c_delta1, c_delta1_orientation) = find_atom_placement(
+            c_gamma_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            c_gamma,
+            c_beta,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (c_delta2, c_delta2_orientation) = find_atom_placement(
+            c_gamma_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            c_gamma,
+            c_beta,
+            unsafe { SIDECHAIN_BOND_OUT2 },
+            LEN_SC,
+        );
+
+        let (c_eps1, c_eps1_orientation) = find_atom_placement(
+            c_delta1_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            0.,
+            c_delta1,
+            c_gamma,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        let (c_eps2, c_eps2_orientation) = find_atom_placement(
+            c_delta2_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            0.,
+            c_delta2,
+            c_gamma,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        // We anchor c_zeta off eps1.
+        let (c_zeta, _c_zeta_orientation) = find_atom_placement(
+            c_eps1_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            c_eps1,
+            c_delta1,
+            SIDECHAIN_BOND_OUT1,
+            LEN_SC,
+        );
+
+        CoordsPhe {
+            c_beta,
+            c_gamma,
+            c_delta1,
+            c_delta2,
+            c_eps1,
+            c_eps2,
+            c_zeta,
+
+            c_beta_orientation,
+            c_gamma_orientation,
+            c_delta1_orientation,
+            c_delta2_orientation,
+            c_eps1_orientation,
+            c_eps2_orientation,
         }
     }
 }
@@ -1502,8 +2006,8 @@ pub struct CoordsHis {
     pub c_gamma_orientation: Quaternion,
     pub c_delta1_orientation: Quaternion,
     pub n_delta2_orientation: Quaternion,
-    pub n_eps1_orientation: Quaternion,
-    pub c_eps2_orientation: Quaternion,
+    // pub n_eps1_orientation: Quaternion,
+    // pub c_eps2_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]
@@ -1586,6 +2090,20 @@ pub struct CoordsGln {
 }
 
 #[derive(Debug, Default)]
+pub struct CoordsAla {
+    pub c_beta: Vec3,
+}
+
+#[derive(Debug, Default)]
+pub struct CoordsVal {
+    pub c_beta: Vec3,
+    pub c_gamma1: Vec3,
+    pub c_gamma2: Vec3,
+
+    c_beta_orientation: Quaternion,
+}
+
+#[derive(Debug, Default)]
 pub struct CoordsIle {
     pub c_beta: Vec3,
     pub c_gamma1: Vec3,
@@ -1608,6 +2126,33 @@ pub struct CoordsLeu {
 }
 
 #[derive(Debug, Default)]
+pub struct CoordsCys {
+    pub c_beta: Vec3,
+    pub s_gamma: Vec3,
+
+    pub c_beta_orientation: Quaternion,
+}
+
+#[derive(Debug, Default)]
+pub struct CoordsSec {
+    pub c_beta: Vec3,
+    pub se_gamma: Vec3,
+
+    pub c_beta_orientation: Quaternion,
+}
+
+pub struct CoordsMet {
+    pub c_beta: Vec3,
+    pub c_gamma: Vec3,
+    pub s_delta: Vec3,
+    pub c_eps: Vec3,
+
+    pub c_beta_orientation: Quaternion,
+    pub c_gamma_orientation: Quaternion,
+    pub s_delta_orientation: Quaternion,
+}
+
+#[derive(Debug, Default)]
 pub struct CoordsGly {}
 
 #[derive(Debug, Default)]
@@ -1618,6 +2163,24 @@ pub struct CoordsPro {
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
+}
+
+#[derive(Debug, Default)]
+pub struct CoordsPhe {
+    pub c_beta: Vec3,
+    pub c_gamma: Vec3,
+    pub c_delta1: Vec3,
+    pub c_delta2: Vec3,
+    pub c_eps1: Vec3,
+    pub c_eps2: Vec3,
+    pub c_zeta: Vec3,
+
+    pub c_beta_orientation: Quaternion,
+    pub c_gamma_orientation: Quaternion,
+    pub c_delta1_orientation: Quaternion,
+    pub c_delta2_orientation: Quaternion,
+    pub c_eps1_orientation: Quaternion,
+    pub c_eps2_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]

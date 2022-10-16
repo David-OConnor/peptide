@@ -6,7 +6,7 @@ use graphics::Scene;
 
 use crate::{
     atom_coords::ProteinCoords,
-    chem_definitions::{AminoAcidType, BackboneRole},
+    chem_definitions::{AminoAcidType, AtomRole},
     render_wgpu,
     sidechain::Sidechain,
     types::{Residue, State},
@@ -36,7 +36,7 @@ const WINDOW_MARGIN: egui::style::Margin = egui::style::Margin {
 };
 
 const SIM_TIME_SCALE_MIN: f64 = 0.;
-const SIM_TIME_SCALE_MAX: f64 = 0.1;
+const SIM_TIME_SCALE_MAX: f64 = 1.;
 
 // Water freezing vs boiling
 const TEMPERATURE_MIN: f64 = 273.15;
@@ -77,7 +77,7 @@ pub fn change_lit_res(state: &State, scene: &mut Scene) {
         .protein_coords
         .atoms_backbone
         .iter()
-        .find(|a| a.residue_id == state.active_residue && a.role == BackboneRole::N)
+        .find(|a| a.residue_id == state.active_residue && a.role == AtomRole::N)
         .unwrap()
         .position;
 
@@ -114,7 +114,7 @@ fn add_focus_btn(ui: &mut egui::Ui, state: &mut State, scene: &mut Scene, res_id
             .protein_coords
             .atoms_backbone
             .iter()
-            .find(|a| a.residue_id == res_id && a.role == BackboneRole::N)
+            .find(|a| a.residue_id == res_id && a.role == AtomRole::N)
             .unwrap()
             .position;
 
@@ -351,7 +351,7 @@ fn add_motion_sim(
         if ui.button("Start thermal sim").clicked() {
             state.sim_running = true;
         }
-        if ui.button("End thermal sim").clicked() {
+        if ui.button("Stop thermal sim").clicked() {
             state.sim_running = false;
         }
     });
@@ -502,7 +502,7 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
             ui.add(egui::Label::new("Keyboard commands:").wrap(true));
             ui.add(egui::Label::new("W/S/A/D: Move forward, back, left, right. C: down. Space: up. Q/E: Roll.").wrap(true));
             ui.add(egui::Label::new("Mouse left click + drag: Pitch and yaw. Up and down arrows: change active residue.").wrap(true));
-            ui.add(egui::Label::new("Hold shift to move faster").wrap(true));
+            ui.add(egui::Label::new("Hold shift to move faster.").wrap(true));
             // ui.label("Keyboard commands:").wrap(true);
             // ui.label("WSAD: Move forward, back, left, right. C: down. Space: up. Q/E: Roll.");
             // ui.label("Mouse left click + drag: Pitch and yaw. Up and down arrows: change active residue.");

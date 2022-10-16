@@ -1,6 +1,6 @@
 //! This file contains render code that's engine agnostic. Configuration, etc.
 
-use crate::chem_definitions::BackboneRole;
+use crate::chem_definitions::AtomRole;
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
@@ -14,6 +14,8 @@ pub const BOND_COLOR_SIDECHAIN: (f32, f32, f32) = (0.7, 0.65, 0.5);
 pub const CALPHA_COLOR: (f32, f32, f32) = (0.2, 0.8, 0.2);
 pub const CP_COLOR: (f32, f32, f32) = (0.4, 0.6, 0.6);
 pub const C_SIDECHAIN_COLOR: (f32, f32, f32) = (0.3, 0.5, 0.3);
+pub const S_SIDECHAIN_COLOR: (f32, f32, f32) = (0.6, 0.6, 0.);
+pub const SE_SIDECHAIN_COLOR: (f32, f32, f32) = (0.0, 0.6, 0.6);
 
 pub const N_COLOR: (f32, f32, f32) = (0., 0., 1.);
 pub const O_COLOR: (f32, f32, f32) = (1., 0., 0.);
@@ -47,7 +49,7 @@ pub const SIDE_LEN: f32 = 0.4;
 //     pub orientation: Quaternion,
 // }
 
-impl BackboneRole {
+impl AtomRole {
     pub fn render_color(&self) -> (f32, f32, f32) {
         let cα = CALPHA_COLOR;
         let cp = CP_COLOR;
@@ -56,6 +58,8 @@ impl BackboneRole {
         let h_n = H_COLOR;
         let h_cα = H_COLOR;
         let cs = C_SIDECHAIN_COLOR;
+        let s = S_SIDECHAIN_COLOR;
+        let se = SE_SIDECHAIN_COLOR;
 
         match self {
             Self::Cα => (cα.0, cα.1, cα.2),
@@ -68,6 +72,8 @@ impl BackboneRole {
             // todo: Consider a diff shade for n and o sidechain colors
             Self::NSidechain => (n.0, n.1, n.2),
             Self::OSidechain => (o.0, o.1, o.2),
+            Self::SSidechain => (s.0, s.1, s.2),
+            Self::SeSidechain => (se.0, se.1, se.2),
         }
     }
 }
