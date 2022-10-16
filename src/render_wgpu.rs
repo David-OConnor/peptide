@@ -49,6 +49,27 @@ fn quat_to_f32(q: Quaternion) -> lin_alg2::f32::Quaternion {
     lin_alg2::f32::Quaternion::new(q.w as f32, q.x as f32, q.y as f32, q.z as f32)
 }
 
+/// Adjust the camera to focus on a new point. Does so by rotating in the shortest direction
+/// to point at the new point, then moving forward or back to get to the requested distance.
+pub fn look_at(cam: &mut Camera, focus_pt: Vec3F32, dist: f32) {
+    // todo: A smooth animation later. For now, just calculate the resulting camera
+    // todo position and orientation.
+
+    let vec_currently_looking_at = cam.orientation.rotate_vec(Vec3F32::new(0., 0., 1.)); // fwd vec
+    let dir_to_pt = (focus_pt - cam.position).to_normalized();
+
+    let rotation = QuatF32::from_unit_vecs(vec_currently_looking_at, dir_to_pt);
+
+    // let rotation = new_orientation * cam.orientation.inverse();
+    cam.orientation = rotation * cam.orientation;
+
+    // todo: Why so slow?
+
+    // Now that the orientation is set, move forward or backwards in relation
+    // to the new focus point until at the target distance.
+    cam.position = focus_pt - dir_to_pt * dist;
+}
+
 fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) -> (bool, bool) {
     // Box::new(move |event: DeviceEvent, scene: &mut Scene, dt: f32| {
     move |state: &mut State, event: DeviceEvent, scene: &mut Scene, dt: f32| {
@@ -484,7 +505,8 @@ pub fn run(mut state: State) {
     };
     let ui_settings = UiSettings {
         // todo: How to handle this? For blocking keyboard and moues inputs when over the UI.
-        width: 520.,
+        // width: gui::UI_WIDTH as f64, // todo: Not working correctly.
+        width: 500.,
     };
 
     // Of note, these functions could be used directly, vice as closures.

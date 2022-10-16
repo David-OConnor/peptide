@@ -2,7 +2,7 @@
 
 use std::{f64::consts::TAU, fmt};
 
-use crate::{atom_coords::ProteinCoords, proteins, render::Camera, sidechain::Sidechain, gui::UiMode};
+use crate::{atom_coords::ProteinCoords, gui::UiMode, proteins, sidechain::Sidechain};
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
@@ -80,9 +80,6 @@ pub struct State {
     pub protein_coords: ProteinCoords,
     /// Residue id that's selected for rotation. Starts at 1.
     pub active_residue: usize,
-    /// Camera position and orientation
-    /// todo: DO we want this? Probably not.
-    pub cam: Camera,
     pub ui_mode: UiMode,
     // pub ui: StateUi,
 }
@@ -99,10 +96,6 @@ pub struct State {
 //                 atoms_backbone: Vec::new(),
 //             },
 //             active_residue: 1,
-//             cam: Camera {
-//                 position: Vec3::new(0., 0., 7.),
-//                 orientation: Quaternion::new_identity(),
-//             },
 //         }
 //     }
 // }
@@ -116,10 +109,6 @@ impl State {
             protein_descrip,
             protein_coords,
             active_residue: 1,
-            cam: Camera {
-                position: Vec3::new(0., 0., 7.),
-                orientation: Quaternion::new_identity(),
-            },
             ui_mode: UiMode::ActiveAaEditor,
             // ui: Default::default(),
         }

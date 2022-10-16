@@ -41,11 +41,11 @@ pub const RUN_FACTOR: f64 = 5.;
 // Render size of an atom, on a [polyhedron] side.
 pub const SIDE_LEN: f32 = 0.4;
 
-// todo: Do we want this in addition to the render lib's cam?
-pub struct Camera {
-    pub position: Vec3,
-    pub orientation: Quaternion,
-}
+// // todo: Do we want this in addition to the render lib's cam?
+// pub struct Camera {
+//     pub position: Vec3,
+//     pub orientation: Quaternion,
+// }
 
 impl BackboneRole {
     pub fn render_color(&self) -> (f32, f32, f32) {
