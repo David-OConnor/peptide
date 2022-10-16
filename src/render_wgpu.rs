@@ -329,7 +329,6 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> bool {
         false
     }
     // todo: This may be where you need to update the render after changing a slider
-
 }
 
 /// todo: Use a vec with vec ops instead?

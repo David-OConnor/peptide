@@ -38,6 +38,10 @@ const WINDOW_MARGIN: egui::style::Margin = egui::style::Margin {
 const SIM_TIME_SCALE_MIN: f64 = 0.;
 const SIM_TIME_SCALE_MAX: f64 = 0.1;
 
+// Water freezing vs boiling
+const TEMPERATURE_MIN: f64 = 273.15;
+const TEMPERATURE_MAX: f64 = 373.15;
+
 use lin_alg2::f32::Vec3;
 
 // todo: Unused
@@ -273,9 +277,16 @@ fn add_aa_selector(
 
         // Click this button to change the active residue to this.
         // todo: button .fill() method to change BG color
-        if ui.button(RichText::new("Sel").color(
-            if state.active_residue == ar_i + 1 { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
-        )).clicked() {
+        if ui
+            .button(
+                RichText::new("Sel").color(if state.active_residue == ar_i + 1 {
+                    ACTIVE_MODE_COLOR
+                } else {
+                    INACTIVE_MODE_COLOR
+                }),
+            )
+            .clicked()
+        {
             state.active_residue = ar_i + 1;
             change_lit_res(state, scene);
 
@@ -348,11 +359,23 @@ fn add_motion_sim(
     ui.add_space(SPACE_BETWEEN_SECTIONS);
 
     ui.label("Simulation speed");
-    ui.add(egui::Slider::new(
-        &mut state.sim_time_scale, SIM_TIME_SCALE_MIN..=SIM_TIME_SCALE_MAX
-    )
+
+    ui.add(
+        egui::Slider::new(
+            &mut state.sim_time_scale,
+            SIM_TIME_SCALE_MIN..=SIM_TIME_SCALE_MAX,
+        )
         .logarithmic(true)
-        .text(""));
+        .text(""),
+    );
+
+    ui.label("Temperature (K)");
+
+    ui.add(
+        egui::Slider::new(&mut state.temperature, TEMPERATURE_MIN..=TEMPERATURE_MAX)
+            .fixed_decimals(0) // Or it bounces between 0 and 1 rapidly
+            .text(""),
+    );
 }
 
 /// This function draws the (immediate-mode) GUI.
