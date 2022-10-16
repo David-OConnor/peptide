@@ -35,6 +35,9 @@ const WINDOW_MARGIN: egui::style::Margin = egui::style::Margin {
     bottom: 30.,
 };
 
+const SIM_TIME_SCALE_MIN: f64 = 0.;
+const SIM_TIME_SCALE_MAX: f64 = 0.1;
+
 use lin_alg2::f32::Vec3;
 
 // todo: Unused
@@ -172,19 +175,19 @@ fn add_active_aa_editor(
 
     let mut sc = &mut active_res.sidechain;
 
-    if let Some(mut χ) = sc.get_mut_χ1() {
+    if let Some(χ) = sc.get_mut_χ1() {
         add_angle_slider(χ, "χ1", entities_changed, ui);
     }
-    if let Some(mut χ) = sc.get_mut_χ2() {
+    if let Some(χ) = sc.get_mut_χ2() {
         add_angle_slider(χ, "χ2", entities_changed, ui);
     }
-    if let Some(mut χ) = sc.get_mut_χ3() {
+    if let Some(χ) = sc.get_mut_χ3() {
         add_angle_slider(χ, "χ3", entities_changed, ui);
     }
-    if let Some(mut χ) = sc.get_mut_χ4() {
+    if let Some(χ) = sc.get_mut_χ4() {
         add_angle_slider(χ, "χ4", entities_changed, ui);
     }
-    if let Some(mut χ) = sc.get_mut_χ5() {
+    if let Some(χ) = sc.get_mut_χ5() {
         add_angle_slider(χ, "χ5", entities_changed, ui);
     }
 }
@@ -326,6 +329,32 @@ fn add_sequence_editor(
     });
 }
 
+/// Adds a ui area for editing the primary (AA) sequence.
+fn add_motion_sim(
+    ui: &mut egui::Ui,
+    state: &mut State,
+    // scene: &mut Scene,
+    // entities_changed: &mut bool,
+) {
+    ui.horizontal(|ui| {
+        if ui.button("Start thermal sim").clicked() {
+            state.sim_running = true;
+        }
+        if ui.button("End thermal sim").clicked() {
+            state.sim_running = false;
+        }
+    });
+
+    ui.add_space(SPACE_BETWEEN_SECTIONS);
+
+    ui.label("Simulation speed");
+    ui.add(egui::Slider::new(
+        &mut state.sim_time_scale, SIM_TIME_SCALE_MIN..=SIM_TIME_SCALE_MAX
+    )
+        .logarithmic(true)
+        .text(""));
+}
+
 /// This function draws the (immediate-mode) GUI.
 /// [UI items](https://docs.rs/egui/latest/egui/struct.Ui.html#method.heading)
 pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, bool) {
@@ -440,15 +469,17 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
                     add_sequence_editor(ui, state, scene, &mut entities_changed, &mut lighting_changed);
                 }
                 UiMode::MotionSim => {
-                    // add_motion_sim(ui, state, &mut scene_changed);
+                    // add_motion_sim(ui, state, &mut entities_changed);
+                    add_motion_sim(ui, state);
                 }
             }
 
             ui.add_space(SPACE_BETWEEN_SECTIONS * 2.);
 
             ui.add(egui::Label::new("Keyboard commands:").wrap(true));
-            ui.add(egui::Label::new("WSAD: Move forward, back, left, right. C: down. Space: up. Q/E: Roll.").wrap(true));
+            ui.add(egui::Label::new("W/S/A/D: Move forward, back, left, right. C: down. Space: up. Q/E: Roll.").wrap(true));
             ui.add(egui::Label::new("Mouse left click + drag: Pitch and yaw. Up and down arrows: change active residue.").wrap(true));
+            ui.add(egui::Label::new("Hold shift to move faster").wrap(true));
             // ui.label("Keyboard commands:").wrap(true);
             // ui.label("WSAD: Move forward, back, left, right. C: down. Space: up. Q/E: Roll.");
             // ui.label("Mouse left click + drag: Pitch and yaw. Up and down arrows: change active residue.");

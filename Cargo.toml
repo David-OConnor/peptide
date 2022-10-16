@@ -7,11 +7,9 @@ edition = "2021"
 
 [dependencies]
 graphics = { path = "../graphics_wgpu" }
-lin-alg2 = { path = "../lin_alg" }
-
 # We use `winit` here to import `winit` events, for passing to
 # the renderer. todo: Re-export these from the graphics lib instead?
 winit = "^0.27.2"
-
+lin-alg2 = { path = "../lin_alg" }
 egui = "^0.19.0"
-#egui_demo_lib = "^0.19" # todo: temp
+rand = { version = "^0.8.5", features = ["std", "std_rng"] }

@@ -82,6 +82,11 @@ pub struct State {
     pub active_residue: usize,
     pub ui_mode: UiMode,
     // pub ui: StateUi,
+    /// Simulation temperature. Nominally K, but currently unhinged from real time etc.
+    pub temperature: f64,
+    /// Ratio of sim time to real time. A higher value (closer to 1) is faster.
+    pub sim_time_scale: f64,
+    pub sim_running: bool,
 }
 
 // impl Default for State {
@@ -111,6 +116,9 @@ impl State {
             active_residue: 1,
             ui_mode: UiMode::ActiveAaEditor,
             // ui: Default::default(),
+            temperature: 293.,
+            sim_time_scale: 0.001,
+            sim_running: false,
         }
     }
 

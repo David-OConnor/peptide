@@ -96,13 +96,26 @@ fn init_protein() -> ProteinDescription {
         clamp_angle(&mut res.φ);
         clamp_angle(&mut res.ψ);
         clamp_angle(&mut res.ω);
-        println!("A");
-        // todo: Clamp sidechains too!
+
+        if let Some(χ) = res.sidechain.get_mut_χ1() {
+            clamp_angle(χ);
+        }
+        if let Some(χ) = res.sidechain.get_mut_χ2() {
+            clamp_angle(χ);
+        }
+        if let Some(χ) = res.sidechain.get_mut_χ3() {
+            clamp_angle(χ);
+        }
+        if let Some(χ) = res.sidechain.get_mut_χ4() {
+            clamp_angle(χ);
+        }
+        if let Some(χ) = res.sidechain.get_mut_χ5() {
+            clamp_angle(χ);
+        }
     }
 
-    prot_test.save("trp_cage.prot");
-
-    let prot_test_load = ProteinDescription::load("trp_cage.prot");
+    // prot_test.save("trp_cage.prot");
+    // let prot_test_load = ProteinDescription::load("trp_cage.prot");
 
     // ProteinDescription { residues }
     proteins::make_trp_cage()

@@ -2,10 +2,13 @@
 
 use std::f64::consts::TAU;
 
+use rand;
+
 use graphics::{
     self, Camera, ControlScheme, DeviceEvent, ElementState, Entity, InputSettings, LightType,
     Lighting, Mesh, PointLight, Scene, UiSettings,
 };
+
 use lin_alg2::{
     self,
     f32::Quaternion as QuatF32,
@@ -285,9 +288,48 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
     }
 }
 
-fn render_handler(_state: &mut State, _scene: &mut Scene) -> bool {
+// todo: Util?
+/// Get a random value from -0.5 to 0.5
+fn rng() -> f64 {
+    rand::random::<f64>() - 0.5
+}
+
+fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> bool {
+    if state.sim_running {
+        // Constant term in our noise.
+        let c = state.temperature * state.sim_time_scale * dt as f64;
+        // Crude approach, where we add random noise to the angles.
+
+        for res in &mut state.protein_descrip.residues {
+            res.ψ += rng() * c;
+            res.φ += rng() * c;
+
+            if let Some(χ) = res.sidechain.get_mut_χ1() {
+                *χ += rng() * c;
+            }
+            if let Some(χ) = res.sidechain.get_mut_χ2() {
+                *χ += rng() * c;
+            }
+            if let Some(χ) = res.sidechain.get_mut_χ3() {
+                *χ += rng() * c;
+            }
+            if let Some(χ) = res.sidechain.get_mut_χ4() {
+                *χ += rng() * c;
+            }
+            if let Some(χ) = res.sidechain.get_mut_χ5() {
+                *χ += rng() * c;
+            }
+        }
+
+        state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
+        scene.entities = generate_entities(&state);
+
+        true
+    } else {
+        false
+    }
     // todo: This may be where you need to update the render after changing a slider
-    false
+
 }
 
 /// todo: Use a vec with vec ops instead?
