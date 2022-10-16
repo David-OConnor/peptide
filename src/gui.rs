@@ -1,6 +1,6 @@
 use core::f64::consts::TAU;
 
-use egui;
+use egui::{self, RichText};
 
 use graphics::Scene;
 
@@ -64,22 +64,6 @@ pub enum UiMode {
 //     // Box::new(move |event: DeviceEvent, scene: &mut Scene, dt: f32| {
 //     move |state: &mut State, event: DeviceEvent, scene: &mut Scene, dt: f32| {
 
-/// Helper function to add a slider.
-fn add_angle_slider(val: &mut f64, label: &str, entities_changed: &mut bool, ui: &mut egui::Ui) {
-    ui.add(
-        // todo: Make the sliders wider.
-        egui::Slider::from_get_set(0.0..=TAU, |v| {
-            if let Some(v_) = v {
-                *val = v_;
-                *entities_changed = true;
-            }
-
-            *val
-        })
-        .text(label),
-    );
-}
-
 /// Updating the position of the light source on the active residue.
 pub fn change_lit_res(state: &State, scene: &mut Scene) {
     let active_n_posit = state
@@ -95,6 +79,46 @@ pub fn change_lit_res(state: &State, scene: &mut Scene) {
         active_n_posit.y as f32,
         active_n_posit.z as f32,
     );
+}
+
+/// Helper function to add a slider.
+fn add_angle_slider(val: &mut f64, label: &str, entities_changed: &mut bool, ui: &mut egui::Ui) {
+    ui.add(
+        egui::Slider::from_get_set(0.0..=TAU, |mut v| {
+            if let Some(v_) = v {
+                *val = v_;
+                *entities_changed = true;
+            }
+
+            *val
+        })
+        .text(label),
+    );
+
+    // ui.add(egui::Slider::new(val, 0.0..=TAU).text(label));
+    // *entities_changed = true;
+}
+
+/// Look at the anchor N atom of the desired res.
+fn add_focus_btn(ui: &mut egui::Ui, state: &mut State, scene: &mut Scene, res_id: usize) {
+    if ui.button("Focus").clicked() {
+        // todo: DRY here between this and the lighting update.
+        let active_n_posit = state
+            .protein_coords
+            .atoms_backbone
+            .iter()
+            .find(|a| a.residue_id == res_id && a.role == BackboneRole::N)
+            .unwrap()
+            .position;
+
+        let active_n_posit = Vec3::new(
+            active_n_posit.x as f32,
+            active_n_posit.y as f32,
+            active_n_posit.z as f32,
+        );
+
+        render_wgpu::look_at(&mut scene.camera, active_n_posit, FOCUS_TARGET_DIST);
+    }
 }
 
 /// Adds a ui area for editing the primary (AA) sequence.
@@ -137,8 +161,11 @@ fn add_active_aa_editor(
 
     // We use this syntax instead of the more concise `new` syntax, so we know
     // if we need to change the scene.
+    // todo: The backbone sliders aren't initializing correctly
     add_angle_slider(&mut active_res.ψ, "ψ", entities_changed, ui);
+    let mut active_res = &mut state.protein_descrip.residues[ar_i];
     add_angle_slider(&mut active_res.φ, "φ", entities_changed, ui);
+    let mut active_res = &mut state.protein_descrip.residues[ar_i];
     add_angle_slider(&mut active_res.ω, "ω", entities_changed, ui);
 
     ui.label("Sidechain dihedral angles:");
@@ -242,13 +269,18 @@ fn add_aa_selector(
         }
 
         // Click this button to change the active residue to this.
-        if ui.button("Sel").clicked() {
+        // todo: button .fill() method to change BG color
+        if ui.button(RichText::new("Sel").color(
+            if state.active_residue == ar_i + 1 { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
+        )).clicked() {
             state.active_residue = ar_i + 1;
             change_lit_res(state, scene);
 
             *entities_changed = true; // to change entity color.
             *lighting_changed = true;
         }
+
+        add_focus_btn(ui, state, scene, ar_i + 1);
     });
 }
 
@@ -369,32 +401,7 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
                     }
                 }
 
-                // Look at the anchor N atom of the new active res.
-                if ui.button("Focus").clicked() {
-                    // // We don't update the camera here directly, since we haven't yet calcualted the
-                    // //  new active residue's coordinates.
-                    // *focus_commanded = true;
-                    // println!("C");
-
-                    // todo: DRY here between this and the lighting update.
-                    let active_n_posit = state
-                        .protein_coords
-                        .atoms_backbone
-                        .iter()
-                        .find(|a| a.residue_id == state.active_residue && a.role == BackboneRole::N)
-                        .unwrap()
-                        .position;
-
-                    let active_n_posit = Vec3::new(
-                        active_n_posit.x as f32,
-                        active_n_posit.y as f32,
-                        active_n_posit.z as f32,
-                    );
-
-                    // todo: Dist.
-                    render_wgpu::look_at(&mut scene.camera, active_n_posit, FOCUS_TARGET_DIST);
-                    // *entities_changed = true;
-                }
+                add_focus_btn(ui, state, scene, state.active_residue);
             });
 
             ui.add_space(SPACE_BETWEEN_SECTIONS);
@@ -404,19 +411,19 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
 
                 // todo: Something to let you know current mode; highlight etc.
                 // if ui.selectable_label(state.ui_mode == UiMode::ActiveAaEditor, "Aa editor").clicked() {
-                if ui.button(egui::RichText::new("AA editor").color(
+                if ui.button(RichText::new("AA editor").color(
                     if state.ui_mode == UiMode::ActiveAaEditor { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
                 )).clicked() {
                     state.ui_mode = UiMode::ActiveAaEditor
                 }
                 // if ui.selectable_label(state.ui_mode == UiMode::SeqEditor, "Seq editor").clicked() {
-                if ui.button(egui::RichText::new("Seq editor").color(
+                if ui.button(RichText::new("Seq editor").color(
                     if state.ui_mode == UiMode::SeqEditor { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
                 )).clicked() {
                     state.ui_mode = UiMode::SeqEditor;
                 }
                 // if ui.selectable_label(state.ui_mode == UiMode::MotionSim, "Motion sim").clicked() {
-                if ui.button(egui::RichText::new("Motion sim").color(
+                if ui.button(RichText::new("Motion sim").color(
                     if state.ui_mode == UiMode::MotionSim { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
                 )).clicked() {
                     state.ui_mode = UiMode::MotionSim;

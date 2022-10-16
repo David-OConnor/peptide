@@ -55,12 +55,13 @@ pub fn look_at(cam: &mut Camera, focus_pt: Vec3F32, dist: f32) {
     // todo: A smooth animation later. For now, just calculate the resulting camera
     // todo position and orientation.
 
+    // todo: Add this to your quaternion article.
+
     let vec_currently_looking_at = cam.orientation.rotate_vec(Vec3F32::new(0., 0., 1.)); // fwd vec
     let dir_to_pt = (focus_pt - cam.position).to_normalized();
 
     let rotation = QuatF32::from_unit_vecs(vec_currently_looking_at, dir_to_pt);
 
-    // let rotation = new_orientation * cam.orientation.inverse();
     cam.orientation = rotation * cam.orientation;
 
     // todo: Why so slow?
@@ -259,32 +260,13 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
 
         if active_res_changed || active_res_backbone_changed {
             // todo: Break this out by psi, phi etc instead of always updating all?
-            let res = &state.protein_descrip.residues[state.active_residue - 1];
-
-            // state.ui.active_res_φ = res.φ;
-            // state.ui.active_res_ψ = res.ψ;
-            // state.ui.active_res_ω = res.ω;
+            let mut res = &mut state.protein_descrip.residues[state.active_residue - 1];
 
             // todo: Only do this for backbone changd; not acive res
-            // Note: We use modulus here to make integrating with the GUI
-            // easier, ie clamping the range between 0 and TAU.
 
-            // todo: we used `active_res` code shortener before, but having trouble now.
-            // Clamp to > 0
-            if state.protein_descrip.residues[ar_i].φ < 0. {
-                state.protein_descrip.residues[ar_i].φ += TAU;
-            }
-            if state.protein_descrip.residues[ar_i].ψ < 0. {
-                state.protein_descrip.residues[ar_i].ψ += TAU;
-            }
-            if state.protein_descrip.residues[ar_i].ω < 0. {
-                state.protein_descrip.residues[ar_i].ω += TAU;
-            }
-
-            // Clamp to < TAU
-            state.protein_descrip.residues[ar_i].φ = (state.protein_descrip.residues[ar_i].φ) % TAU;
-            state.protein_descrip.residues[ar_i].ψ = (state.protein_descrip.residues[ar_i].ψ) % TAU;
-            state.protein_descrip.residues[ar_i].ω = (state.protein_descrip.residues[ar_i].ω) % TAU;
+            crate::clamp_angle(&mut res.φ);
+            crate::clamp_angle(&mut res.ψ);
+            crate::clamp_angle(&mut res.ω);
         }
 
         // if active_res_changed || active_res_sidechain_changed {

@@ -59,6 +59,8 @@ mod types;
 
 use crate::types::State;
 
+use std::f64::consts::TAU;
+
 // todo: model the oxygen double-bounded to Cp next.
 
 const BOND_ROTATION_SPEED: f64 = 1.; // radians/s
@@ -85,13 +87,38 @@ fn init_protein() -> ProteinDescription {
     //     );
     // }
 
-    let prot_test = proteins::make_trp_cage();
+    let mut prot_test = proteins::make_trp_cage();
+
+    // Clamp to within 0, TAU. Otherwise, the GUI sliders will glitch out.
+    // todo: Would this make sense elsewhere, given it's only for the GUI?
+
+    for res in &mut prot_test.residues {
+        clamp_angle(&mut res.φ);
+        clamp_angle(&mut res.ψ);
+        clamp_angle(&mut res.ω);
+        println!("A");
+        // todo: Clamp sidechains too!
+    }
+
     prot_test.save("trp_cage.prot");
 
     let prot_test_load = ProteinDescription::load("trp_cage.prot");
 
     // ProteinDescription { residues }
     proteins::make_trp_cage()
+}
+
+// todo: util mod?
+
+pub fn clamp_angle(angle: &mut f64) {
+    // Clamp to > 0
+    if *angle < 0. {
+        // Note that this assumes it's not lower than -TAU.
+        *angle += TAU;
+    // Clamp to < TAU
+    } else if *angle > TAU {
+        *angle = *angle % TAU;
+    }
 }
 
 fn main() {
