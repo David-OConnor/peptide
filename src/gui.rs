@@ -15,8 +15,12 @@ use crate::{
 // Note: This is draggable.
 const SIDE_PANEL_SIZE: f32 = 400.;
 const SLIDER_WIDTH: f32 = 160.;
+const AA_SEL_WIDTH: f32 = 60.;
 
 const SPACE_BETWEEN_SECTIONS: f32 = 20.;
+
+const ACTIVE_MODE_COLOR: egui::Color32 = egui::Color32::LIGHT_BLUE;
+const INACTIVE_MODE_COLOR: egui::Color32 = egui::Color32::LIGHT_GRAY;
 
 const WINDOW_MARGIN: egui::style::Margin = egui::style::Margin { // todo not working
     left: 10.,
@@ -30,6 +34,13 @@ use lin_alg2::f32::Vec3;
 // todo: Unused
 #[derive(Default)]
 pub struct _StateUi {}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum UiMode {
+    ActiveAaEditor,
+    SeqEditor,
+    MotionSim,
+}
 
 //fn make_event_handler(
 //     state: &mut State,
@@ -195,7 +206,7 @@ fn add_aa_selector(
     // todo match top level only?
     // todo: Change width
     egui::ComboBox::from_id_source(sel_id)
-        .width(100.)
+        .width(AA_SEL_WIDTH)
         .selected_text(format!("{:?}", selected))
         .show_ui(ui, |ui| {
             // todo: Code shortener
@@ -320,22 +331,54 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
 
             ui.horizontal(|ui| {
                 if ui.button("Save").clicked() {
-                    scene_changed = true;
-                    lighting_changed = true;
                 }
                 if ui.button("Load").clicked() {
-                    scene_changed = true;
-                    lighting_changed = true;
                 }
             });
 
-            add_active_aa_editor(ui, state, scene, &mut scene_changed, &mut lighting_changed);
+            ui.add_space(SPACE_BETWEEN_SECTIONS);
+
+            ui.horizontal(|ui| {
+                // todo: BG color instead of text color?
+
+                // todo: Something to let you know current mode; highlight etc.
+                // if ui.selectable_label(state.ui_mode == UiMode::ActiveAaEditor, "Aa editor").clicked() {
+                if ui.button(egui::RichText::new("AA editor").color(
+                    if state.ui_mode == UiMode::ActiveAaEditor { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
+                )).clicked() {
+                    state.ui_mode = UiMode::ActiveAaEditor
+                }
+                // if ui.selectable_label(state.ui_mode == UiMode::SeqEditor, "Seq editor").clicked() {
+                if ui.button(egui::RichText::new("Seq editor").color(
+                    if state.ui_mode == UiMode::SeqEditor { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
+                )).clicked() {
+                    state.ui_mode = UiMode::SeqEditor;
+                }
+                // if ui.selectable_label(state.ui_mode == UiMode::MotionSim, "Motion sim").clicked() {
+                if ui.button(egui::RichText::new("Motion sim").color(
+                    if state.ui_mode == UiMode::MotionSim { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
+                )).clicked() {
+                    state.ui_mode = UiMode::MotionSim;
+                }
+            });
 
             ui.add_space(SPACE_BETWEEN_SECTIONS);
 
-            add_sequence_editor(ui, state, &mut scene_changed);
+            match state.ui_mode {
+                UiMode::ActiveAaEditor => {
+                    add_active_aa_editor(ui, state, scene, &mut scene_changed, &mut lighting_changed);
+                }
+                UiMode::SeqEditor => {
+                    add_sequence_editor(ui, state, &mut scene_changed);
+                }
+                UiMode::MotionSim => {
+                    // add_motion_sim(ui, state, &mut scene_changed);
+                }
+            }
 
-            // ui.add_space(SPACE_BETWEEN_SECTIONS); // todo: Not working to add margin.
+            ui.label("Keyboard commands:");
+            ui.label("WSAD: Move forward, back, left, right. C: down. Space: up. Q/E: Roll.");
+            ui.label("Mouse left click + drag: Pitch and yaw. Up and down arrows: change active residue.");
         });
 
         if scene_changed {

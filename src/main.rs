@@ -89,7 +89,6 @@ fn init_protein() -> ProteinDescription {
     prot_test.save("trp_cage.prot");
 
     let prot_test_load = ProteinDescription::load("trp_cage.prot");
-    println!("Loaded: {}", prot_test_load);
 
     // ProteinDescription { residues }
     proteins::make_trp_cage()

@@ -2,7 +2,7 @@
 
 use std::{f64::consts::TAU, fmt};
 
-use crate::{atom_coords::ProteinCoords, proteins, render::Camera, sidechain::Sidechain};
+use crate::{atom_coords::ProteinCoords, proteins, render::Camera, sidechain::Sidechain, gui::UiMode};
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
@@ -83,6 +83,7 @@ pub struct State {
     /// Camera position and orientation
     /// todo: DO we want this? Probably not.
     pub cam: Camera,
+    pub ui_mode: UiMode,
     // pub ui: StateUi,
 }
 
@@ -119,6 +120,7 @@ impl State {
                 position: Vec3::new(0., 0., 7.),
                 orientation: Quaternion::new_identity(),
             },
+            ui_mode: UiMode::ActiveAaEditor,
             // ui: Default::default(),
         }
     }
@@ -169,8 +171,10 @@ impl Default for Residue {
     fn default() -> Self {
         Self {
             ω: TAU / 2.,
-            φ: proteins::PHI_SHEET,
-            ψ: proteins::PSI_SHEET,
+            // φ: proteins::PHI_SHEET,
+            // ψ: proteins::PSI_SHEET,
+            φ: proteins::PHI_HELIX,
+            ψ: proteins::PSI_HELIX,
             sidechain: Sidechain::Arg(Default::default()),
             dipole: Vec3::new_zero(),
         }

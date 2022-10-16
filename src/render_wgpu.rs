@@ -482,7 +482,10 @@ pub fn run(mut state: State) {
         initial_controls: ControlScheme::FreeCamera,
         ..Default::default()
     };
-    let ui_settings = UiSettings::default();
+    let ui_settings = UiSettings {
+        // todo: How to handle this? For blocking keyboard and moues inputs when over the UI.
+        width: 520.,
+    };
 
     // Of note, these functions could be used directly, vice as closures.
     // Leaving them as closure-creators now for flexibility.
