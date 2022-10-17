@@ -96,51 +96,6 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
                 if key.state == ElementState::Pressed {
                     // todo: These should probably be every 10 residues.
                     match key.scancode {
-                        2 => {
-                            state.active_residue = 1;
-                            entities_changed = true;
-                            active_res_changed = true;
-                        }
-                        3 => {
-                            state.active_residue = 2;
-                            entities_changed = true;
-                            active_res_changed = true;
-                        }
-                        4 => {
-                            state.active_residue = 3;
-                            entities_changed = true;
-                            active_res_changed = true;
-                        }
-                        5 => {
-                            state.active_residue = 4;
-                            entities_changed = true;
-                            active_res_changed = true;
-                        }
-                        6 => {
-                            state.active_residue = 5;
-                            entities_changed = true;
-                            active_res_changed = true;
-                        }
-                        7 => {
-                            state.active_residue = 6;
-                            entities_changed = true;
-                            active_res_changed = true;
-                        }
-                        8 => {
-                            state.active_residue = 7;
-                            entities_changed = true;
-                            active_res_changed = true;
-                        }
-                        9 => {
-                            state.active_residue = 8;
-                            entities_changed = true;
-                            active_res_changed = true;
-                        }
-                        10 => {
-                            state.active_residue = 9;
-                            entities_changed = true;
-                            active_res_changed = true;
-                        }
                         // todo: Why are these scan codes for up/down so high??
                         57_416 => {
                             // Up arrow

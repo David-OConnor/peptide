@@ -1,6 +1,6 @@
 use core::f64::consts::TAU;
 
-use egui::{self, RichText};
+use egui::{self, Color32, RichText};
 
 use graphics::{EngineUpdates, Scene};
 
@@ -15,7 +15,7 @@ use crate::{
 // Note: This is draggable.
 const SIDE_PANEL_SIZE: f32 = 400.;
 const SLIDER_WIDTH: f32 = 160.;
-const AA_SEL_WIDTH: f32 = 60.;
+const AA_SEL_WIDTH: f32 = 70.;
 // const KEYBOARD_HELP_WIDTH: f32 = 200.;
 
 const SPACE_BETWEEN_SECTIONS: f32 = 20.;
@@ -24,8 +24,8 @@ pub const UI_WIDTH: f32 = 260.;
 // When focusing on the active residue, move to this distance.
 pub const FOCUS_TARGET_DIST: f32 = 15.;
 
-const ACTIVE_MODE_COLOR: egui::Color32 = egui::Color32::LIGHT_BLUE;
-const INACTIVE_MODE_COLOR: egui::Color32 = egui::Color32::LIGHT_GRAY;
+const ACTIVE_MODE_COLOR: Color32 = Color32::LIGHT_BLUE;
+const INACTIVE_MODE_COLOR: Color32 = Color32::LIGHT_GRAY;
 
 const WINDOW_MARGIN: egui::style::Margin = egui::style::Margin {
     // todo not working
@@ -147,7 +147,11 @@ fn add_active_aa_editor(
     ui.label(state.protein_descrip.residues[ar_i].sidechain.aa_name());
 
     let active_aa_type = state.protein_descrip.residues[ar_i].sidechain.aa_type();
-    add_aa_selector(ui, state, scene, engine_updates, ar_i, active_aa_type, 0);
+    let removed = add_aa_selector(ui, state, scene, engine_updates, ar_i, active_aa_type, 0);
+
+    if removed {
+        state.protein_descrip.residues.remove(ar_i);
+    }
 
     // if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
     //     // …
@@ -193,7 +197,9 @@ fn add_active_aa_editor(
     }
 }
 
-/// Adds a ui area for editing the primary (AA) sequence.
+/// Adds a UI area for editing the primary (AA) sequence, as well as related auxillary
+/// functionality. The returned option is if we remove the active res index. We don't remove
+/// it directly, since we iterate over this fn in a loop in the seq editor.
 fn add_aa_selector(
     ui: &mut egui::Ui,
     state: &mut State,
@@ -202,7 +208,9 @@ fn add_aa_selector(
     ar_i: usize,
     initial_type: AminoAcidType,
     sel_id: usize,
-) {
+) -> bool {
+    let mut res_removed = false;
+
     // todo: Maybe a pure enum?
     let mut selected = initial_type;
 
@@ -215,60 +223,56 @@ fn add_aa_selector(
     ui.horizontal(|ui| {
         egui::ComboBox::from_id_source(sel_id)
             .width(AA_SEL_WIDTH)
-            .selected_text(format!("{:?}", selected))
+            .selected_text(format!("{}", selected))
             .show_ui(ui, |ui| {
                 // todo: Code shortener
-                ui.selectable_value(&mut selected, AminoAcidType::Arg, "Arg");
-                ui.selectable_value(&mut selected, AminoAcidType::His, "His");
-                ui.selectable_value(&mut selected, AminoAcidType::Lys, "Lys");
-                ui.selectable_value(&mut selected, AminoAcidType::Asp, "Asp");
-                ui.selectable_value(&mut selected, AminoAcidType::Glu, "Glu");
-                ui.selectable_value(&mut selected, AminoAcidType::Ser, "Ser");
-                ui.selectable_value(&mut selected, AminoAcidType::Thr, "Thr");
-                ui.selectable_value(&mut selected, AminoAcidType::Asn, "Asn");
-                ui.selectable_value(&mut selected, AminoAcidType::Gln, "Gln");
-                ui.selectable_value(&mut selected, AminoAcidType::Cys, "Cys");
-                ui.selectable_value(&mut selected, AminoAcidType::Sec, "Sec");
-                ui.selectable_value(&mut selected, AminoAcidType::Gly, "Gly");
-                ui.selectable_value(&mut selected, AminoAcidType::Pro, "Pro");
-                ui.selectable_value(&mut selected, AminoAcidType::Ala, "Ala");
-                ui.selectable_value(&mut selected, AminoAcidType::Val, "Val");
-                ui.selectable_value(&mut selected, AminoAcidType::Ile, "Ile");
-                ui.selectable_value(&mut selected, AminoAcidType::Leu, "Leu");
-                ui.selectable_value(&mut selected, AminoAcidType::Met, "Met");
-                ui.selectable_value(&mut selected, AminoAcidType::Phe, "Phe");
-                ui.selectable_value(&mut selected, AminoAcidType::Tyr, "Tyr");
-                ui.selectable_value(&mut selected, AminoAcidType::Trp, "Trp");
+                ui.selectable_value(&mut selected, AminoAcidType::Arg, "Arg (R)");
+                ui.selectable_value(&mut selected, AminoAcidType::His, "His (H)");
+                ui.selectable_value(&mut selected, AminoAcidType::Lys, "Lys (K)");
+                ui.selectable_value(&mut selected, AminoAcidType::Asp, "Asp (D)");
+                ui.selectable_value(&mut selected, AminoAcidType::Glu, "Glu (E)");
+                ui.selectable_value(&mut selected, AminoAcidType::Ser, "Ser (S)");
+                ui.selectable_value(&mut selected, AminoAcidType::Thr, "Thr (T)");
+                ui.selectable_value(&mut selected, AminoAcidType::Asn, "Asn (N)");
+                ui.selectable_value(&mut selected, AminoAcidType::Gln, "Gln (Q)");
+                ui.selectable_value(&mut selected, AminoAcidType::Cys, "Cys (C)");
+                ui.selectable_value(&mut selected, AminoAcidType::Sec, "Sec (U)");
+                ui.selectable_value(&mut selected, AminoAcidType::Gly, "Gly (G)");
+                ui.selectable_value(&mut selected, AminoAcidType::Pro, "Pro (P)");
+                ui.selectable_value(&mut selected, AminoAcidType::Ala, "Ala (A)");
+                ui.selectable_value(&mut selected, AminoAcidType::Val, "Val (V)");
+                ui.selectable_value(&mut selected, AminoAcidType::Ile, "Ile (I)");
+                ui.selectable_value(&mut selected, AminoAcidType::Leu, "Leu (L)");
+                ui.selectable_value(&mut selected, AminoAcidType::Met, "Met (M)");
+                ui.selectable_value(&mut selected, AminoAcidType::Phe, "Phe (F)");
+                ui.selectable_value(&mut selected, AminoAcidType::Tyr, "Tyr (Y)");
+                ui.selectable_value(&mut selected, AminoAcidType::Trp, "Trp (W)");
             });
 
         if selected != state.protein_descrip.residues[ar_i].sidechain.aa_type() {
-            let sc = &mut state.protein_descrip.residues[ar_i].sidechain;
-
-            *sc = match selected {
-                AminoAcidType::Arg => Sidechain::Arg(Default::default()),
-                AminoAcidType::His => Sidechain::His(Default::default()),
-                AminoAcidType::Lys => Sidechain::Lys(Default::default()),
-                AminoAcidType::Asp => Sidechain::Asp(Default::default()),
-                AminoAcidType::Glu => Sidechain::Glu(Default::default()),
-                AminoAcidType::Ser => Sidechain::Ser(Default::default()),
-                AminoAcidType::Thr => Sidechain::Thr(Default::default()),
-                AminoAcidType::Asn => Sidechain::Asn(Default::default()),
-                AminoAcidType::Gln => Sidechain::Gln(Default::default()),
-                AminoAcidType::Cys => Sidechain::Cys(Default::default()),
-                AminoAcidType::Sec => Sidechain::Sec(Default::default()),
-                AminoAcidType::Gly => Sidechain::Gly(Default::default()),
-                AminoAcidType::Pro => Sidechain::Pro(Default::default()),
-                AminoAcidType::Ala => Sidechain::Ala(Default::default()),
-                AminoAcidType::Val => Sidechain::Val(Default::default()),
-                AminoAcidType::Ile => Sidechain::Ile(Default::default()),
-                AminoAcidType::Leu => Sidechain::Leu(Default::default()),
-                AminoAcidType::Met => Sidechain::Met(Default::default()),
-                AminoAcidType::Phe => Sidechain::Phe(Default::default()),
-                AminoAcidType::Tyr => Sidechain::Tyr(Default::default()),
-                AminoAcidType::Trp => Sidechain::Trp(Default::default()),
-            };
-
+            state.protein_descrip.residues[ar_i].sidechain = Sidechain::from_aa_type(selected);
             engine_updates.entities = true;
+        }
+
+        // todo: If we want this field to start with the current value, we probably
+        // todo need an intermediate state-tracking var.
+        // let mut ident_entry = state.protein_descrip.residues[ar_i].sidechain.aa_ident_single_letter();
+        let mut ident_entry = String::new();
+
+        let response = ui.add(egui::TextEdit::singleline(&mut ident_entry).desired_width(16.));
+        if response.changed() {
+            // if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
+            let val = ident_entry.to_ascii_uppercase();
+
+            match Sidechain::from_ident_single_letter(&val) {
+                Some(res) => {
+                    if res.aa_type() != state.protein_descrip.residues[ar_i].sidechain.aa_type() {
+                        state.protein_descrip.residues[ar_i].sidechain = res;
+                        engine_updates.entities = true;
+                    }
+                }
+                None => (), // todo: Blank the field etc?
+            }
         }
 
         // Click this button to change the active residue to this.
@@ -291,7 +295,18 @@ fn add_aa_selector(
         }
 
         add_focus_btn(ui, state, scene, ar_i + 1, &mut engine_updates.camera);
+
+        ui.add_space(16.);
+
+        if ui.button(RichText::new("❌").color(Color32::RED)).clicked() {
+            res_removed = true;
+
+            engine_updates.entities = true;
+            engine_updates.lighting = true; // In case the active res was deleted.
+        }
     });
+
+    res_removed
 }
 
 /// Adds a ui area for editing the primary (AA) sequence.
@@ -311,15 +326,28 @@ fn add_sequence_editor(
     });
 
     egui::containers::ScrollArea::vertical().show(ui, |ui| {
+        let mut res_i_removed = None;
+
         for ar_i in 0..state.protein_descrip.residues.len() {
             // Each selector (combo box) needs a unique id.
             let sel_id = 100 + ar_i; // todo?
+
             let aa_type = state.protein_descrip.residues[ar_i].sidechain.aa_type();
 
             ui.horizontal(|ui| {
                 ui.label((ar_i + 1).to_string());
-                add_aa_selector(ui, state, scene, engine_updates, ar_i, aa_type, sel_id);
+                let removed =
+                    add_aa_selector(ui, state, scene, engine_updates, ar_i, aa_type, sel_id);
+
+                if removed {
+                    res_i_removed = Some(ar_i);
+                }
             });
+        }
+        // Only remove residues from the state after the loop is complete, to prevent
+        // modifying the iterator while iterating.
+        if let Some(ar_i) = res_i_removed {
+            state.protein_descrip.residues.remove(ar_i);
         }
 
         ui.spacing_mut().window_margin = WINDOW_MARGIN;

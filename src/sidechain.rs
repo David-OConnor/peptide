@@ -208,6 +208,62 @@ impl fmt::Display for Sidechain {
 }
 
 impl Sidechain {
+    /// Construct an AA (with default dihedral angles) from an amino acid type.
+    pub fn from_aa_type(aa_type: AminoAcidType) -> Self {
+        match aa_type {
+            AminoAcidType::Arg => Self::Arg(Default::default()),
+            AminoAcidType::His => Self::His(Default::default()),
+            AminoAcidType::Lys => Self::Lys(Default::default()),
+            AminoAcidType::Asp => Self::Asp(Default::default()),
+            AminoAcidType::Glu => Self::Glu(Default::default()),
+            AminoAcidType::Ser => Self::Ser(Default::default()),
+            AminoAcidType::Thr => Self::Thr(Default::default()),
+            AminoAcidType::Asn => Self::Asn(Default::default()),
+            AminoAcidType::Gln => Self::Gln(Default::default()),
+            AminoAcidType::Cys => Self::Cys(Default::default()),
+            AminoAcidType::Sec => Self::Sec(Default::default()),
+            AminoAcidType::Gly => Self::Gly(Default::default()),
+            AminoAcidType::Pro => Self::Pro(Default::default()),
+            AminoAcidType::Ala => Self::Ala(Default::default()),
+            AminoAcidType::Val => Self::Val(Default::default()),
+            AminoAcidType::Ile => Self::Ile(Default::default()),
+            AminoAcidType::Leu => Self::Leu(Default::default()),
+            AminoAcidType::Met => Self::Met(Default::default()),
+            AminoAcidType::Phe => Self::Phe(Default::default()),
+            AminoAcidType::Tyr => Self::Tyr(Default::default()),
+            AminoAcidType::Trp => Self::Trp(Default::default()),
+        }
+    }
+
+    /// Construct an AA (with default dihedral angles) from a single-letter identifier.
+    /// Returns `None` if an invalid letter is passed.
+    pub fn from_ident_single_letter(ident: &str) -> Option<Self> {
+        match ident {
+            "R" => Some(Self::Arg(Default::default())),
+            "H" => Some(Self::His(Default::default())),
+            "K" => Some(Self::Lys(Default::default())),
+            "D" => Some(Self::Asp(Default::default())),
+            "E" => Some(Self::Glu(Default::default())),
+            "S" => Some(Self::Ser(Default::default())),
+            "T" => Some(Self::Thr(Default::default())),
+            "N" => Some(Self::Asn(Default::default())),
+            "Q" => Some(Self::Gln(Default::default())),
+            "C" => Some(Self::Cys(Default::default())),
+            "U" => Some(Self::Sec(Default::default())),
+            "G" => Some(Self::Gly(Default::default())),
+            "P" => Some(Self::Pro(Default::default())),
+            "A" => Some(Self::Ala(Default::default())),
+            "V" => Some(Self::Val(Default::default())),
+            "I" => Some(Self::Ile(Default::default())),
+            "L" => Some(Self::Leu(Default::default())),
+            "M" => Some(Self::Met(Default::default())),
+            "F" => Some(Self::Phe(Default::default())),
+            "Y" => Some(Self::Tyr(Default::default())),
+            "W" => Some(Self::Trp(Default::default())),
+            _ => None,
+        }
+    }
+
     /// todo: Instead of this, many impl partial eq in a way that makes sense?
     pub fn aa_type(&self) -> AminoAcidType {
         match self {
@@ -258,6 +314,32 @@ impl Sidechain {
             Self::Phe(_) => "Phe (F)",
             Self::Tyr(_) => "Tyr (Y)",
             Self::Trp(_) => "Trp (W)",
+        }
+    }
+
+    pub fn aa_ident_single_letter(&self) -> &str {
+        match self {
+            Self::Arg(_) => "R",
+            Self::His(_) => "H",
+            Self::Lys(_) => "K",
+            Self::Asp(_) => "D",
+            Self::Glu(_) => "E",
+            Self::Ser(_) => "S",
+            Self::Thr(_) => "T",
+            Self::Asn(_) => "N",
+            Self::Gln(_) => "Q",
+            Self::Cys(_) => "C",
+            Self::Sec(_) => "U",
+            Self::Gly(_) => "G",
+            Self::Pro(_) => "P",
+            Self::Ala(_) => "A",
+            Self::Val(_) => "V",
+            Self::Ile(_) => "I",
+            Self::Leu(_) => "L",
+            Self::Met(_) => "M",
+            Self::Phe(_) => "F",
+            Self::Tyr(_) => "Y",
+            Self::Trp(_) => "W",
         }
     }
 

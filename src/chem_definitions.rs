@@ -1,6 +1,7 @@
 //! Names and enumerations of various chemistry definitions.
-
 #![allow(unused)]
+
+use std::fmt;
 
 #[derive(Clone, Copy, Debug)]
 pub enum AtomType {
@@ -53,31 +54,33 @@ pub enum AminoAcidType {
     Trp,
 }
 
-impl AminoAcidType {
-    pub fn symbol(&self) -> &str {
-        match self {
-            Self::Ala => "Ala",
-            Self::Arg => "Arg",
-            Self::Asn => "Asn",
-            Self::Asp => "Asp",
-            Self::Cys => "Cys",
-            Self::Gln => "Gln",
-            Self::Glu => "Glu",
-            Self::Gly => "Gly",
-            Self::His => "His",
-            Self::Ile => "Ile",
-            Self::Leu => "Leu",
-            Self::Lys => "Lys",
-            Self::Met => "Met",
-            Self::Phe => "Phe",
-            Self::Pro => "Pro",
-            Self::Ser => "Ser",
-            Self::Thr => "Thr",
-            Self::Trp => "Trp",
-            Self::Tyr => "Tyr",
-            Self::Val => "Val",
-            Self::Sec => "Sec",
-        }
+impl fmt::Display for AminoAcidType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let v = match self {
+            Self::Arg => "Arg (R)",
+            Self::His => "His (H)",
+            Self::Lys => "Lys (K)",
+            Self::Asp => "Asp (D)",
+            Self::Glu => "Glu (E)",
+            Self::Ser => "Ser (S)",
+            Self::Thr => "Thr (T)",
+            Self::Asn => "Asn (N)",
+            Self::Gln => "Gln (Q)",
+            Self::Cys => "Cys (C)",
+            Self::Sec => "Sec (U)",
+            Self::Gly => "Gly (G)",
+            Self::Pro => "Pro (P)",
+            Self::Ala => "Ala (A)",
+            Self::Val => "Val (V)",
+            Self::Ile => "Ile (I)",
+            Self::Leu => "Leu (L)",
+            Self::Met => "Met (M)",
+            Self::Phe => "Phe (F)",
+            Self::Tyr => "Tyr (Y)",
+            Self::Trp => "Trp (W)",
+        };
+
+        write!(f, "{}", v)
     }
 }
 
