@@ -2,7 +2,7 @@ use core::f64::consts::TAU;
 
 use egui::{self, RichText};
 
-use graphics::Scene;
+use graphics::{EngineUpdates, Scene};
 
 use crate::{
     atom_coords::ProteinCoords,
@@ -107,7 +107,13 @@ fn add_angle_slider(val: &mut f64, label: &str, entities_changed: &mut bool, ui:
 }
 
 /// Look at the anchor N atom of the desired res.
-fn add_focus_btn(ui: &mut egui::Ui, state: &mut State, scene: &mut Scene, res_id: usize) {
+fn add_focus_btn(
+    ui: &mut egui::Ui,
+    state: &mut State,
+    scene: &mut Scene,
+    res_id: usize,
+    cam_changed: &mut bool,
+) {
     if ui.button("Focus").clicked() {
         // todo: DRY here between this and the lighting update.
         let active_n_posit = state
@@ -125,6 +131,7 @@ fn add_focus_btn(ui: &mut egui::Ui, state: &mut State, scene: &mut Scene, res_id
         );
 
         render_wgpu::look_at(&mut scene.camera, active_n_posit, FOCUS_TARGET_DIST);
+        *cam_changed = true;
     }
 }
 
@@ -133,24 +140,14 @@ fn add_active_aa_editor(
     ui: &mut egui::Ui,
     state: &mut State,
     scene: &mut Scene,
-    entities_changed: &mut bool,
-    lighting_changed: &mut bool,
+    engine_updates: &mut EngineUpdates,
 ) {
     // todo: Is this the right way for text input?
     let ar_i = state.active_residue - 1;
     ui.label(state.protein_descrip.residues[ar_i].sidechain.aa_name());
 
     let active_aa_type = state.protein_descrip.residues[ar_i].sidechain.aa_type();
-    add_aa_selector(
-        ui,
-        state,
-        scene,
-        entities_changed,
-        lighting_changed,
-        ar_i,
-        active_aa_type,
-        0,
-    );
+    add_aa_selector(ui, state, scene, engine_updates, ar_i, active_aa_type, 0);
 
     // if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
     //     // …
@@ -169,30 +166,30 @@ fn add_active_aa_editor(
     // We use this syntax instead of the more concise `new` syntax, so we know
     // if we need to change the scene.
     // todo: The backbone sliders aren't initializing correctly
-    add_angle_slider(&mut active_res.ψ, "ψ", entities_changed, ui);
+    add_angle_slider(&mut active_res.ψ, "ψ", &mut engine_updates.entities, ui);
     let mut active_res = &mut state.protein_descrip.residues[ar_i];
-    add_angle_slider(&mut active_res.φ, "φ", entities_changed, ui);
+    add_angle_slider(&mut active_res.φ, "φ", &mut engine_updates.entities, ui);
     let mut active_res = &mut state.protein_descrip.residues[ar_i];
-    add_angle_slider(&mut active_res.ω, "ω", entities_changed, ui);
+    add_angle_slider(&mut active_res.ω, "ω", &mut engine_updates.entities, ui);
 
     ui.label("Sidechain dihedral angles:");
 
     let mut sc = &mut active_res.sidechain;
 
     if let Some(χ) = sc.get_mut_χ1() {
-        add_angle_slider(χ, "χ1", entities_changed, ui);
+        add_angle_slider(χ, "χ1", &mut engine_updates.entities, ui);
     }
     if let Some(χ) = sc.get_mut_χ2() {
-        add_angle_slider(χ, "χ2", entities_changed, ui);
+        add_angle_slider(χ, "χ2", &mut engine_updates.entities, ui);
     }
     if let Some(χ) = sc.get_mut_χ3() {
-        add_angle_slider(χ, "χ3", entities_changed, ui);
+        add_angle_slider(χ, "χ3", &mut engine_updates.entities, ui);
     }
     if let Some(χ) = sc.get_mut_χ4() {
-        add_angle_slider(χ, "χ4", entities_changed, ui);
+        add_angle_slider(χ, "χ4", &mut engine_updates.entities, ui);
     }
     if let Some(χ) = sc.get_mut_χ5() {
-        add_angle_slider(χ, "χ5", entities_changed, ui);
+        add_angle_slider(χ, "χ5", &mut engine_updates.entities, ui);
     }
 }
 
@@ -201,8 +198,7 @@ fn add_aa_selector(
     ui: &mut egui::Ui,
     state: &mut State,
     scene: &mut Scene,
-    entities_changed: &mut bool,
-    lighting_changed: &mut bool,
+    engine_updates: &mut EngineUpdates,
     ar_i: usize,
     initial_type: AminoAcidType,
     sel_id: usize,
@@ -272,7 +268,7 @@ fn add_aa_selector(
                 AminoAcidType::Trp => Sidechain::Trp(Default::default()),
             };
 
-            *entities_changed = true;
+            engine_updates.entities = true;
         }
 
         // Click this button to change the active residue to this.
@@ -290,11 +286,11 @@ fn add_aa_selector(
             state.active_residue = ar_i + 1;
             change_lit_res(state, scene);
 
-            *entities_changed = true; // to change entity color.
-            *lighting_changed = true;
+            engine_updates.entities = true; // to change entity color.
+            engine_updates.lighting = true;
         }
 
-        add_focus_btn(ui, state, scene, ar_i + 1);
+        add_focus_btn(ui, state, scene, ar_i + 1, &mut engine_updates.camera);
     });
 }
 
@@ -303,15 +299,14 @@ fn add_sequence_editor(
     ui: &mut egui::Ui,
     state: &mut State,
     scene: &mut Scene,
-    entities_changed: &mut bool,
-    lighting_changed: &mut bool,
+    engine_updates: &mut EngineUpdates,
 ) {
     ui.horizontal(|ui| {
         ui.label("Add a new residue");
         // todo: Set button width.
         if ui.button("+").clicked() {
             state.protein_descrip.residues.push(Default::default());
-            *entities_changed = true;
+            engine_updates.entities = true;
         }
     });
 
@@ -323,16 +318,7 @@ fn add_sequence_editor(
 
             ui.horizontal(|ui| {
                 ui.label((ar_i + 1).to_string());
-                add_aa_selector(
-                    ui,
-                    state,
-                    scene,
-                    entities_changed,
-                    lighting_changed,
-                    ar_i,
-                    aa_type,
-                    sel_id,
-                );
+                add_aa_selector(ui, state, scene, engine_updates, ar_i, aa_type, sel_id);
             });
         }
 
@@ -380,10 +366,9 @@ fn add_motion_sim(
 
 /// This function draws the (immediate-mode) GUI.
 /// [UI items](https://docs.rs/egui/latest/egui/struct.Ui.html#method.heading)
-pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, bool) {
+pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpdates {
     move |state: &mut State, ctx: &egui::Context, scene: &mut Scene| {
-        let mut entities_changed = false;
-        let mut lighting_changed = false;
+        let mut engine_updates = EngineUpdates::default();
 
         let panel = egui::SidePanel::left(0) // ID must be unique among panels.
             .default_width(SIDE_PANEL_SIZE);
@@ -427,9 +412,8 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
                     if num < state.protein_descrip.residues.len() + 1 {
                         state.active_residue = num;
 
-                        change_lit_res(state, scene);
-                        entities_changed = true;
-                        lighting_changed = true;
+                        engine_updates.entities = true;
+                        engine_updates.lighting = true;
                     }
                 }
 
@@ -439,8 +423,8 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
                         state.active_residue += 1;
 
                         change_lit_res(state, scene);
-                        entities_changed = true;
-                        lighting_changed = true;
+                        engine_updates.entities = true;
+                        engine_updates.lighting = true;
                     }
                 }
                 if ui.button("-").clicked() {
@@ -448,12 +432,12 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
                         state.active_residue -= 1;
 
                         change_lit_res(state, scene);
-                        entities_changed = true;
-                        lighting_changed = true;
+                        engine_updates.entities = true;
+                        engine_updates.lighting = true;
                     }
                 }
 
-                add_focus_btn(ui, state, scene, state.active_residue);
+                add_focus_btn(ui, state, scene, state.active_residue, &mut engine_updates.camera);
             });
 
             ui.add_space(SPACE_BETWEEN_SECTIONS);
@@ -486,10 +470,10 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
 
             match state.ui_mode {
                 UiMode::ActiveAaEditor => {
-                    add_active_aa_editor(ui, state, scene, &mut entities_changed, &mut lighting_changed);
+                    add_active_aa_editor(ui, state, scene, &mut engine_updates);
                 }
                 UiMode::SeqEditor => {
-                    add_sequence_editor(ui, state, scene, &mut entities_changed, &mut lighting_changed);
+                    add_sequence_editor(ui, state, scene, &mut engine_updates);
                 }
                 UiMode::MotionSim => {
                     // add_motion_sim(ui, state, &mut entities_changed);
@@ -508,15 +492,12 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> (bool, boo
             // ui.label("Mouse left click + drag: Pitch and yaw. Up and down arrows: change active residue.");
         });
 
-        if entities_changed {
+        if engine_updates.entities {
             // Recalculate coordinates, eg if we've changed an angle, or AA.
             state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
             scene.entities = render_wgpu::generate_entities(&state);
         }
 
-        // todo: Sequence editor, where you can easily see and edit the whole sequence.
-
-        // todo: Only true if you've changed a slider.
-        (entities_changed, lighting_changed)
+        engine_updates
     }
 }

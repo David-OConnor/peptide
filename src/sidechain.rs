@@ -1358,9 +1358,7 @@ impl Ala {
             LEN_SC,
         );
 
-        CoordsAla {
-            c_beta,
-        }
+        CoordsAla { c_beta }
     }
 }
 
@@ -1409,7 +1407,7 @@ impl Val {
             c_gamma1,
             c_gamma2,
 
-            c_beta_orientation
+            c_beta_orientation,
         }
     }
 }

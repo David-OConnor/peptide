@@ -5,8 +5,8 @@ use std::f64::consts::TAU;
 use rand;
 
 use graphics::{
-    self, Camera, ControlScheme, DeviceEvent, ElementState, Entity, InputSettings, LightType,
-    Lighting, Mesh, PointLight, Scene, UiSettings,
+    self, Camera, ControlScheme, DeviceEvent, ElementState, EngineUpdates, Entity, InputSettings,
+    LightType, Lighting, Mesh, PointLight, Scene, UiSettings,
 };
 
 use lin_alg2::{
@@ -74,11 +74,11 @@ pub fn look_at(cam: &mut Camera, focus_pt: Vec3F32, dist: f32) {
     cam.position = focus_pt - dir_to_pt * dist;
 }
 
-fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) -> (bool, bool) {
+fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) -> EngineUpdates {
     // Box::new(move |event: DeviceEvent, scene: &mut Scene, dt: f32| {
     move |state: &mut State, event: DeviceEvent, scene: &mut Scene, dt: f32| {
         // todo: Higher level api from winit or otherwise instead of scancode?
-        let mut scene_changed = false;
+        let mut entities_changed = false;
         let mut active_res_backbone_changed = false;
         let mut active_res_sidechain_changed = false;
         let mut active_res_changed = false;
@@ -98,47 +98,47 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
                     match key.scancode {
                         2 => {
                             state.active_residue = 1;
-                            scene_changed = true;
+                            entities_changed = true;
                             active_res_changed = true;
                         }
                         3 => {
                             state.active_residue = 2;
-                            scene_changed = true;
+                            entities_changed = true;
                             active_res_changed = true;
                         }
                         4 => {
                             state.active_residue = 3;
-                            scene_changed = true;
+                            entities_changed = true;
                             active_res_changed = true;
                         }
                         5 => {
                             state.active_residue = 4;
-                            scene_changed = true;
+                            entities_changed = true;
                             active_res_changed = true;
                         }
                         6 => {
                             state.active_residue = 5;
-                            scene_changed = true;
+                            entities_changed = true;
                             active_res_changed = true;
                         }
                         7 => {
                             state.active_residue = 6;
-                            scene_changed = true;
+                            entities_changed = true;
                             active_res_changed = true;
                         }
                         8 => {
                             state.active_residue = 7;
-                            scene_changed = true;
+                            entities_changed = true;
                             active_res_changed = true;
                         }
                         9 => {
                             state.active_residue = 8;
-                            scene_changed = true;
+                            entities_changed = true;
                             active_res_changed = true;
                         }
                         10 => {
                             state.active_residue = 9;
-                            scene_changed = true;
+                            entities_changed = true;
                             active_res_changed = true;
                         }
                         // todo: Why are these scan codes for up/down so high??
@@ -146,7 +146,7 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
                             // Up arrow
                             if state.active_residue != state.protein_descrip.residues.len() {
                                 state.active_residue += 1;
-                                scene_changed = true;
+                                entities_changed = true;
                                 active_res_changed = true;
                             }
                         }
@@ -154,7 +154,7 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
                             // Down arrow
                             if state.active_residue != 1 {
                                 state.active_residue -= 1;
-                                scene_changed = true;
+                                entities_changed = true;
                                 active_res_changed = true;
                             }
                         }
@@ -162,73 +162,73 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
                             // T
                             active_res.φ += rotation_amt;
                             active_res_backbone_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         34 => {
                             // G
                             active_res.φ -= rotation_amt;
                             active_res_backbone_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         21 => {
                             // Y
                             active_res.ψ += rotation_amt;
                             active_res_backbone_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         35 => {
                             // H
                             active_res.ψ -= rotation_amt;
                             active_res_backbone_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         22 => {
                             // U
                             active_res.ω += rotation_amt;
                             active_res_backbone_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         36 => {
                             // J
                             active_res.ω -= rotation_amt;
                             active_res_backbone_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         23 => {
                             // I
                             active_res.sidechain.add_to_χ1(rotation_amt);
                             active_res_sidechain_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         37 => {
                             // K
                             active_res.sidechain.add_to_χ1(-rotation_amt);
                             active_res_sidechain_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         24 => {
                             // O
                             active_res.sidechain.add_to_χ2(rotation_amt);
                             active_res_sidechain_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         38 => {
                             // L
                             active_res.sidechain.add_to_χ2(-rotation_amt);
                             active_res_sidechain_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         36 => {
                             // P
                             active_res.sidechain.add_to_χ3(rotation_amt);
                             active_res_sidechain_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         39 => {
                             // ;
                             active_res.sidechain.add_to_χ3(-rotation_amt);
                             active_res_sidechain_changed = true;
-                            scene_changed = true;
+                            entities_changed = true;
                         }
                         // 29 => {
                         //     // Left ctrl
@@ -241,7 +241,7 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
             _ => {}
         }
 
-        if scene_changed {
+        if entities_changed {
             // Recalculate coordinates now that we've updated our bond angles
             state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
             scene.entities = generate_entities(&state);
@@ -283,8 +283,11 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
         //     // state.ui.active_res_χ5 = sc.get_χ5();
         // }
 
-        (scene_changed, lighting_changed)
-        // })
+        EngineUpdates {
+            entities: entities_changed,
+            camera: false,
+            lighting: lighting_changed,
+        }
     }
 }
 
@@ -294,7 +297,9 @@ fn rng() -> f64 {
     rand::random::<f64>() - 0.5
 }
 
-fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> bool {
+fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdates {
+    let mut entities_changed = false;
+
     if state.sim_running {
         // Constant term in our noise.
         let c = state.temperature * state.sim_time_scale * dt as f64;
@@ -324,9 +329,13 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> bool {
         state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
         scene.entities = generate_entities(&state);
 
-        true
-    } else {
-        false
+        entities_changed = true;
+    }
+
+    EngineUpdates {
+        entities: entities_changed,
+        camera: false,
+        lighting: false,
     }
     // todo: This may be where you need to update the render after changing a slider
 }
@@ -387,7 +396,11 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
                     cα_id = id;
                     n_id
                 }
-                AtomRole::CSidechain | AtomRole::OSidechain | AtomRole::NSidechain | AtomRole::SSidechain | AtomRole::SeSidechain => {
+                AtomRole::CSidechain
+                | AtomRole::OSidechain
+                | AtomRole::NSidechain
+                | AtomRole::SSidechain
+                | AtomRole::SeSidechain => {
                     // This assumes the prev atom added before the sidechain was Cα.
                     id - atom.sidechain_bond_step
                 }

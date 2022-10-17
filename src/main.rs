@@ -42,6 +42,8 @@
 
 // Doe sfolding begin starting at the end extruded?
 
+extern crate graphics;
+
 use types::ProteinDescription;
 
 mod atom_coords;
