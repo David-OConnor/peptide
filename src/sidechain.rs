@@ -1,8 +1,6 @@
 //! This module contains info related to side chains, including their geometry
 
-// Don't show warnings for unused AAs etc.
-#![allow(dead_code)]
-
+// Don't show warnings for un`
 use std::{f64::consts::TAU, fmt};
 
 use crate::{
