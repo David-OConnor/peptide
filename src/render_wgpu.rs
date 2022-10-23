@@ -318,7 +318,8 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
     let mut cα_id = 1; // Residue 0, index 1 for first Cα
     let mut cp_id = 0;
 
-    for (id, atom) in state.protein_coords.atoms_backbone.iter().enumerate() {
+    // Atom id is used for station-keeping here.
+    for (atom_id, atom) in state.protein_coords.atoms_backbone.iter().enumerate() {
         let atom_color = if state.active_residue == atom.residue_id {
             avg_colors(ACTIVE_COLOR_ATOM, atom.role.render_color())
         } else {
@@ -335,6 +336,15 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             _ => 1.
         };
 
+        if !state.show_hydrogens {
+            match atom.role {
+                AtomRole::HCα | AtomRole::HN | AtomRole::HSidechain => {
+                    continue
+                }
+                _ => ()
+            }
+        }
+
         // The atom
         result.push(Entity::new(
             atom_mesh,
@@ -346,15 +356,15 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
         ));
 
         // Anchor N at position=0; we don't have a bond connected to it.
-        if id != 0 {
+        if atom_id != 0 {
             // Find the previous atom in the chain: The one that connects to this.
             let atom_prev_id = match atom.role {
                 AtomRole::N => {
-                    n_id = id;
+                    n_id = atom_id;
                     cp_id
                 }
                 AtomRole::Cα => {
-                    cα_id = id;
+                    cα_id = atom_id;
                     n_id
                 }
                 AtomRole::CSidechain
@@ -365,10 +375,10 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
                 | AtomRole::HSidechain
                 => {
                     // This assumes the prev atom added before the sidechain was Cα.
-                    id - atom.sidechain_bond_step
+                    atom_id - atom.sidechain_bond_step
                 }
                 AtomRole::Cp => {
-                    cp_id = id;
+                    cp_id = atom_id;
                     cα_id
                 }
                 AtomRole::O => cp_id,

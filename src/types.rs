@@ -87,23 +87,8 @@ pub struct State {
     /// Ratio of sim time to real time. A higher value (closer to 1) is faster.
     pub sim_time_scale: f64,
     pub sim_running: bool,
+    pub show_hydrogens: bool,
 }
-
-// impl Default for State {
-//     fn default() -> Self {
-//         Self {
-//             protein_descrip: ProteinDescription {
-//                 name: "".to_owned(),
-//                 pdb_ident: "".to_owned(),
-//                 residues: Vec::new(),
-//             },
-//             protein_coords: ProteinCoords {
-//                 atoms_backbone: Vec::new(),
-//             },
-//             active_residue: 1,
-//         }
-//     }
-// }
 
 impl State {
     /// Create state from a protein description
@@ -119,6 +104,7 @@ impl State {
             temperature: 293.,
             sim_time_scale: 0.001,
             sim_running: false,
+            show_hydrogens: true,
         }
     }
 

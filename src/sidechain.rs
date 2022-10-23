@@ -792,6 +792,27 @@ impl His {
             LEN_SC,
         );
 
+        let (h_amine_delta, _) = find_atom_placement(
+            n_delta2_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            n_delta2,
+            c_gamma,
+            SIDECHAIN_BOND_OUT1,
+            LEN_H,
+        );
+        let (h_amine_eps, _) = find_atom_placement(
+            n_eps1_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            n_eps1,
+            c_delta1,
+            SIDECHAIN_BOND_OUT1,
+            LEN_H,
+        );
+
         // todo: These bond vecs are wrong! Needs to be tighter angles
         // todo due to there only being 5 atoms in the ring.
 
@@ -802,12 +823,14 @@ impl His {
             n_delta2,
             n_eps1,
             c_eps2,
+            h_amine_delta,
+            h_amine_eps,
 
             c_beta_orientation,
             c_gamma_orientation,
             c_delta1_orientation,
             n_delta2_orientation,
-            // n_eps1_orientation,
+            n_eps1_orientation,
             // c_eps2_orientation,
         }
     }
@@ -874,7 +897,7 @@ impl Lys {
             LEN_SC,
         );
 
-        let (n_zeta, _) = find_atom_placement(
+        let (n_zeta, n_zeta_orientation) = find_atom_placement(
             c_eps_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
             SIDECHAIN_BOND_OUT1,
@@ -885,17 +908,42 @@ impl Lys {
             LEN_SC,
         );
 
+        let (h_amine1, _) = find_atom_placement(
+            n_zeta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            n_zeta,
+            c_eps,
+            SIDECHAIN_BOND_OUT1,
+            LEN_H,
+        );
+
+        let (h_amine2, _) = find_atom_placement(
+            n_zeta_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            n_zeta,
+            c_eps,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            LEN_H,
+        );
+
         CoordsLys {
             c_beta,
             c_gamma,
             c_delta,
             c_eps,
             n_zeta,
+            h_amine1,
+            h_amine2,
 
             c_beta_orientation,
             c_gamma_orientation,
             c_delta_orientation,
             c_eps_orientation,
+            n_zeta_orientation,
         }
     }
 }
@@ -1276,7 +1324,7 @@ impl Gln {
             LEN_SC,
         );
 
-        let (n_eps2, _) = find_atom_placement(
+        let (n_eps2, n_eps2_orientation) = find_atom_placement(
             c_delta_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
             SIDECHAIN_BOND_OUT1,
@@ -1287,16 +1335,41 @@ impl Gln {
             LEN_SC,
         );
 
+        let (h_amine1, _) = find_atom_placement(
+            n_eps2_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            n_eps2,
+            c_delta,
+            SIDECHAIN_BOND_OUT1,
+            LEN_H,
+        );
+
+        let (h_amine2, _) = find_atom_placement(
+            n_eps2_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            n_eps2,
+            c_delta,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            LEN_H,
+        );
+
         CoordsGln {
             c_beta,
             c_gamma,
             c_delta,
             o_eps1,
             n_eps2,
+            h_amine1,
+            h_amine2,
 
             c_beta_orientation,
             c_gamma_orientation,
             c_delta_orientation,
+            n_eps2_orientation,
         }
     }
 }
@@ -2054,6 +2127,16 @@ impl Trp {
             SIDECHAIN_BOND_OUT1,
             LEN_SC,
         );
+        let (h_amine, _) = find_atom_placement(
+            n_delta2_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            n_delta2,
+            c_gamma,
+            SIDECHAIN_BOND_OUT1,
+            LEN_H,
+        );
 
         CoordsTrp {
             c_beta,
@@ -2066,6 +2149,7 @@ impl Trp {
             c_zeta2,
             c_eta1,
             c_eta2,
+            h_amine,
 
             c_beta_orientation,
             c_gamma_orientation,
@@ -2105,11 +2189,14 @@ pub struct CoordsHis {
     pub n_delta2: Vec3,
     pub n_eps1: Vec3,
     pub c_eps2: Vec3,
+    pub h_amine_delta: Vec3,
+    pub h_amine_eps: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
     pub c_delta1_orientation: Quaternion,
     pub n_delta2_orientation: Quaternion,
+    pub n_eps1_orientation: Quaternion,
     // pub n_eps1_orientation: Quaternion,
     // pub c_eps2_orientation: Quaternion,
 }
@@ -2121,11 +2208,15 @@ pub struct CoordsLys {
     pub c_delta: Vec3,
     pub c_eps: Vec3,
     pub n_zeta: Vec3,
+    pub h_amine1: Vec3,
+    pub h_amine2: Vec3,
+    // todo: Third N here?
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
     pub c_delta_orientation: Quaternion,
     pub c_eps_orientation: Quaternion,
+    pub n_zeta_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]
@@ -2190,10 +2281,13 @@ pub struct CoordsGln {
     pub c_delta: Vec3,
     pub o_eps1: Vec3,
     pub n_eps2: Vec3,
+    pub h_amine1: Vec3,
+    pub h_amine2: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
     pub c_delta_orientation: Quaternion,
+    pub n_eps2_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]
@@ -2324,6 +2418,7 @@ pub struct CoordsTrp {
     pub c_zeta2: Vec3,
     pub c_eta1: Vec3,
     pub c_eta2: Vec3,
+    pub h_amine: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,

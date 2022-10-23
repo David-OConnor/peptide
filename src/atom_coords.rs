@@ -248,12 +248,31 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::NSidechain,
                         sc_coords.n_zeta,
+                        sc_coords.n_zeta_orientation,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_amine1,
                         Q_I,
                         &mut backbone,
                         1,
                         residue_id,
                         &mut atom_id,
                     );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_amine2,
+                        Q_I,
+                        &mut backbone,
+                        2,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    // todo: Amonium group with 3 Hs for Lys?? H3N+?
                 }
                 Sidechain::Asp(angles) => {
                     let sc_coords = angles.sidechain_cart_coords(
@@ -468,6 +487,24 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::NSidechain,
                         sc_coords.n_eps2,
+                        sc_coords.n_eps2_orientation,
+                        &mut backbone,
+                        2,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_amine1,
+                        Q_I,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_amine2,
                         Q_I,
                         &mut backbone,
                         2,
@@ -847,6 +884,15 @@ impl ProteinCoords {
                         residue_id,
                         &mut atom_id,
                     );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_amine, // todo: Is this called Amine here?
+                        Q_I,
+                        &mut backbone,
+                        7,
+                        residue_id,
+                        &mut atom_id,
+                    );
                 }
                 Sidechain::Cys(angles) => {
                     let sc_coords = angles.sidechain_cart_coords(
@@ -1003,6 +1049,24 @@ impl ProteinCoords {
                         Q_I,
                         &mut backbone,
                         2,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_amine_delta, // todo: Is this called Amine here?
+                        Q_I,
+                        &mut backbone,
+                        3,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_amine_eps, // todo: Is this called Amine here?
+                        Q_I,
+                        &mut backbone,
+                        3,
                         residue_id,
                         &mut atom_id,
                     );
