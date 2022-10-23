@@ -16,6 +16,7 @@ const TAU_DIV2: f64 = TAU / 2.;
 
 // todo: These are temp
 pub const LEN_SC: f64 = 1.53;
+pub const LEN_H: f64 = 1.2; // todo: Total wag
 
 // pub const BOND_IN: Vec3 = Vec3 {
 //     x: 1.,
@@ -1176,7 +1177,7 @@ impl Asn {
             LEN_SC,
         );
 
-        let (n_delta2, _) = find_atom_placement(
+        let (n_delta2, n_delta2_orientation) = find_atom_placement(
             c_gamma_orientation,
             unsafe { SIDECHAIN_BOND_TO_PREV },
             SIDECHAIN_BOND_OUT1,
@@ -1187,14 +1188,39 @@ impl Asn {
             LEN_SC,
         );
 
+        let (h_amine1, _) = find_atom_placement(
+            n_delta2_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            n_delta2,
+            c_gamma,
+            SIDECHAIN_BOND_OUT1,
+            LEN_H,
+        );
+
+        let (h_amine2, _) = find_atom_placement(
+            n_delta2_orientation,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            SIDECHAIN_BOND_OUT1,
+            TAU_DIV2,
+            n_delta2,
+            c_gamma,
+            unsafe { SIDECHAIN_BOND_TO_PREV },
+            LEN_H,
+        );
+
         CoordsAsn {
             c_beta,
             c_gamma,
             o_delta1,
             n_delta2,
+            h_amine1,
+            h_amine2,
 
             c_beta_orientation,
             c_gamma_orientation,
+            n_delta2_orientation,
         }
     }
 }
@@ -2149,9 +2175,12 @@ pub struct CoordsAsn {
     pub c_gamma: Vec3,
     pub o_delta1: Vec3,
     pub n_delta2: Vec3,
+    pub h_amine1: Vec3,
+    pub h_amine2: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
+    pub n_delta2_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]

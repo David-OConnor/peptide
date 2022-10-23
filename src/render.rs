@@ -21,6 +21,9 @@ pub const N_COLOR: (f32, f32, f32) = (0., 0., 1.);
 pub const O_COLOR: (f32, f32, f32) = (1., 0., 0.);
 pub const H_COLOR: (f32, f32, f32) = (0.8, 0.8, 0.8);
 
+// Fraction of C radius.
+pub const H_SCALE: f32 = 0.8;
+
 // Note: This active color is deliberately not normalized, so it comes out weaker in saturation,
 // but brighter in the avg with the atom color.
 pub const ACTIVE_COLOR_ATOM: (f32, f32, f32) = (2., 1., 0.3);
@@ -29,7 +32,7 @@ pub const ACTIVE_COLOR_ATOM: (f32, f32, f32) = (2., 1., 0.3);
 pub const ATOM_SHINYNESS: f32 = 1.;
 pub const BOND_SHINYNESS: f32 = 1.;
 
-pub const BOND_RADIUS_BACKBONE: f32 = 0.10;
+pub const BOND_RADIUS_BACKBONE: f32 = 0.09;
 pub const BOND_RADIUS_SIDECHAIN: f32 = 0.025;
 pub const BOND_N_SIDES: usize = 10;
 
@@ -39,6 +42,14 @@ pub const CAM_ROTATE_SENS: f64 = 0.2;
 pub const CAM_ROTATE_KEY_SENS: f64 = 0.5;
 // Move speed multiplier when the run modifier key is held.
 pub const RUN_FACTOR: f64 = 5.;
+
+pub const WINDOW_TITLE: &str = "Peptide";
+pub const WINDOW_SIZE_X: f32 = 1_200.0;
+pub const WINDOW_SIZE_Y: f32 = 1_000.0;
+
+// Changes the far end of the frustrum; try to have this shortly past the farthest
+// view distance you expect. Possible to make this dynamic?
+pub const RENDER_DIST: f32 = 200.;
 
 // Render size of an atom, on a [polyhedron] side.
 pub const SIDE_LEN: f32 = 0.4;
@@ -72,6 +83,7 @@ impl AtomRole {
             // todo: Consider a diff shade for n and o sidechain colors
             Self::NSidechain => (n.0, n.1, n.2),
             Self::OSidechain => (o.0, o.1, o.2),
+            Self::HSidechain => (h_n.0, h_n.1, h_n.2),
             Self::SSidechain => (s.0, s.1, s.2),
             Self::SeSidechain => (se.0, se.1, se.2),
         }

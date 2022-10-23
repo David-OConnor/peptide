@@ -102,6 +102,7 @@ pub enum AtomRole {
     NSidechain,
     SSidechain,
     SeSidechain,
+    HSidechain,
 }
 
 impl AtomRole {

@@ -23,19 +23,12 @@ use crate::{
     gui,
     render::{
         self, ACTIVE_COLOR_ATOM, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
-        BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS,
+        BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS, WINDOW_TITLE, WINDOW_SIZE_X,
+        WINDOW_SIZE_Y, RENDER_DIST
     },
     sidechain::LEN_SC,
     types::State,
 };
-
-const WINDOW_TITLE: &str = "Peptide";
-const WINDOW_SIZE_X: f32 = 900.0;
-const WINDOW_SIZE_Y: f32 = 600.0;
-
-// Changes the far end of the frustrum; try to have this shortly past the farthest
-// view distance you expect. Possible to make this dynamic?
-const RENDER_DIST: f32 = 200.;
 
 // The length-wise axis of our graphics engine's cylinder mesh.
 const BOND_MODEL_AXIS: Vec3 = Vec3 {
@@ -193,6 +186,14 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
                     }
                 }
             }
+            // todo: Gamepad not yet supported by winit, but WIP.
+            // GamepadEvent::Axis { axis_id, axis, value, stick } => {
+            //     println!("Axis id: {:?}, axis: {:?}, value: {:?}, stick: {:?}", axis_id, axis, value, stick)
+            // }
+            // // GamepadEvent::Stick => {
+            // GamepadEvent::Button{ button_id, button, state } => {
+            //     // todo: Println etc
+            // }
             _ => {}
         }
 
@@ -325,8 +326,13 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
         };
 
         let atom_mesh = match atom.role {
-            AtomRole::N | AtomRole::Cα | AtomRole::Cp | AtomRole::O => 0,
-            _ => 1,
+            AtomRole::N | AtomRole::Cα | AtomRole::Cp => 0, // Cube
+            _ => 1, // Sphere
+        };
+
+        let scale = match atom.role {
+            AtomRole::HCα | AtomRole::HN | AtomRole::HSidechain => render::H_SCALE,
+            _ => 1.
         };
 
         // The atom
@@ -334,7 +340,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             atom_mesh,
             vec3_to_f32(atom.position),
             quat_to_f32(atom.orientation),
-            1.,
+            scale,
             atom_color,
             ATOM_SHINYNESS,
         ));
@@ -355,7 +361,9 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
                 | AtomRole::OSidechain
                 | AtomRole::NSidechain
                 | AtomRole::SSidechain
-                | AtomRole::SeSidechain => {
+                | AtomRole::SeSidechain
+                | AtomRole::HSidechain
+                => {
                     // This assumes the prev atom added before the sidechain was Cα.
                     id - atom.sidechain_bond_step
                 }
@@ -397,6 +405,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
                 AtomRole::CSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
                 AtomRole::OSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
                 AtomRole::NSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+                AtomRole::HSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
                 AtomRole::SSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
                 AtomRole::SeSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
             };

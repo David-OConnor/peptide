@@ -397,6 +397,24 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::NSidechain,
                         sc_coords.n_delta2,
+                        sc_coords.n_delta2_orientation,
+                        &mut backbone,
+                        2,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_amine1,
+                        Q_I,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_amine2,
                         Q_I,
                         &mut backbone,
                         2,
@@ -1133,10 +1151,6 @@ impl ProteinCoords {
 
             residue_id += 1;
         }
-        //
-        // for atom in &backbone {
-        //     println!("ATOM: {:?}\n", atom);
-        // }
 
         Self {
             atoms_backbone: backbone,
