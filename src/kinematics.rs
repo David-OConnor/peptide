@@ -52,13 +52,14 @@ pub fn find_atom_placement(
 ) -> (Vec3, Quaternion) {
     let prev_bond_world = posit_prev - posit_2_back;
 
-    // Find the position:
+    // Find the position; this is passed directly to the output, and isn't used for further
+    // calcualtions within this function.
     let position = posit_prev + or_prev.rotate_vec(bond_to_this_local) * bond_to_this_len;
 
     // #1: Align the prev atom's bond vector to world space based on the prev atom's orientation.
-    let bond_to_this_worldspace = or_prev.rotate_vec(bond_to_next_local);
+    let bond_to_this_worldspace = or_prev.rotate_vec(bond_to_this_local);
 
-    // #2: Find the rotation quaternion that aligns the (inverse of) the local(world?)-space bond to
+    // #2: Find the rotation quaternion that aligns the (inverse of) the local-space bond to
     // the prev atom with the world-space "to" bond of the previous atom. This is also the
     // orientation of our atom, without applying the dihedral angle.
     let bond_alignment_rotation =

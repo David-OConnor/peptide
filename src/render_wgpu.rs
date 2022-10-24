@@ -24,7 +24,7 @@ use crate::{
     render::{
         self, ACTIVE_COLOR_ATOM, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
         BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS, RENDER_DIST, WINDOW_SIZE_X,
-        WINDOW_SIZE_Y, WINDOW_TITLE,
+        WINDOW_SIZE_Y, WINDOW_TITLE, ACTIVE_N_COLOR, ACTIVE_CALPHA_COLOR
     },
     sidechain::LEN_SC,
     types::State,
@@ -320,11 +320,25 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 
     // Atom id is used for station-keeping here.
     for (atom_id, atom) in state.protein_coords.atoms_backbone.iter().enumerate() {
-        let atom_color = if state.active_residue == atom.residue_id {
-            avg_colors(ACTIVE_COLOR_ATOM, atom.role.render_color())
-        } else {
-            atom.role.render_color()
-        };
+
+        // let atom_color = if state.active_residue == atom.residue_id {
+        //     avg_colors(ACTIVE_COLOR_ATOM, atom.role.render_color())
+        // } else {
+        //     atom.role.render_color()
+        // };
+
+        let mut atom_color = atom.role.render_color();
+
+        // todo, until we can find a better way to highlight the active atoms.
+        // Highlight the active Nitrogen in an eye-catching color.
+        if state.active_residue == atom.residue_id {
+            match atom.role {
+                AtomRole::Cα => {
+                    atom_color = ACTIVE_CALPHA_COLOR;
+                }
+                _ => (),
+            }
+        }
 
         let atom_mesh = match atom.role {
             AtomRole::N | AtomRole::Cα | AtomRole::Cp => 0, // Cube

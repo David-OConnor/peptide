@@ -22,8 +22,8 @@ pub struct AtomCoords {
     pub role: AtomRole,
     pub position: Vec3,
     pub orientation: Quaternion,
-    // Normally 1. Set this to 2 to go back 2 in the sidechain to find its partner,
-    // eg ASPs second O.
+    /// Use use this step to find the previous atom to create the bond to. Normally 1. Set this to 2 to go back 2
+    /// in the sidechain to find its partner, eg ASPs second O.
     pub sidechain_bond_step: usize,
 }
 
@@ -40,7 +40,7 @@ fn add_atom(
     position: Vec3,
     orientation: Quaternion,
     backbone: &mut Vec<AtomCoords>,
-    step: usize,
+    bond_step: usize,
     residue_id: usize,
     atom_id: &mut usize,
 ) {
@@ -49,7 +49,7 @@ fn add_atom(
         role,
         position,
         orientation,
-        sidechain_bond_step: step,
+        sidechain_bond_step: bond_step,
     });
 
     *atom_id += 1;
@@ -214,10 +214,19 @@ impl ProteinCoords {
                     );
                     add_atom(
                         AtomRole::HSidechain,
+                        sc_coords.h_n_eps,
+                        Q_I,
+                        &mut backbone,
+                        5,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
                         sc_coords.h_amine_eta1b,
                         Q_I,
                         &mut backbone,
-                        3,
+                        4,
                         residue_id,
                         &mut atom_id,
                     );
@@ -226,7 +235,7 @@ impl ProteinCoords {
                         sc_coords.h_amine_eta2a,
                         Q_I,
                         &mut backbone,
-                        3,
+                        4,
                         residue_id,
                         &mut atom_id,
                     );
@@ -235,7 +244,7 @@ impl ProteinCoords {
                         sc_coords.h_amine_eta2b,
                         Q_I,
                         &mut backbone,
-                        4,
+                        5,
                         residue_id,
                         &mut atom_id,
                     );
@@ -410,7 +419,7 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::OSidechain,
                         sc_coords.o_gamma1,
-                        Q_I,
+                        sc_coords.o_gamma1_orientation,
                         &mut backbone,
                         2,
                         residue_id,
@@ -1075,7 +1084,7 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::NSidechain,
                         sc_coords.n_eps1,
-                        Q_I,
+                        sc_coords.n_eps1_orientation,
                         &mut backbone,
                         2,
                         residue_id,
@@ -1084,7 +1093,7 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::CSidechain,
                         sc_coords.c_eps2,
-                        Q_I,
+                        sc_coords.c_eps2_orientation,
                         &mut backbone,
                         2,
                         residue_id,

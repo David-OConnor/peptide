@@ -26,7 +26,10 @@ pub const H_SCALE: f32 = 0.8;
 
 // Note: This active color is deliberately not normalized, so it comes out weaker in saturation,
 // but brighter in the avg with the atom color.
-pub const ACTIVE_COLOR_ATOM: (f32, f32, f32) = (2., 1., 0.3);
+pub const ACTIVE_COLOR_ATOM: (f32, f32, f32) = (1., 0.5, 0.15);
+pub const ACTIVE_N_COLOR: (f32, f32, f32) = (0.2, 0.9, 0.9);
+// pub const ACTIVE_CALPHA_COLOR: (f32, f32, f32) = (0.4, 0.9, 0.4);
+pub const ACTIVE_CALPHA_COLOR: (f32, f32, f32) = (0.8, 0.0, 0.8);
 
 // Shinyness affects specular intensity.
 pub const ATOM_SHINYNESS: f32 = 1.;

@@ -106,7 +106,7 @@ fn add_angle_slider(val: &mut f64, label: &str, entities_changed: &mut bool, ui:
     // *entities_changed = true;
 }
 
-/// Look at the anchor N atom of the desired res.
+/// Look at the anchor Cα atom of the desired res.
 fn add_focus_btn(
     ui: &mut egui::Ui,
     state: &mut State,
@@ -120,7 +120,7 @@ fn add_focus_btn(
             .protein_coords
             .atoms_backbone
             .iter()
-            .find(|a| a.residue_id == res_id && a.role == AtomRole::N)
+            .find(|a| a.residue_id == res_id && a.role == AtomRole::Cα)
             .unwrap()
             .position;
 
@@ -194,6 +194,12 @@ fn add_active_aa_editor(
     }
     if let Some(χ) = sc.get_mut_χ5() {
         add_angle_slider(χ, "χ5", &mut engine_updates.entities, ui);
+    }
+    if let Some(χ) = sc.get_mut_χ6() {
+        add_angle_slider(χ, "χ6", &mut engine_updates.entities, ui);
+    }
+    if let Some(χ) = sc.get_mut_χ7() {
+        add_angle_slider(χ, "χ7", &mut engine_updates.entities, ui);
     }
 }
 
@@ -269,6 +275,8 @@ fn add_aa_selector(
                     if res.aa_type() != state.protein_descrip.residues[ar_i].sidechain.aa_type() {
                         state.protein_descrip.residues[ar_i].sidechain = res;
                         engine_updates.entities = true;
+
+                        response.surrender_focus()
                     }
                 }
                 None => (), // todo: Blank the field etc?
@@ -469,11 +477,11 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
             });
 
             ui.horizontal(|ui| {
-                  let show_scs_text = if state.show_sidechains {
-                "Hide sidechains"
-            } else {
-                "Show sidechains"
-            };
+                let show_scs_text = if state.show_sidechains {
+                    "Hide sidechains"
+                } else {
+                    "Show sidechains"
+                };
             if ui.button(show_scs_text).clicked() {
                 state.show_sidechains = !state.show_sidechains;
                 engine_updates.entities = true;
