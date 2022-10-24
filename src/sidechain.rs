@@ -18,13 +18,29 @@ const TAU_DIV2: f64 = TAU / 2.;
 pub const LEN_SC: f64 = 1.53;
 
 // Dummy bonds, for semantic clarity. They're the same, but we need both in our forward-kinematics API.
-const H_BOND_IN: Vec3 = Vec3 { x: 1., y: 0., z: 0. };
-const H_BOND_OUT: Vec3 = Vec3 { x: 1., y: 0., z: 0. };
+const H_BOND_IN: Vec3 = Vec3 {
+    x: 1.,
+    y: 0.,
+    z: 0.,
+};
+const H_BOND_OUT: Vec3 = Vec3 {
+    x: 1.,
+    y: 0.,
+    z: 0.,
+};
 
 // todo: How should we handle O? Generally double-bonded to a C with no continued chain?
-const O_BOND_IN: Vec3 = Vec3 { x: 1., y: 0., z: 0. };
+const O_BOND_IN: Vec3 = Vec3 {
+    x: 1.,
+    y: 0.,
+    z: 0.,
+};
 // todo: This should prob be diff, in case a H is bound?
-const O_BOND_OUT: Vec3 = Vec3 { x: 1., y: 0., z: 0. };
+const O_BOND_OUT: Vec3 = Vec3 {
+    x: 1.,
+    y: 0.,
+    z: 0.,
+};
 
 // As a convention, we use generic tetrahedral and planar geometry in this module.
 // This is a stopgap. Note that we are treating the generic-geometry `BOND_A` as to
@@ -894,7 +910,7 @@ impl His {
             0.,
             n_delta2,
             c_gamma,
-            unsafe { PLANAR3_B},
+            unsafe { PLANAR3_B },
             LEN_SC,
         );
 
@@ -1008,7 +1024,7 @@ impl Lys {
 
         let (n_zeta, n_zeta_orientation) = find_atom_placement(
             c_eps_orientation,
-            unsafe {PLANAR3_A },
+            unsafe { PLANAR3_A },
             unsafe { PLANAR3_B },
             TAU_DIV2,
             c_eps,
@@ -1727,7 +1743,8 @@ impl Ile {
             LEN_SC,
         );
 
-        let (c_gamma1, _) = find_atom_placement( // Non-continuing chain
+        let (c_gamma1, _) = find_atom_placement(
+            // Non-continuing chain
             c_beta_orientation,
             unsafe { TETRA_A },
             unsafe { TETRA_B },
@@ -1803,7 +1820,7 @@ impl Leu {
 
         let (c_delta1, _) = find_atom_placement(
             c_gamma_orientation,
-            unsafe {TETRA_A },
+            unsafe { TETRA_A },
             unsafe { TETRA_B },
             TAU_DIV2,
             c_gamma,

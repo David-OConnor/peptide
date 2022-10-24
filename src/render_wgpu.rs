@@ -22,9 +22,9 @@ use crate::{
     chem_definitions::AtomRole,
     gui,
     render::{
-        self, ACTIVE_COLOR_ATOM, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
-        BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS, RENDER_DIST, WINDOW_SIZE_X,
-        WINDOW_SIZE_Y, WINDOW_TITLE, ACTIVE_N_COLOR, ACTIVE_CALPHA_COLOR
+        self, ACTIVE_CALPHA_COLOR, ACTIVE_COLOR_ATOM, ACTIVE_N_COLOR, ATOM_SHINYNESS,
+        BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN, BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN,
+        BOND_SHINYNESS, RENDER_DIST, WINDOW_SIZE_X, WINDOW_SIZE_Y, WINDOW_TITLE,
     },
     sidechain::LEN_SC,
     types::State,
@@ -320,7 +320,6 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 
     // Atom id is used for station-keeping here.
     for (atom_id, atom) in state.protein_coords.atoms_backbone.iter().enumerate() {
-
         // let atom_color = if state.active_residue == atom.residue_id {
         //     avg_colors(ACTIVE_COLOR_ATOM, atom.role.render_color())
         // } else {
@@ -467,24 +466,6 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 
 /// The entry point for our renderer.
 pub fn run(mut state: State) {
-    let res = &state.protein_descrip.residues[state.active_residue - 1];
-
-    // Initialize the GUI state here.
-    // state.ui = gui::StateUi {
-    //     // prot_name: state.protein_descrip.name.clone(),
-    //     // pdb_ident: state.protein_descrip.pdb_ident.clone(),
-    //     // active_res_id: state.active_residue,
-    //     // active_res_aa_name: res.sidechain.aa_name().to_owned(),
-    //     // active_res_ψ: res.ψ,
-    //     // active_res_φ: res.φ,
-    //     // active_res_ω: res.ω,
-    //     active_res_χ1: res.sidechain.get_χ1(),
-    //     active_res_χ2: res.sidechain.get_χ2(),
-    //     active_res_χ3: res.sidechain.get_χ3(),
-    //     active_res_χ4: res.sidechain.get_χ4(),
-    //     active_res_χ5: res.sidechain.get_χ5(),
-    // };
-
     // Render our atoms.
     // let entities = generate_entities(&state, &state.protein_coords.atoms_backbone);
     let entities = generate_entities(&state);

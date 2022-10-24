@@ -113,13 +113,33 @@ pub const H_N_BOND: Vec3 = ANCHOR_BOND_VEC;
 
 // *const* substitute for `Tetrahedral`.
 pub static mut TETRA_A: Vec3 = ANCHOR_BOND_VEC;
-pub static mut TETRA_B: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
-pub static mut TETRA_C: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
-pub static mut TETRA_D: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
+pub static mut TETRA_B: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+pub static mut TETRA_C: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+pub static mut TETRA_D: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
 
 pub static mut PLANAR3_A: Vec3 = ANCHOR_BOND_VEC;
-pub static mut PLANAR3_B: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
-pub static mut PLANAR3_C: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
+pub static mut PLANAR3_B: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+pub static mut PLANAR3_C: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
 
 /// 4 tetrahedral bonds. Eg Carbon.
 pub struct Tetrahedral {
