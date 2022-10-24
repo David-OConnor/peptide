@@ -119,8 +119,7 @@ fn init_protein() -> ProteinDescription {
     // prot_test.save("trp_cage.prot");
     // let prot_test_load = ProteinDescription::load("trp_cage.prot");
 
-    // ProteinDescription { residues }
-    proteins::make_trp_cage()
+    prot_test
 }
 
 // todo: util mod?

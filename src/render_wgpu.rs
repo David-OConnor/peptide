@@ -467,7 +467,6 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 /// The entry point for our renderer.
 pub fn run(mut state: State) {
     // Render our atoms.
-    // let entities = generate_entities(&state, &state.protein_coords.atoms_backbone);
     let entities = generate_entities(&state);
 
     let scene = Scene {

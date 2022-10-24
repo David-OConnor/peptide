@@ -109,7 +109,7 @@ pub const H_N_BOND: Vec3 = ANCHOR_BOND_VEC;
 
 // These are updated in `init_local_bond_vecs`.
 
-// Generic bond geometry; real world values vary slightly from this.
+// Generic bond geometry; real world values vary slightly from this. Initialized below.
 
 // *const* substitute for `Tetrahedral`.
 pub static mut TETRA_A: Vec3 = ANCHOR_BOND_VEC;
@@ -137,6 +137,67 @@ pub static mut PLANAR3_B: Vec3 = Vec3 {
 };
 pub static mut PLANAR3_C: Vec3 = Vec3 {
     x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+pub const RING_BOND_IN: Vec3 = Vec3 {
+    x: 1.,
+    y: 0.,
+    z: 0.,
+};
+
+// Formular for N-sided ring: TAU/2 - TAU/N
+// 1.884955
+// These ring bond out angles are for planar rings, with the input being the anchor vec.
+pub static mut RING5_BOND_OUT: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+// Other direction.
+pub static mut RING5_BOND_OUT_B: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+// 2.094395
+pub static mut RING6_BOND_OUT: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+// Other direction.
+pub static mut RING6_BOND_OUT_B: Vec3 = Vec3 {
+    x: 0.,
+    y: 0.,
+    z: 0.,
+};
+
+// H Dummy bonds, for semantic clarity. They're the same, but we need both in our forward-kinematics API.
+pub const H_BOND_IN: Vec3 = Vec3 {
+    x: 1.,
+    y: 0.,
+    z: 0.,
+};
+pub const H_BOND_OUT: Vec3 = Vec3 {
+    x: 1.,
+    y: 0.,
+    z: 0.,
+};
+
+// todo: How should we handle O? Generally double-bonded to a C with no continued chain?
+pub const O_BOND_IN: Vec3 = Vec3 {
+    x: 1.,
+    y: 0.,
+    z: 0.,
+};
+// todo: This should prob be diff, in case a H is bound?
+pub const O_BOND_OUT: Vec3 = Vec3 {
+    x: 1.,
     y: 0.,
     z: 0.,
 };
@@ -269,6 +330,17 @@ pub fn init_local_bond_vecs() {
         PLANAR3_A = planar3.bond_a;
         PLANAR3_B = planar3.bond_b;
         PLANAR3_C = planar3.bond_c;
+
+        let z = Vec3::new(0., 0., 1.);
+        let bond_angle_ring5 = TAU / 2. - TAU / 5.;
+        let bond_angle_ring6 = TAU / 2. - TAU / 6.;
+
+        RING5_BOND_OUT = Quaternion::from_axis_angle(z, bond_angle_ring5).rotate_vec(ANCHOR_BOND_VEC);
+        RING6_BOND_OUT = Quaternion::from_axis_angle(z, bond_angle_ring6).rotate_vec(ANCHOR_BOND_VEC);
+
+        RING5_BOND_OUT_B = Quaternion::from_axis_angle(z, -bond_angle_ring5).rotate_vec(ANCHOR_BOND_VEC);
+        RING6_BOND_OUT_B = Quaternion::from_axis_angle(z, -bond_angle_ring6).rotate_vec(ANCHOR_BOND_VEC);
+
 
         // Find the second bond vectors. The initial anchor bonds (eg `CALPHA_CP_BOND`) are rotated
         // along the (underconstrained) normal plane above.

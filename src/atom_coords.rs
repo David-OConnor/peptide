@@ -827,7 +827,7 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::OSidechain,
                         sc_coords.o_eta,
-                        Q_I,
+                        sc_coords.o_eta_orientation,
                         &mut backbone,
                         1,
                         residue_id,
