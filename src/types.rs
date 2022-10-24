@@ -87,6 +87,7 @@ pub struct State {
     /// Ratio of sim time to real time. A higher value (closer to 1) is faster.
     pub sim_time_scale: f64,
     pub sim_running: bool,
+    pub show_sidechains: bool,
     pub show_hydrogens: bool,
 }
 
@@ -104,6 +105,7 @@ impl State {
             temperature: 293.,
             sim_time_scale: 0.001,
             sim_running: false,
+            show_sidechains: true,
             show_hydrogens: true,
         }
     }

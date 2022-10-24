@@ -23,8 +23,8 @@ use crate::{
     gui,
     render::{
         self, ACTIVE_COLOR_ATOM, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
-        BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS, WINDOW_TITLE, WINDOW_SIZE_X,
-        WINDOW_SIZE_Y, RENDER_DIST
+        BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS, RENDER_DIST, WINDOW_SIZE_X,
+        WINDOW_SIZE_Y, WINDOW_TITLE,
     },
     sidechain::LEN_SC,
     types::State,
@@ -328,20 +328,36 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 
         let atom_mesh = match atom.role {
             AtomRole::N | AtomRole::Cα | AtomRole::Cp => 0, // Cube
-            _ => 1, // Sphere
+            _ => 1,                                          // Sphere
         };
 
         let scale = match atom.role {
             AtomRole::HCα | AtomRole::HN | AtomRole::HSidechain => render::H_SCALE,
-            _ => 1.
+            _ => 1.,
         };
 
         if !state.show_hydrogens {
             match atom.role {
-                AtomRole::HCα | AtomRole::HN | AtomRole::HSidechain => {
-                    continue
-                }
-                _ => ()
+                AtomRole::HCα | AtomRole::HN | AtomRole::HSidechain => continue,
+                _ => (),
+            }
+        }
+
+        //    CSidechain,
+        //     OSidechain,
+        //     NSidechain,
+        //     SSidechain,
+        //     SeSidechain,
+        //     HSidechain,
+        if !state.show_sidechains {
+            match atom.role {
+                AtomRole::CSidechain
+                | AtomRole::OSidechain
+                | AtomRole::NSidechain
+                | AtomRole::SSidechain
+                | AtomRole::SeSidechain
+                | AtomRole::HSidechain => continue,
+                _ => (),
             }
         }
 
@@ -372,8 +388,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
                 | AtomRole::NSidechain
                 | AtomRole::SSidechain
                 | AtomRole::SeSidechain
-                | AtomRole::HSidechain
-                => {
+                | AtomRole::HSidechain => {
                     // This assumes the prev atom added before the sidechain was Cα.
                     atom_id - atom.sidechain_bond_step
                 }

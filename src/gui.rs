@@ -468,6 +468,17 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                 add_focus_btn(ui, state, scene, state.active_residue, &mut engine_updates.camera);
             });
 
+            ui.horizontal(|ui| {
+                  let show_scs_text = if state.show_sidechains {
+                "Hide sidechains"
+            } else {
+                "Show sidechains"
+            };
+            if ui.button(show_scs_text).clicked() {
+                state.show_sidechains = !state.show_sidechains;
+                engine_updates.entities = true;
+            }
+
             let show_h_text = if state.show_hydrogens {
                 "Hide Hs"
             } else {
@@ -477,6 +488,8 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                 state.show_hydrogens = !state.show_hydrogens;
                 engine_updates.entities = true;
             }
+            });
+
 
             ui.add_space(SPACE_BETWEEN_SECTIONS);
 

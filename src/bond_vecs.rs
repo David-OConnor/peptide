@@ -1,4 +1,5 @@
-//! Code for generating bond vectors for an atom.
+//! This module contains code for modelling bond angles as (unit?) vectors. Or perhaps
+//! non-unit vectors including length. It's designed to be explicit and flexible.
 
 // [Includes some common bond angles](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2810841/)
 
@@ -114,13 +115,72 @@ pub static mut SIDECHAIN_BOND_TO_PREV: Vec3 = Vec3 {
     z: 0.,
 };
 
-pub const SIDECHAIN_BOND_OUT1: Vec3 = ANCHOR_BOND_VEC;
+// pub const SIDECHAIN_BOND_OUT1: Vec3 = ANCHOR_BOND_VEC;
 
-pub static mut SIDECHAIN_BOND_OUT2: Vec3 = Vec3 {
-    x: 0.,
-    y: 0.,
-    z: 0.,
-};
+// pub static mut SIDECHAIN_BOND_OUT2: Vec3 = Vec3 {
+//     x: 0.,
+//     y: 0.,
+//     z: 0.,
+// };
+
+// Generic bond geometry; real world values vary slightly from this.
+
+// *const* substitute for `Tetrahedral`.
+pub static mut TETRA_A: Vec3 = ANCHOR_BOND_VEC;
+pub static mut TETRA_B: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
+pub static mut TETRA_C: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
+pub static mut TETRA_D: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
+
+pub static mut PLANAR3_A: Vec3 = ANCHOR_BOND_VEC;
+pub static mut PLANAR3_B: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
+pub static mut PLANAR3_C: Vec3 = Vec3 { x: 0., y: 0., z: 0. };
+
+/// 4 tetrahedral bonds. Eg Carbon.
+pub struct Tetrahedral {
+    pub bond_a: Vec3,
+    pub bond_b: Vec3,
+    pub bond_c: Vec3,
+    pub bond_d: Vec3,
+}
+
+impl Default for Tetrahedral {
+    fn default() -> Self {
+        // Z is an arbitrary orthonormal vec to the anchor vec.
+        let z = Vec3::new(0., 0., 1.);
+        let tetra_angle = 1.9106332; // Angle between any 2 bonds in a tetrahedron.
+
+        let r1 = z;
+        let r2 = Quaternion::from_axis_angle(ANCHOR_BOND_VEC, TAU / 3.).rotate_vec(z);
+        let r3 = Quaternion::from_axis_angle(ANCHOR_BOND_VEC, TAU * 2. / 3.).rotate_vec(z);
+
+        Self {
+            bond_a: ANCHOR_BOND_VEC,
+            bond_b: Quaternion::from_axis_angle(r1, tetra_angle).rotate_vec(ANCHOR_BOND_VEC),
+            bond_c: Quaternion::from_axis_angle(r2, tetra_angle).rotate_vec(ANCHOR_BOND_VEC),
+            bond_d: Quaternion::from_axis_angle(r3, tetra_angle).rotate_vec(ANCHOR_BOND_VEC),
+        }
+    }
+}
+
+/// 3 roughly-planar bonds. Eg Nitrogen.
+pub struct Planar3 {
+    pub bond_a: Vec3,
+    pub bond_b: Vec3,
+    pub bond_c: Vec3,
+}
+
+impl Default for Planar3 {
+    /// Equal spacing in a plane.
+    fn default() -> Self {
+        let z = Vec3::new(0., 0., 1.);
+
+        Self {
+            bond_a: ANCHOR_BOND_VEC,
+            bond_b: Quaternion::from_axis_angle(z, TAU / 3.).rotate_vec(ANCHOR_BOND_VEC),
+            bond_c: Quaternion::from_axis_angle(z, TAU * 2. / 3.).rotate_vec(ANCHOR_BOND_VEC),
+        }
+    }
+}
 
 /// Rotate a vector in 3d a given angle, given a rotation plane.
 fn rotate_vec(start: Vec3, angle: f64, rot_plane_norm: Vec3) -> Vec3 {
@@ -186,12 +246,25 @@ pub fn init_local_bond_vecs() {
 
     // We use this normal plane for all rotations if the bond are in plane. We use it for
     // the first rotation if not.
-    let rot_plane_norm = Vec3::new(0., 1., 0.);
+    let rot_plane_norm = Vec3::new(0., 0., 1.);
 
     // The first bond vectors are defined as the anchor vec. These are Calpha's CP bond, Cp's N bond,
     // and N's Calpha bond. This is also the first sidechain bond out.
 
+
     unsafe {
+        // Store globals for generic geometric bond angles, to prevent repeated calculation.
+        let tetra = Tetrahedral::default();
+        TETRA_A = tetra.bond_a;
+        TETRA_B = tetra.bond_b;
+        TETRA_C = tetra.bond_c;
+        TETRA_D = tetra.bond_d;
+
+        let planar3 = Planar3::default();
+        PLANAR3_A = planar3.bond_a;
+        PLANAR3_B = planar3.bond_b;
+        PLANAR3_C = planar3.bond_c;
+
         // Find the second bond vectors. The initial anchor bonds (eg `CALPHA_CP_BOND`) are rotated
         // along the (underconstrained) normal plane above.
         CALPHA_N_BOND = rotate_vec(CALPHA_CP_BOND, BOND_ANGLE_CALPHA_CP_N, rot_plane_norm);
@@ -203,7 +276,7 @@ pub fn init_local_bond_vecs() {
         // todo logic below to find H atom locations.
         N_H_BOND = rotate_vec(N_CALPHA_BOND, TAU * 2. / 3., rot_plane_norm);
 
-        SIDECHAIN_BOND_OUT2 = rotate_vec(ANCHOR_BOND_VEC, TAU / 3., rot_plane_norm);
+        // SIDECHAIN_BOND_OUT2 = rotate_vec(ANCHOR_BOND_VEC, TAU / 3., rot_plane_norm);
         SIDECHAIN_BOND_TO_PREV = rotate_vec(ANCHOR_BOND_VEC, TAU * 2. / 3., rot_plane_norm);
 
         // todo: To find the 3rd (and later 4th, ie hydrogen-to-atom) bonds, we we
@@ -222,15 +295,8 @@ pub fn init_local_bond_vecs() {
         // println!("CALPHA_N_BOND {:?}", CALPHA_N_BOND);
         // println!("CALPHA_CP_BOND {:?}", CALPHA_CP_BOND);
 
-        // todo: This is a 4th bond, and you don't have angles to it... this is a temp hack.
-        CALPHA_H_BOND = find_third_bond_vec(
-            CALPHA_CP_BOND,
-            CALPHA_N_BOND,
-            // todo: These value are placeholders; they produce rough, but OK results.
-            -120. * TAU / 360.,
-            120. * TAU / 360.,
-            rot_plane_norm,
-        );
+        // Using generic tetrahedron geometry for now, since we don't have average measured angles.
+        CALPHA_H_BOND = tetra.bond_d;
 
         // todo temp
         // CALPHA_H_BOND = Vec3::new(0.7, -1., 1.).to_normalized();
@@ -244,7 +310,7 @@ pub fn init_local_bond_vecs() {
         );
 
         // todo: The other ones.
-    }
 
-    // Find vectors from C' to O, and Cα to R, given the previous 2 bonds for each.
+        // Find vectors from C' to O, and Cα to R, given the previous 2 bonds for each.
+    }
 }

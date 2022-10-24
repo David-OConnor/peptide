@@ -5,6 +5,8 @@ use lin_alg2::f64::{Quaternion, Vec3};
 use crate::types::ProteinDescription;
 use crate::{chem_definitions::AtomRole, sidechain::Sidechain};
 
+// todo: For chain termination AA, you may need to replace the final backbone N with an O.
+
 const Q_I: Quaternion = Quaternion {
     w: 1.,
     x: 0.,
@@ -1026,7 +1028,7 @@ impl ProteinCoords {
                         &mut atom_id,
                     );
                     add_atom(
-                        AtomRole::CSidechain,
+                        AtomRole::NSidechain,
                         sc_coords.n_delta2,
                         sc_coords.n_delta2_orientation,
                         &mut backbone,
@@ -1035,7 +1037,7 @@ impl ProteinCoords {
                         &mut atom_id,
                     );
                     add_atom(
-                        AtomRole::CSidechain,
+                        AtomRole::NSidechain,
                         sc_coords.n_eps1,
                         Q_I,
                         &mut backbone,
