@@ -107,21 +107,7 @@ pub const O_CP_BOND: Vec3 = ANCHOR_BOND_VEC;
 pub const H_CALPHA_BOND: Vec3 = ANCHOR_BOND_VEC;
 pub const H_N_BOND: Vec3 = ANCHOR_BOND_VEC;
 
-// todo: temp
 // These are updated in `init_local_bond_vecs`.
-pub static mut SIDECHAIN_BOND_TO_PREV: Vec3 = Vec3 {
-    x: 0.,
-    y: 0.,
-    z: 0.,
-};
-
-// pub const SIDECHAIN_BOND_OUT1: Vec3 = ANCHOR_BOND_VEC;
-
-// pub static mut SIDECHAIN_BOND_OUT2: Vec3 = Vec3 {
-//     x: 0.,
-//     y: 0.,
-//     z: 0.,
-// };
 
 // Generic bond geometry; real world values vary slightly from this.
 
@@ -249,8 +235,7 @@ pub fn init_local_bond_vecs() {
     let rot_plane_norm = Vec3::new(0., 0., 1.);
 
     // The first bond vectors are defined as the anchor vec. These are Calpha's CP bond, Cp's N bond,
-    // and N's Calpha bond. This is also the first sidechain bond out.
-
+    // and N's Calpha bond. They are also the generic geometry's `bond_a` for planar and tetrahedral.
 
     unsafe {
         // Store globals for generic geometric bond angles, to prevent repeated calculation.
@@ -275,9 +260,6 @@ pub fn init_local_bond_vecs() {
         // todo: Rather than assume it's in plane, we may need to apply the `find_third_bond_vec`
         // todo logic below to find H atom locations.
         N_H_BOND = rotate_vec(N_CALPHA_BOND, TAU * 2. / 3., rot_plane_norm);
-
-        // SIDECHAIN_BOND_OUT2 = rotate_vec(ANCHOR_BOND_VEC, TAU / 3., rot_plane_norm);
-        SIDECHAIN_BOND_TO_PREV = rotate_vec(ANCHOR_BOND_VEC, TAU * 2. / 3., rot_plane_norm);
 
         // todo: To find the 3rd (and later 4th, ie hydrogen-to-atom) bonds, we we
         // todo taking an iterative approach based on that above. Long-term, you should

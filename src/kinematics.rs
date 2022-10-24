@@ -35,26 +35,28 @@ fn calc_dihedral_angle(bond_middle: Vec3, bond_adjacent1: Vec3, bond_adjacent2: 
 }
 
 /// Calculate the orientation, as a quaternion, and position, as a vector, of an atom, given the orientation of a
-/// previous atom, and the bond angle. `bond_angle` is the vector representing the bond to
-/// this atom from the previous atom's orientation. `bond_prev` and `bond_next` are in the atom's
-/// coordinates; not worldspace. This is solving an iteration of the *forward kinematics problem*.
+/// previous atom, and the bond angle. `bond_to_prev_local` is the vector representing the bond to
+/// this atom from the previous atom's orientation. `bond_to_prev_local`, `bond_to_next_local`, and
+/// `bond_to_this_local` are in the atom's local coordinate space; not worldspace. They are all unit vectors.
+///
+/// This is solving an iteration of the *forward kinematics problem*.
 pub fn find_atom_placement(
-    o_prev: Quaternion,
-    bond_to_prev_local: Vec3, // Local space
-    bond_to_next_local: Vec3, // Local space
+    or_prev: Quaternion,
+    bond_to_prev_local: Vec3,
+    bond_to_next_local: Vec3,
     dihedral_angle: f64,
     posit_prev: Vec3,
     posit_2_back: Vec3,
-    bond_to_this_local: Vec3, // direction-only unit vec
+    bond_to_this_local: Vec3,
     bond_to_this_len: f64,
 ) -> (Vec3, Quaternion) {
     let prev_bond_world = posit_prev - posit_2_back;
 
     // Find the position:
-    let position = posit_prev + o_prev.rotate_vec(bond_to_this_local) * bond_to_this_len;
+    let position = posit_prev + or_prev.rotate_vec(bond_to_this_local) * bond_to_this_len;
 
     // #1: Align the prev atom's bond vector to world space based on the prev atom's orientation.
-    let bond_to_this_worldspace = o_prev.rotate_vec(bond_to_next_local);
+    let bond_to_this_worldspace = or_prev.rotate_vec(bond_to_next_local);
 
     // #2: Find the rotation quaternion that aligns the (inverse of) the local(world?)-space bond to
     // the prev atom with the world-space "to" bond of the previous atom. This is also the
