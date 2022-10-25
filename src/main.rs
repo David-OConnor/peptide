@@ -55,10 +55,10 @@ mod proteins;
 mod render;
 mod render_wgpu;
 mod save_load;
+mod sc_atom_placement;
 mod sidechain;
 mod simulate;
 mod types;
-mod sc_atom_placement;
 
 use crate::types::State;
 

@@ -437,6 +437,8 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                 }
             });
 
+            ui.add_space(SPACE_BETWEEN_SECTIONS);
+
             ui.horizontal(|ui| {
                 ui.label("Active residue:");
 

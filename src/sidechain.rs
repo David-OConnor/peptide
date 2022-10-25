@@ -3,11 +3,7 @@
 // Don't show warnings for un`
 use std::{f64::consts::TAU, fmt};
 
-use crate::{
-    bond_vecs::*,
-    chem_definitions::AminoAcidType,
-    kinematics::find_atom_placement,
-};
+use crate::{bond_vecs::*, chem_definitions::AminoAcidType, kinematics::find_atom_placement};
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
@@ -653,16 +649,16 @@ pub struct CoordsArg {
     pub n_eta1: Vec3,
     pub n_eta2: Vec3,
     pub h_n_eps: Vec3,
-    pub h_amine_eta1a: Vec3,
-    pub h_amine_eta1b: Vec3,
-    pub h_amine_eta2a: Vec3,
-    pub h_amine_eta2b: Vec3,
-    pub h_c_beta1: Vec3,
-    pub h_c_beta2: Vec3,
-    pub h_c_gamma1: Vec3,
-    pub h_c_gamma2: Vec3,
-    pub h_c_delta1: Vec3,
-    pub h_c_delta2: Vec3,
+    pub h_n_eta1_a: Vec3,
+    pub h_n_eta1_b: Vec3,
+    pub h_n_eta2_a: Vec3,
+    pub h_n_eta2_b: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_c_gamma_a: Vec3,
+    pub h_c_gamma_b: Vec3,
+    pub h_c_dela_a: Vec3,
+    pub h_c_delta_b: Vec3,
     pub h_c_zeta: Vec3,
 
     pub c_beta_orientation: Quaternion,
@@ -682,8 +678,8 @@ pub struct CoordsHis {
     pub n_delta2: Vec3,
     pub n_eps1: Vec3,
     pub c_eps2: Vec3,
-    pub h_amine_delta: Vec3,
-    pub h_amine_eps: Vec3,
+    pub h_n_delta: Vec3,
+    pub h_n_eps: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
@@ -700,8 +696,8 @@ pub struct CoordsLys {
     pub c_delta: Vec3,
     pub c_eps: Vec3,
     pub n_zeta: Vec3,
-    pub h_amine1: Vec3,
-    pub h_amine2: Vec3,
+    pub h_n_zeta_a: Vec3,
+    pub h_n_zeta_b: Vec3,
     // todo: Third N here?
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
@@ -765,8 +761,8 @@ pub struct CoordsAsn {
     pub c_gamma: Vec3,
     pub o_delta1: Vec3,
     pub n_delta2: Vec3,
-    pub h_amine1: Vec3,
-    pub h_amine2: Vec3,
+    pub h_n_delta_a: Vec3,
+    pub h_n_delta_b: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
@@ -780,8 +776,8 @@ pub struct CoordsGln {
     pub c_delta: Vec3,
     pub o_eps1: Vec3,
     pub n_eps2: Vec3,
-    pub h_amine1: Vec3,
-    pub h_amine2: Vec3,
+    pub h_n_eps_a: Vec3,
+    pub h_n_eps_b: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
@@ -792,9 +788,9 @@ pub struct CoordsGln {
 #[derive(Debug, Default)]
 pub struct CoordsAla {
     pub c_beta: Vec3,
-    pub h_c_beta1: Vec3,
-    pub h_c_beta2: Vec3,
-    pub h_c_beta3: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_c_beta_c: Vec3,
 
     pub c_beta_orientation: Quaternion,
 }
@@ -804,8 +800,17 @@ pub struct CoordsVal {
     pub c_beta: Vec3,
     pub c_gamma1: Vec3,
     pub c_gamma2: Vec3,
+    pub h_c_beta: Vec3,
+    pub h_c_gamma1_a: Vec3,
+    pub h_c_gamma1_b: Vec3,
+    pub h_c_gamma1_c: Vec3,
+    pub h_c_gamma2_a: Vec3,
+    pub h_c_gamma2_b: Vec3,
+    pub h_c_gamma2_c: Vec3,
 
     pub c_beta_orientation: Quaternion,
+    pub c_gamma1_orientation: Quaternion,
+    pub c_gamma2_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]
@@ -926,7 +931,7 @@ pub struct CoordsTrp {
     pub c_zeta2: Vec3,
     pub c_eta1: Vec3,
     pub c_eta2: Vec3,
-    pub h_amine: Vec3,
+    pub h_n_delta: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,

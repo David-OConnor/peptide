@@ -15,6 +15,7 @@ pub const LEN_CALPHA_CP: f64 = 1.53; // angstrom
 pub const LEN_CP_O: f64 = 1.2; // angstrom // todo placeholder!
 pub const LEN_CALPHA_H: f64 = 1.0; // angstrom // todo placeholder!
 pub const LEN_N_H: f64 = 1.0; // angstrom // todo placeholder!
+pub const LEN_C_H: f64 = 1.0; // angstrom // todo placeholder!
 
 // Ideal bond angles. There are an approximation; from averages. Consider replacing with something
 // more robust later. All angles are in radians. We use degrees with math to match common sources.
@@ -142,6 +143,7 @@ pub static mut PLANAR3_C: Vec3 = Vec3 {
 };
 
 pub const RING_BOND_IN: Vec3 = Vec3 {
+    // The anchor vec
     x: 1.,
     y: 0.,
     z: 0.,
@@ -196,10 +198,11 @@ pub const O_BOND_IN: Vec3 = Vec3 {
     z: 0.,
 };
 
-// todo: This is a sloppy placeholder. What should this be? Can it rotate freely??
-// todo: Should it be a different fixed angle?
-pub const O_BOND_OUT: Vec3 = Vec3 {
-    x: -1.,
+// todo:  What should this be? Can it rotate freely??
+// todo: Should it be a different fixed angle? Currently have it slightly greater than TAU/4, initialized
+// todo below
+pub static mut O_BOND_OUT: Vec3 = Vec3 {
+    x: 0.,
     y: 0.,
     z: 0.,
 };
@@ -336,13 +339,19 @@ pub fn init_local_bond_vecs() {
         let z = Vec3::new(0., 0., 1.);
         let bond_angle_ring5 = TAU / 2. - TAU / 5.;
         let bond_angle_ring6 = TAU / 2. - TAU / 6.;
+        let bond_angle_ho = TAU * 0.3;
 
-        RING5_BOND_OUT = Quaternion::from_axis_angle(z, bond_angle_ring5).rotate_vec(ANCHOR_BOND_VEC);
-        RING6_BOND_OUT = Quaternion::from_axis_angle(z, bond_angle_ring6).rotate_vec(ANCHOR_BOND_VEC);
+        RING5_BOND_OUT =
+            Quaternion::from_axis_angle(z, bond_angle_ring5).rotate_vec(ANCHOR_BOND_VEC);
+        RING6_BOND_OUT =
+            Quaternion::from_axis_angle(z, bond_angle_ring6).rotate_vec(ANCHOR_BOND_VEC);
 
-        RING5_BOND_OUT_B = Quaternion::from_axis_angle(z, -bond_angle_ring5).rotate_vec(ANCHOR_BOND_VEC);
-        RING6_BOND_OUT_B = Quaternion::from_axis_angle(z, -bond_angle_ring6).rotate_vec(ANCHOR_BOND_VEC);
+        RING5_BOND_OUT_B =
+            Quaternion::from_axis_angle(z, -bond_angle_ring5).rotate_vec(ANCHOR_BOND_VEC);
+        RING6_BOND_OUT_B =
+            Quaternion::from_axis_angle(z, -bond_angle_ring6).rotate_vec(ANCHOR_BOND_VEC);
 
+        O_BOND_OUT = Quaternion::from_axis_angle(z, bond_angle_ho).rotate_vec(ANCHOR_BOND_VEC);
 
         // Find the second bond vectors. The initial anchor bonds (eg `CALPHA_CP_BOND`) are rotated
         // along the (underconstrained) normal plane above.
