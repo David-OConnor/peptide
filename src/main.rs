@@ -58,6 +58,7 @@ mod save_load;
 mod sidechain;
 mod simulate;
 mod types;
+mod sc_atom_placement;
 
 use crate::types::State;
 

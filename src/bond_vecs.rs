@@ -195,9 +195,11 @@ pub const O_BOND_IN: Vec3 = Vec3 {
     y: 0.,
     z: 0.,
 };
-// todo: This should prob be diff, in case a H is bound?
+
+// todo: This is a sloppy placeholder. What should this be? Can it rotate freely??
+// todo: Should it be a different fixed angle?
 pub const O_BOND_OUT: Vec3 = Vec3 {
-    x: 1.,
+    x: -1.,
     y: 0.,
     z: 0.,
 };
