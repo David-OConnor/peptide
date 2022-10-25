@@ -248,6 +248,69 @@ impl ProteinCoords {
                         residue_id,
                         &mut atom_id,
                     );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_beta1,
+                        Q_I,
+                        &mut backbone,
+                        12,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_beta2,
+                        Q_I,
+                        &mut backbone,
+                        13,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_gamma1,
+                        Q_I,
+                        &mut backbone,
+                        13,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_gamma2,
+                        Q_I,
+                        &mut backbone,
+                        14,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta1,
+                        Q_I,
+                        &mut backbone,
+                        14,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta2,
+                        Q_I,
+                        &mut backbone,
+                        15,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_zeta,
+                        Q_I,
+                        &mut backbone,
+                        14,
+                        residue_id,
+                        &mut atom_id,
+                    );
                 }
                 Sidechain::Lys(angles) => {
                     let sc_coords = angles.sidechain_cart_coords(
@@ -1031,7 +1094,7 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::CSidechain,
                         sc_coords.c_eps,
-                        Q_I,
+                        sc_coords.c_eps_orientation,
                         &mut backbone,
                         1,
                         residue_id,
@@ -1181,9 +1244,36 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::CSidechain,
                         sc_coords.c_beta,
+                        sc_coords.c_beta_orientation,
+                        &mut backbone,
+                        2,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_beta1,
+                        Q_I,
+                        &mut backbone,
+                        1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_beta2,
                         Q_I,
                         &mut backbone,
                         2,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_beta3,
+                        Q_I,
+                        &mut backbone,
+                        3,
                         residue_id,
                         &mut atom_id,
                     );
