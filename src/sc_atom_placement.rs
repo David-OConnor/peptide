@@ -113,7 +113,7 @@ impl Arg {
             LEN_N_H,
         );
 
-        let (h_amine_eta1a, _) = find_atom_placement(
+        let (h_n_eta1_a, _) = find_atom_placement(
             n_eta1_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -124,7 +124,7 @@ impl Arg {
             LEN_N_H,
         );
 
-        let (h_amine_eta1b, _) = find_atom_placement(
+        let (h_n_eta1_b, _) = find_atom_placement(
             n_eta1_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -136,7 +136,7 @@ impl Arg {
         );
 
         // Todo: The Hs on these eta2 Ns aren't rotating/oriented correctly. Why?
-        let (h_amine_eta2a, _) = find_atom_placement(
+        let (h_n_eta2_a, _) = find_atom_placement(
             n_eta2_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -147,7 +147,7 @@ impl Arg {
             LEN_N_H,
         );
 
-        let (h_amine_eta2b, _) = find_atom_placement(
+        let (h_n_eta2_b, _) = find_atom_placement(
             n_eta2_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -157,7 +157,7 @@ impl Arg {
             unsafe { PLANAR3_C },
             LEN_N_H,
         );
-        let (h_c_beta1, _) = find_atom_placement(
+        let (h_c_beta_a, _) = find_atom_placement(
             c_beta_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -168,7 +168,7 @@ impl Arg {
             LEN_C_H,
         );
 
-        let (h_c_beta2, _) = find_atom_placement(
+        let (h_c_beta_b, _) = find_atom_placement(
             c_beta_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -179,7 +179,7 @@ impl Arg {
             LEN_C_H,
         );
 
-        let (h_c_gamma1, _) = find_atom_placement(
+        let (h_c_gamma_a, _) = find_atom_placement(
             c_gamma_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -189,7 +189,7 @@ impl Arg {
             unsafe { TETRA_C },
             LEN_C_H,
         );
-        let (h_c_gamma2, _) = find_atom_placement(
+        let (h_c_gamma_b, _) = find_atom_placement(
             c_gamma_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -200,7 +200,7 @@ impl Arg {
             LEN_C_H,
         );
 
-        let (h_c_delta1, _) = find_atom_placement(
+        let (h_c_delta_a, _) = find_atom_placement(
             c_delta_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -211,7 +211,7 @@ impl Arg {
             LEN_C_H,
         );
 
-        let (h_c_delta2, _) = find_atom_placement(
+        let (h_c_delta_b, _) = find_atom_placement(
             c_delta_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -233,17 +233,6 @@ impl Arg {
             LEN_C_H,
         );
 
-        let (h_c_delta2, _) = find_atom_placement(
-            c_delta_orientation,
-            H_BOND_IN,
-            H_BOND_OUT,
-            TAU_DIV2,
-            c_delta,
-            c_gamma,
-            unsafe { TETRA_D },
-            LEN_C_H,
-        );
-
         CoordsArg {
             c_beta,
             c_gamma,
@@ -253,16 +242,16 @@ impl Arg {
             n_eta1,
             n_eta2,
             h_n_eps,
-            h_n_eta1_a: h_amine_eta1a,
-            h_n_eta1_b: h_amine_eta1b,
-            h_n_eta2_a: h_amine_eta2a,
-            h_n_eta2_b: h_amine_eta2b,
-            h_c_beta_a: h_c_beta1,
-            h_c_beta_b: h_c_beta2,
-            h_c_gamma_a: h_c_gamma1,
-            h_c_gamma_b: h_c_gamma2,
-            h_c_dela_a: h_c_delta1,
-            h_c_delta_b: h_c_delta2,
+            h_n_eta1_a,
+            h_n_eta1_b,
+            h_n_eta2_a,
+            h_n_eta2_b,
+            h_c_beta_a,
+            h_c_beta_b,
+            h_c_gamma_a,
+            h_c_gamma_b,
+            h_c_delta_a,
+            h_c_delta_b,
             h_c_zeta,
 
             c_beta_orientation,
@@ -353,7 +342,7 @@ impl His {
             LEN_SC,
         );
 
-        let (h_amine_delta, _) = find_atom_placement(
+        let (h_n_delta, _) = find_atom_placement(
             n_delta2_orientation,
             unsafe { H_BOND_IN },
             unsafe { H_BOND_OUT },
@@ -363,7 +352,7 @@ impl His {
             unsafe { PLANAR3_C },
             LEN_N_H,
         );
-        let (h_amine_eps, _) = find_atom_placement(
+        let (h_n_eps, _) = find_atom_placement(
             n_eps1_orientation,
             unsafe { H_BOND_IN },
             unsafe { H_BOND_OUT },
@@ -384,8 +373,8 @@ impl His {
             n_delta2,
             n_eps1,
             c_eps2,
-            h_n_delta: h_amine_delta,
-            h_n_eps: h_amine_eps,
+            h_n_delta: h_n_delta,
+            h_n_eps: h_n_eps,
 
             c_beta_orientation,
             c_gamma_orientation,
@@ -472,7 +461,7 @@ impl Lys {
             LEN_SC,
         );
 
-        let (h_amine1, _) = find_atom_placement(
+        let (h_n_zeta_a, _) = find_atom_placement(
             n_zeta_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -483,7 +472,7 @@ impl Lys {
             LEN_N_H,
         );
 
-        let (h_amine2, _) = find_atom_placement(
+        let (h_n_zeta_b, _) = find_atom_placement(
             n_zeta_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -502,8 +491,8 @@ impl Lys {
             c_delta,
             c_eps,
             n_zeta,
-            h_n_zeta_a: h_amine1,
-            h_n_zeta_b: h_amine2,
+            h_n_zeta_a,
+            h_n_zeta_b,
 
             c_beta_orientation,
             c_gamma_orientation,
@@ -865,7 +854,7 @@ impl Asn {
             LEN_SC,
         );
 
-        let (h_amine1, _) = find_atom_placement(
+        let (h_n_delta_a, _) = find_atom_placement(
             n_delta2_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -876,7 +865,7 @@ impl Asn {
             LEN_N_H,
         );
 
-        let (h_amine2, _) = find_atom_placement(
+        let (h_n_delta_b, _) = find_atom_placement(
             n_delta2_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -892,8 +881,8 @@ impl Asn {
             c_gamma,
             o_delta1,
             n_delta2,
-            h_n_delta_a: h_amine1,
-            h_n_delta_b: h_amine2,
+            h_n_delta_a,
+            h_n_delta_b,
 
             c_beta_orientation,
             c_gamma_orientation,
@@ -964,7 +953,7 @@ impl Gln {
             LEN_SC,
         );
 
-        let (h_amine1, _) = find_atom_placement(
+        let (h_n_eps_a, _) = find_atom_placement(
             n_eps2_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -975,7 +964,7 @@ impl Gln {
             LEN_N_H,
         );
 
-        let (h_amine2, _) = find_atom_placement(
+        let (h_n_eps_b, _) = find_atom_placement(
             n_eps2_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -992,8 +981,8 @@ impl Gln {
             c_delta,
             o_eps1,
             n_eps2,
-            h_n_eps_a: h_amine1,
-            h_n_eps_b: h_amine2,
+            h_n_eps_a: h_n_eps_a,
+            h_n_eps_b: h_n_eps_b,
 
             c_beta_orientation,
             c_gamma_orientation,
@@ -1037,9 +1026,45 @@ impl Cys {
             LEN_SC,
         );
 
+        let (h_c_beta_a, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_C },
+            LEN_C_H,
+        );
+
+        let (h_c_beta_b, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_D },
+            LEN_C_H,
+        );
+
+        let (h_s_gamma, _) = find_atom_placement(
+            s_gamma_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            s_gamma,
+            c_beta,
+            unsafe { O_BOND_OUT }, // todo: For S.
+            LEN_C_H,
+        );
+
         CoordsCys {
             c_beta,
             s_gamma,
+            h_c_beta_a,
+            h_c_beta_b,
+            h_s_gamma,
 
             c_beta_orientation,
             s_gamma_orientation,
@@ -1081,9 +1106,33 @@ impl Sec {
             LEN_SC,
         );
 
+        let (h_c_beta_a, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_C },
+            LEN_C_H,
+        );
+
+        let (h_c_beta_b, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_D },
+            LEN_C_H,
+        );
+
         CoordsSec {
             c_beta,
             se_gamma,
+            h_c_beta_a,
+            h_c_beta_b,
 
             c_beta_orientation,
             se_gamma_orientation,
@@ -1170,7 +1219,7 @@ impl Ala {
             LEN_SC,
         );
 
-        let (h_c_beta1, _) = find_atom_placement(
+        let (h_c_beta_a, _) = find_atom_placement(
             c_beta_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -1181,7 +1230,7 @@ impl Ala {
             LEN_C_H,
         );
 
-        let (h_c_beta2, _) = find_atom_placement(
+        let (h_c_beta_b, _) = find_atom_placement(
             c_beta_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -1192,7 +1241,7 @@ impl Ala {
             LEN_C_H,
         );
 
-        let (h_c_beta3, _) = find_atom_placement(
+        let (h_c_beta_c, _) = find_atom_placement(
             c_beta_orientation,
             H_BOND_IN,
             H_BOND_OUT,
@@ -1206,9 +1255,9 @@ impl Ala {
         CoordsAla {
             c_beta,
             c_beta_orientation,
-            h_c_beta_a: h_c_beta1,
-            h_c_beta_b: h_c_beta2,
-            h_c_beta_c: h_c_beta3,
+            h_c_beta_a,
+            h_c_beta_b,
+            h_c_beta_c,
         }
     }
 }
@@ -1889,7 +1938,7 @@ impl Trp {
             unsafe { TETRA_B },
             LEN_SC,
         );
-        let (h_amine, _) = find_atom_placement(
+        let (h_n_delta, _) = find_atom_placement(
             n_delta2_orientation,
             unsafe { TETRA_A },
             unsafe { TETRA_B },
@@ -1911,7 +1960,7 @@ impl Trp {
             c_zeta2,
             c_eta1,
             c_eta2,
-            h_n_delta: h_amine,
+            h_n_delta,
 
             c_beta_orientation,
             c_gamma_orientation,

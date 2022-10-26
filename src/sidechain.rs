@@ -657,7 +657,7 @@ pub struct CoordsArg {
     pub h_c_beta_b: Vec3,
     pub h_c_gamma_a: Vec3,
     pub h_c_gamma_b: Vec3,
-    pub h_c_dela_a: Vec3,
+    pub h_c_delta_a: Vec3,
     pub h_c_delta_b: Vec3,
     pub h_c_zeta: Vec3,
 
@@ -839,6 +839,9 @@ pub struct CoordsLeu {
 pub struct CoordsCys {
     pub c_beta: Vec3,
     pub s_gamma: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_s_gamma: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub s_gamma_orientation: Quaternion,
@@ -848,6 +851,8 @@ pub struct CoordsCys {
 pub struct CoordsSec {
     pub c_beta: Vec3,
     pub se_gamma: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub se_gamma_orientation: Quaternion,
