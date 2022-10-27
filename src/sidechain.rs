@@ -377,7 +377,6 @@ impl Sidechain {
         match self {
             Self::Arg(aa) => Some(aa.χ_3),
             Self::Lys(aa) => Some(aa.χ_3),
-            Self::Asn(aa) => Some(aa.χ_3),
             Self::Glu(aa) => Some(aa.χ_3),
             Self::Gln(aa) => Some(aa.χ_3),
             Self::Met(aa) => Some(aa.χ_3),
@@ -394,18 +393,6 @@ impl Sidechain {
     pub fn get_χ5(&self) -> Option<f64> {
         match self {
             Self::Arg(aa) => Some(aa.χ_5),
-            _ => None,
-        }
-    }
-    pub fn get_χ6(&self) -> Option<f64> {
-        match self {
-            Self::Arg(aa) => Some(aa.χ_6),
-            _ => None,
-        }
-    }
-    pub fn get_χ7(&self) -> Option<f64> {
-        match self {
-            Self::Arg(aa) => Some(aa.χ_7),
             _ => None,
         }
     }
@@ -457,7 +444,6 @@ impl Sidechain {
             Self::Arg(aa) => Some(&mut aa.χ_3),
             Self::Lys(aa) => Some(&mut aa.χ_3),
             Self::Glu(aa) => Some(&mut aa.χ_3),
-            Self::Asn(aa) => Some(&mut aa.χ_3),
             Self::Gln(aa) => Some(&mut aa.χ_3),
             Self::Met(aa) => Some(&mut aa.χ_3),
             _ => None,
@@ -474,18 +460,6 @@ impl Sidechain {
     pub fn get_mut_χ5(&mut self) -> Option<&mut f64> {
         match self {
             Self::Arg(aa) => Some(&mut aa.χ_5),
-            _ => None,
-        }
-    }
-    pub fn get_mut_χ6(&mut self) -> Option<&mut f64> {
-        match self {
-            Self::Arg(aa) => Some(&mut aa.χ_6),
-            _ => None,
-        }
-    }
-    pub fn get_mut_χ7(&mut self) -> Option<&mut f64> {
-        match self {
-            Self::Arg(aa) => Some(&mut aa.χ_7),
             _ => None,
         }
     }
@@ -659,7 +633,6 @@ pub struct CoordsArg {
     pub h_c_gamma_b: Vec3,
     pub h_c_delta_a: Vec3,
     pub h_c_delta_b: Vec3,
-    pub h_c_zeta: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
@@ -987,9 +960,6 @@ pub struct Arg {
     pub χ_3: f64,
     pub χ_4: f64,
     pub χ_5: f64,
-    // todo: 6 and 7 are for the 2 terminal N atoms on the sidechain; not in traditional descriptions.
-    pub χ_6: f64,
-    pub χ_7: f64,
 }
 
 impl Default for Arg {
@@ -1000,8 +970,6 @@ impl Default for Arg {
             χ_3: TAU_DIV2,
             χ_4: TAU_DIV2,
             χ_5: TAU_DIV2,
-            χ_6: TAU_DIV2,
-            χ_7: TAU_DIV2,
         }
     }
 }
@@ -1098,8 +1066,6 @@ impl Default for Thr {
 pub struct Asn {
     pub χ_1: f64,
     pub χ_2: f64,
-    /// todo: This rotates the terminal N, affecting its Hs. Non-traditional DOF.
-    pub χ_3: f64,
 }
 
 impl Default for Asn {
@@ -1107,7 +1073,6 @@ impl Default for Asn {
         Self {
             χ_1: TAU_DIV2,
             χ_2: TAU_DIV2,
-            χ_3: TAU_DIV2,
         }
     }
 }

@@ -196,12 +196,6 @@ fn add_active_aa_editor(
     if let Some(χ) = sc.get_mut_χ5() {
         add_angle_slider(χ, "χ5", &mut engine_updates.entities, ui);
     }
-    if let Some(χ) = sc.get_mut_χ6() {
-        add_angle_slider(χ, "χ6", &mut engine_updates.entities, ui);
-    }
-    if let Some(χ) = sc.get_mut_χ7() {
-        add_angle_slider(χ, "χ7", &mut engine_updates.entities, ui);
-    }
 }
 
 /// Adds a UI area for editing the primary (AA) sequence, as well as related auxillary

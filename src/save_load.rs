@@ -91,8 +91,6 @@ impl Sidechain {
                     χ_3: f64::from_le_bytes(data[17..25].try_into().unwrap()),
                     χ_4: f64::from_le_bytes(data[25..33].try_into().unwrap()),
                     χ_5: f64::from_le_bytes(data[33..41].try_into().unwrap()),
-                    χ_6: 0., // todo not saved
-                    χ_7: 0., // todo not saved
                 })
             }
             1 => Self::His(His {
@@ -123,7 +121,6 @@ impl Sidechain {
             7 => Self::Asn(Asn {
                 χ_1: f64::from_le_bytes(data[1..9].try_into().unwrap()),
                 χ_2: f64::from_le_bytes(data[9..17].try_into().unwrap()),
-                χ_3: f64::from_le_bytes(data[17..25].try_into().unwrap()),
             }),
             8 => Self::Gln(Gln {
                 χ_1: f64::from_le_bytes(data[1..9].try_into().unwrap()),

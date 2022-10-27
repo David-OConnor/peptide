@@ -71,8 +71,8 @@ impl Arg {
 
         let (c_zeta, c_zeta_orientation) = find_atom_placement(
             n_eps_orientation,
-            unsafe { TETRA_A },
-            unsafe { TETRA_B },
+            unsafe { PLANAR3_A },
+            unsafe { PLANAR3_B },
             self.χ_5,
             n_eps,
             c_delta,
@@ -84,10 +84,10 @@ impl Arg {
             c_zeta_orientation,
             unsafe { PLANAR3_A },
             unsafe { PLANAR3_B },
-            self.χ_6,
+            TAU_DIV2,
             c_zeta,
             n_eps,
-            unsafe { TETRA_B },
+            unsafe { PLANAR3_B },
             LEN_SC,
         );
 
@@ -95,10 +95,10 @@ impl Arg {
             c_zeta_orientation,
             unsafe { PLANAR3_A },
             unsafe { PLANAR3_B },
-            self.χ_7,
+            TAU_DIV2,
             c_zeta,
             n_eps,
-            unsafe { TETRA_C },
+            unsafe { PLANAR3_C },
             LEN_SC,
         );
 
@@ -135,7 +135,6 @@ impl Arg {
             LEN_N_H,
         );
 
-        // Todo: The Hs on these eta2 Ns aren't rotating/oriented correctly. Why?
         let (h_n_eta2_a, _) = find_atom_placement(
             n_eta2_orientation,
             H_BOND_IN,
@@ -222,17 +221,6 @@ impl Arg {
             LEN_C_H,
         );
 
-        let (h_c_zeta, _) = find_atom_placement(
-            c_zeta_orientation,
-            H_BOND_IN,
-            H_BOND_OUT,
-            TAU_DIV2,
-            c_zeta,
-            n_eps,
-            unsafe { TETRA_D },
-            LEN_C_H,
-        );
-
         CoordsArg {
             c_beta,
             c_gamma,
@@ -252,7 +240,6 @@ impl Arg {
             h_c_gamma_b,
             h_c_delta_a,
             h_c_delta_b,
-            h_c_zeta,
 
             c_beta_orientation,
             c_gamma_orientation,
@@ -823,8 +810,8 @@ impl Asn {
 
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
-            unsafe { TETRA_A },
-            unsafe { TETRA_B },
+            unsafe { PLANAR3_A },
+            unsafe { PLANAR3_B },
             self.χ_2,
             c_beta,
             c_alpha,
@@ -839,7 +826,7 @@ impl Asn {
             TAU_DIV2,
             c_gamma,
             c_beta,
-            unsafe { TETRA_C },
+            unsafe { PLANAR3_B },
             LEN_SC,
         );
 
@@ -847,10 +834,10 @@ impl Asn {
             c_gamma_orientation,
             unsafe { PLANAR3_A },
             unsafe { PLANAR3_B },
-            self.χ_3,
+            TAU_DIV2,
             c_gamma,
             c_beta,
-            unsafe { TETRA_B },
+            unsafe { PLANAR3_C },
             LEN_SC,
         );
 

@@ -302,15 +302,6 @@ impl ProteinCoords {
                         residue_id,
                         &mut atom_id,
                     );
-                    add_atom(
-                        AtomRole::HSidechain,
-                        sc_coords.h_c_zeta,
-                        Q_I,
-                        &mut backbone,
-                        14,
-                        residue_id,
-                        &mut atom_id,
-                    );
                 }
                 Sidechain::Lys(angles) => {
                     let sc_coords = angles.sidechain_cart_coords(
