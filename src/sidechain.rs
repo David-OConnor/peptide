@@ -763,6 +763,8 @@ pub struct CoordsAsn {
     pub n_delta2: Vec3,
     pub h_n_delta_a: Vec3,
     pub h_n_delta_b: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
@@ -985,7 +987,7 @@ pub struct Arg {
     pub χ_3: f64,
     pub χ_4: f64,
     pub χ_5: f64,
-    // todo: QC the names on xi1 and 2; these are for the 2 terminal N atoms on the sidechain.
+    // todo: 6 and 7 are for the 2 terminal N atoms on the sidechain; not in traditional descriptions.
     pub χ_6: f64,
     pub χ_7: f64,
 }
@@ -1096,6 +1098,7 @@ impl Default for Thr {
 pub struct Asn {
     pub χ_1: f64,
     pub χ_2: f64,
+    /// todo: This rotates the terminal N, affecting its Hs. Non-traditional DOF.
     pub χ_3: f64,
 }
 

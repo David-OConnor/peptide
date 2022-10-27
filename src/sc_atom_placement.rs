@@ -876,6 +876,28 @@ impl Asn {
             LEN_N_H,
         );
 
+        let (h_c_beta_a, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_C },
+            LEN_N_H,
+        );
+
+        let (h_c_beta_b, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_D },
+            LEN_N_H,
+        );
+
         CoordsAsn {
             c_beta,
             c_gamma,
@@ -883,6 +905,8 @@ impl Asn {
             n_delta2,
             h_n_delta_a,
             h_n_delta_b,
+            h_c_beta_a,
+            h_c_beta_b,
 
             c_beta_orientation,
             c_gamma_orientation,
@@ -981,8 +1005,8 @@ impl Gln {
             c_delta,
             o_eps1,
             n_eps2,
-            h_n_eps_a: h_n_eps_a,
-            h_n_eps_b: h_n_eps_b,
+            h_n_eps_a,
+            h_n_eps_b,
 
             c_beta_orientation,
             c_gamma_orientation,

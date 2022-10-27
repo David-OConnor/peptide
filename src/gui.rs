@@ -10,6 +10,7 @@ use crate::{
     render_wgpu,
     sidechain::Sidechain,
     types::{Residue, State},
+    ProteinDescription,
 };
 
 // Note: This is draggable.
@@ -432,8 +433,11 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
 
             ui.horizontal(|ui| {
                 if ui.button("Save").clicked() {
+                    state.protein_descrip.save(&format!("{}.prot", state.protein_descrip.name));
                 }
                 if ui.button("Load").clicked() {
+                    state.protein_descrip = ProteinDescription::load(&format!("{}.prot", state.protein_descrip.name));
+                    engine_updates.entities = true;
                 }
             });
 
