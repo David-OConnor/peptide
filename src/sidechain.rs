@@ -819,9 +819,20 @@ pub struct CoordsIle {
     pub c_gamma1: Vec3,
     pub c_gamma2: Vec3,
     pub c_delta: Vec3,
+    pub h_c_beta: Vec3,
+    pub h_c_gamma1_a: Vec3,
+    pub h_c_gamma1_b: Vec3,
+    pub h_c_gamma1_c: Vec3,
+    pub h_c_gamma2_a: Vec3,
+    pub h_c_gamma2_b: Vec3,
+    pub h_c_delta_a: Vec3,
+    pub h_c_delta_b: Vec3,
+    pub h_c_delta_c: Vec3,
 
     pub c_beta_orientation: Quaternion,
+    pub c_gamma1_orientation: Quaternion,
     pub c_gamma2_orientation: Quaternion,
+    pub c_delta_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]
@@ -830,9 +841,20 @@ pub struct CoordsLeu {
     pub c_gamma: Vec3,
     pub c_delta1: Vec3,
     pub c_delta2: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_c_gamma: Vec3,
+    pub h_c_delta1_a: Vec3,
+    pub h_c_delta1_b: Vec3,
+    pub h_c_delta1_c: Vec3,
+    pub h_c_delta2_a: Vec3,
+    pub h_c_delta2_b: Vec3,
+    pub h_c_delta2_c: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
+    pub c_delta1_orientation: Quaternion,
+    pub c_delta2_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]
@@ -871,7 +893,9 @@ pub struct CoordsMet {
 }
 
 #[derive(Debug, Default)]
-pub struct CoordsGly {}
+pub struct CoordsGly {
+    pub h: Vec3,
+}
 
 #[derive(Debug, Default)]
 pub struct CoordsPro {

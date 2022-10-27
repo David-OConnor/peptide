@@ -1143,11 +1143,23 @@ impl Sec {
 impl Gly {
     pub fn sidechain_cart_coords(
         &self,
-        _c_alpha: Vec3,
-        _c_alpha_orientation: Quaternion,
-        _n_pos: Vec3,
+        c_alpha: Vec3,
+        c_alpha_orientation: Quaternion,
+        n_pos: Vec3,
     ) -> CoordsGly {
-        CoordsGly {}
+        // H on the C alpha.
+        let (h, _) = find_atom_placement(
+            c_alpha_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_alpha,
+            n_pos,
+            unsafe { TETRA_C },
+            LEN_C_H,
+        );
+
+        CoordsGly { h }
     }
 }
 
@@ -1416,7 +1428,7 @@ impl Ile {
             LEN_SC,
         );
 
-        let (c_gamma1, _) = find_atom_placement(
+        let (c_gamma1, c_gamma1_orientation) = find_atom_placement(
             // Non-continuing chain
             c_beta_orientation,
             unsafe { TETRA_A },
@@ -1439,7 +1451,7 @@ impl Ile {
             LEN_SC,
         );
 
-        let (c_delta, _) = find_atom_placement(
+        let (c_delta, c_delta_orientation) = find_atom_placement(
             c_gamma2_orientation,
             unsafe { TETRA_A },
             unsafe { TETRA_B },
@@ -1450,14 +1462,124 @@ impl Ile {
             LEN_SC,
         );
 
+        let (h_c_beta, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_D },
+            LEN_C_H,
+        );
+
+        let (h_c_gamma1_a, _) = find_atom_placement(
+            c_gamma1_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_gamma1,
+            c_beta,
+            unsafe { TETRA_B },
+            LEN_C_H,
+        );
+
+        let (h_c_gamma1_b, _) = find_atom_placement(
+            c_gamma1_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_gamma1,
+            c_beta,
+            unsafe { TETRA_C },
+            LEN_C_H,
+        );
+
+        let (h_c_gamma1_c, _) = find_atom_placement(
+            c_gamma1_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_gamma1,
+            c_beta,
+            unsafe { TETRA_D },
+            LEN_C_H,
+        );
+
+        let (h_c_gamma2_a, _) = find_atom_placement(
+            c_gamma2_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_gamma2,
+            c_beta,
+            unsafe { TETRA_C },
+            LEN_C_H,
+        );
+
+        let (h_c_gamma2_b, _) = find_atom_placement(
+            c_gamma2_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_gamma2,
+            c_beta,
+            unsafe { TETRA_D },
+            LEN_C_H,
+        );
+
+        let (h_c_delta_a, _) = find_atom_placement(
+            c_delta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_delta,
+            c_gamma2,
+            unsafe { TETRA_B },
+            LEN_C_H,
+        );
+
+        let (h_c_delta_b, _) = find_atom_placement(
+            c_delta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_delta,
+            c_gamma2,
+            unsafe { TETRA_C },
+            LEN_C_H,
+        );
+
+        let (h_c_delta_c, _) = find_atom_placement(
+            c_delta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_delta,
+            c_gamma2,
+            unsafe { TETRA_D },
+            LEN_C_H,
+        );
+
         CoordsIle {
             c_beta,
             c_gamma1,
             c_gamma2,
             c_delta, // off gamma2
+            h_c_beta,
+            h_c_gamma1_a,
+            h_c_gamma1_b,
+            h_c_gamma1_c,
+            h_c_gamma2_a,
+            h_c_gamma2_b,
+            h_c_delta_a,
+            h_c_delta_b,
+            h_c_delta_c,
 
             c_beta_orientation,
+            c_gamma1_orientation,
             c_gamma2_orientation,
+            c_delta_orientation,
         }
     }
 }
@@ -1491,7 +1613,7 @@ impl Leu {
             LEN_SC,
         );
 
-        let (c_delta1, _) = find_atom_placement(
+        let (c_delta1, c_delta1_orientation) = find_atom_placement(
             c_gamma_orientation,
             unsafe { TETRA_A },
             unsafe { TETRA_B },
@@ -1502,7 +1624,7 @@ impl Leu {
             LEN_SC,
         );
 
-        let (c_delta2, _) = find_atom_placement(
+        let (c_delta2, c_delta2_orientation) = find_atom_placement(
             c_gamma_orientation,
             unsafe { TETRA_A },
             unsafe { TETRA_B },
@@ -1513,14 +1635,124 @@ impl Leu {
             LEN_SC,
         );
 
+        let (h_c_beta_a, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_C },
+            LEN_C_H,
+        );
+
+        let (h_c_beta_b, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_D },
+            LEN_C_H,
+        );
+
+        let (h_c_gamma, _) = find_atom_placement(
+            c_gamma_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_gamma,
+            c_beta,
+            unsafe { TETRA_D },
+            LEN_C_H,
+        );
+
+        let (h_c_delta1_a, _) = find_atom_placement(
+            c_delta1_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_delta1,
+            c_gamma,
+            unsafe { TETRA_B },
+            LEN_C_H,
+        );
+
+        let (h_c_delta1_b, _) = find_atom_placement(
+            c_delta1_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_delta1,
+            c_gamma,
+            unsafe { TETRA_C },
+            LEN_C_H,
+        );
+
+        let (h_c_delta1_c, _) = find_atom_placement(
+            c_delta1_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_delta1,
+            c_gamma,
+            unsafe { TETRA_D },
+            LEN_C_H,
+        );
+
+        let (h_c_delta2_a, _) = find_atom_placement(
+            c_delta1_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_delta2,
+            c_gamma,
+            unsafe { TETRA_B },
+            LEN_C_H,
+        );
+
+        let (h_c_delta2_b, _) = find_atom_placement(
+            c_delta2_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_delta2,
+            c_gamma,
+            unsafe { TETRA_C },
+            LEN_C_H,
+        );
+
+        let (h_c_delta2_c, _) = find_atom_placement(
+            c_delta2_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_delta2,
+            c_gamma,
+            unsafe { TETRA_D },
+            LEN_C_H,
+        );
+
         CoordsLeu {
             c_beta,
             c_gamma,
             c_delta1,
             c_delta2,
+            h_c_beta_a,
+            h_c_beta_b,
+            h_c_gamma,
+            h_c_delta1_a,
+            h_c_delta1_b,
+            h_c_delta1_c,
+            h_c_delta2_a,
+            h_c_delta2_b,
+            h_c_delta2_c,
 
             c_beta_orientation,
             c_gamma_orientation,
+            c_delta1_orientation,
+            c_delta2_orientation,
         }
     }
 }

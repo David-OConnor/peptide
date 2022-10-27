@@ -667,7 +667,23 @@ impl ProteinCoords {
                         &mut atom_id,
                     );
                 }
-                Sidechain::Gly(_angles) => {} // No sidechain on Gly
+                Sidechain::Gly(angles) => {
+                    let sc_coords = angles.sidechain_cart_coords(
+                        bb_coords.cα,
+                        bb_coords.cα_orientation,
+                        prev_n_posit,
+                    );
+
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h,
+                        Q_I,
+                        &mut backbone,
+                        2,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                }
                 Sidechain::Pro(angles) => {
                     let sc_coords = angles.sidechain_cart_coords(
                         bb_coords.cα,
@@ -722,7 +738,7 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::CSidechain,
                         sc_coords.c_gamma1,
-                        Q_I,
+                        sc_coords.c_gamma1_orientation,
                         &mut backbone,
                         1,
                         residue_id,
@@ -740,9 +756,90 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::CSidechain,
                         sc_coords.c_delta,
-                        Q_I,
+                        sc_coords.c_delta_orientation,
                         &mut backbone,
                         1,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_beta,
+                        Q_I,
+                        &mut backbone,
+                        4,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_gamma1_a,
+                        Q_I,
+                        &mut backbone,
+                        4,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_gamma1_b,
+                        Q_I,
+                        &mut backbone,
+                        5,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_gamma1_c,
+                        Q_I,
+                        &mut backbone,
+                        6,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_gamma2_a,
+                        Q_I,
+                        &mut backbone,
+                        6,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_gamma2_b,
+                        Q_I,
+                        &mut backbone,
+                        7,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta_a,
+                        Q_I,
+                        &mut backbone,
+                        7,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta_b,
+                        Q_I,
+                        &mut backbone,
+                        8,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta_c,
+                        Q_I,
+                        &mut backbone,
+                        9,
                         residue_id,
                         &mut atom_id,
                     );
@@ -775,7 +872,7 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::CSidechain,
                         sc_coords.c_delta1,
-                        Q_I,
+                        sc_coords.c_delta1_orientation,
                         &mut backbone,
                         1,
                         residue_id,
@@ -784,9 +881,91 @@ impl ProteinCoords {
                     add_atom(
                         AtomRole::CSidechain,
                         sc_coords.c_delta2,
-                        Q_I,
+                        sc_coords.c_delta2_orientation,
                         &mut backbone,
                         2,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_beta_a,
+                        Q_I,
+                        &mut backbone,
+                        4,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_beta_b,
+                        Q_I,
+                        &mut backbone,
+                        5,
+                        residue_id,
+                        &mut atom_id,
+                    );
+
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_gamma,
+                        Q_I,
+                        &mut backbone,
+                        5,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta1_a,
+                        Q_I,
+                        &mut backbone,
+                        5,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta1_b,
+                        Q_I,
+                        &mut backbone,
+                        6,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta1_c,
+                        Q_I,
+                        &mut backbone,
+                        7,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta2_a,
+                        Q_I,
+                        &mut backbone,
+                        7,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta2_b,
+                        Q_I,
+                        &mut backbone,
+                        8,
+                        residue_id,
+                        &mut atom_id,
+                    );
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta2_c,
+                        Q_I,
+                        &mut backbone,
+                        9,
                         residue_id,
                         &mut atom_id,
                     );
@@ -797,7 +976,6 @@ impl ProteinCoords {
                         bb_coords.cα_orientation,
                         prev_n_posit,
                     );
-
                     add_atom(
                         AtomRole::CSidechain,
                         sc_coords.c_beta,
