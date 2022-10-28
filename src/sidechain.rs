@@ -672,6 +672,15 @@ pub struct CoordsLys {
     pub h_n_zeta_a: Vec3,
     pub h_n_zeta_b: Vec3,
     // todo: Third N here?
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_c_gamma_a: Vec3,
+    pub h_c_gamma_b: Vec3,
+    pub h_c_delta_a: Vec3,
+    pub h_c_delta_b: Vec3,
+    pub h_c_eps_a: Vec3,
+    pub h_c_eps_b: Vec3,
+
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
     pub c_delta_orientation: Quaternion,
@@ -877,9 +886,16 @@ pub struct CoordsPro {
     pub c_beta: Vec3,
     pub c_gamma: Vec3,
     pub c_delta: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_c_gamma_a: Vec3,
+    pub h_c_gamma_b: Vec3,
+    pub h_c_delta_a: Vec3,
+    pub h_c_delta_b: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
+    pub c_delta_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]
