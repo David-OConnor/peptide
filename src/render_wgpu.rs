@@ -28,6 +28,7 @@ use crate::{
     },
     sidechain::LEN_SC,
     types::State,
+    AminoAcidType,
 };
 
 // The length-wise axis of our graphics engine's cylinder mesh.
@@ -223,9 +224,9 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
 
             // todo: Only do this for backbone changd; not acive res
 
-            crate::clamp_angle(&mut res.φ);
-            crate::clamp_angle(&mut res.ψ);
-            crate::clamp_angle(&mut res.ω);
+            crate::clamp_angle(&mut res.φ, res.sidechain.aa_type() == AminoAcidType::Pro);
+            crate::clamp_angle(&mut res.ψ, false);
+            crate::clamp_angle(&mut res.ω, false);
         }
 
         // if active_res_changed || active_res_sidechain_changed {
@@ -265,20 +266,28 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
             res.ψ += rng() * c;
             res.φ += rng() * c;
 
+            crate::clamp_angle(&mut res.φ, res.sidechain.aa_type() == AminoAcidType::Pro);
+            crate::clamp_angle(&mut res.ψ, false);
+
             if let Some(χ) = res.sidechain.get_mut_χ1() {
                 *χ += rng() * c;
+                crate::clamp_angle(χ, false);
             }
             if let Some(χ) = res.sidechain.get_mut_χ2() {
                 *χ += rng() * c;
+                crate::clamp_angle(χ, false);
             }
             if let Some(χ) = res.sidechain.get_mut_χ3() {
                 *χ += rng() * c;
+                crate::clamp_angle(χ, false);
             }
             if let Some(χ) = res.sidechain.get_mut_χ4() {
                 *χ += rng() * c;
+                crate::clamp_angle(χ, false);
             }
             if let Some(χ) = res.sidechain.get_mut_χ5() {
                 *χ += rng() * c;
+                crate::clamp_angle(χ, false);
             }
         }
 
@@ -484,6 +493,7 @@ pub fn run(mut state: State) {
         ],
         entities,
         camera: Camera {
+            fov_y: TAU as f32 / 7.,
             position: Vec3F32::new(0., 0., -30.),
             far: RENDER_DIST,
             // orientation: QuatF32::from

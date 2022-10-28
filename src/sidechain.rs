@@ -12,6 +12,9 @@ pub const TAU_DIV2: f64 = TAU / 2.;
 // todo: These are temp
 pub const LEN_SC: f64 = 1.53;
 
+pub const PRO_PHI_MIN: f64 = 4.83456;
+pub const PRO_PHI_MAX: f64 = 5.53269;
+
 // As a convention, we use generic tetrahedral and planar geometry in this module.
 // This is a stopgap. Note that we are treating the generic-geometry `BOND_A` as to
 // the previous atom in a chain, and `BOND_B` to the next one. For branching, we incorporate

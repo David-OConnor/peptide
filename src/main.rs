@@ -62,6 +62,8 @@ mod types;
 
 use crate::types::State;
 
+use crate::chem_definitions::AminoAcidType;
+use crate::sidechain::{PRO_PHI_MAX, PRO_PHI_MIN};
 use std::f64::consts::TAU;
 
 // todo: model the oxygen double-bounded to Cp next.
@@ -96,24 +98,24 @@ fn init_protein() -> ProteinDescription {
     // todo: Would this make sense elsewhere, given it's only for the GUI?
 
     for res in &mut prot_test.residues {
-        clamp_angle(&mut res.φ);
-        clamp_angle(&mut res.ψ);
-        clamp_angle(&mut res.ω);
+        clamp_angle(&mut res.φ, res.sidechain.aa_type() == AminoAcidType::Pro);
+        clamp_angle(&mut res.ψ, false);
+        clamp_angle(&mut res.ω, false);
 
         if let Some(χ) = res.sidechain.get_mut_χ1() {
-            clamp_angle(χ);
+            clamp_angle(χ, false);
         }
         if let Some(χ) = res.sidechain.get_mut_χ2() {
-            clamp_angle(χ);
+            clamp_angle(χ, false);
         }
         if let Some(χ) = res.sidechain.get_mut_χ3() {
-            clamp_angle(χ);
+            clamp_angle(χ, false);
         }
         if let Some(χ) = res.sidechain.get_mut_χ4() {
-            clamp_angle(χ);
+            clamp_angle(χ, false);
         }
         if let Some(χ) = res.sidechain.get_mut_χ5() {
-            clamp_angle(χ);
+            clamp_angle(χ, false);
         }
     }
 
@@ -125,7 +127,7 @@ fn init_protein() -> ProteinDescription {
 
 // todo: util mod?
 
-pub fn clamp_angle(angle: &mut f64) {
+pub fn clamp_angle(angle: &mut f64, pro_φ: bool) {
     // Clamp to > 0
     if *angle < 0. {
         // Note that this assumes it's not lower than -TAU.
@@ -133,6 +135,18 @@ pub fn clamp_angle(angle: &mut f64) {
     // Clamp to < TAU
     } else if *angle > TAU {
         *angle = *angle % TAU;
+    }
+
+    // todo: Note that we could perhaps clamp instead of "bounce" here. Also note that the bouncing
+    // todo won't behave well if a bounce from one range will put it past the other.
+    // todo: This is so noise still affects in both directions, but it's a   approach.
+    if pro_φ {
+        if *angle < PRO_PHI_MIN {
+            *angle = PRO_PHI_MIN + (PRO_PHI_MIN - *angle);
+        }
+        if *angle > PRO_PHI_MAX {
+            *angle = PRO_PHI_MAX - (*angle - PRO_PHI_MAX);
+        }
     }
 }
 

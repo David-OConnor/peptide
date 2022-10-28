@@ -8,7 +8,7 @@ use crate::{
     atom_coords::ProteinCoords,
     chem_definitions::{AminoAcidType, AtomRole},
     render_wgpu,
-    sidechain::Sidechain,
+    sidechain::{Sidechain, PRO_PHI_MAX, PRO_PHI_MIN},
     types::{Residue, State},
     ProteinDescription,
 };
@@ -90,9 +90,23 @@ pub fn change_lit_res(state: &State, scene: &mut Scene) {
 }
 
 /// Helper function to add a slider.
-fn add_angle_slider(val: &mut f64, label: &str, entities_changed: &mut bool, ui: &mut egui::Ui) {
+fn add_angle_slider(
+    val: &mut f64,
+    label: &str,
+    entities_changed: &mut bool,
+    ui: &mut egui::Ui,
+    pro_φ: bool,
+) {
+    // Proline has a limited range of motion for φ.
+    let mut range_start = 0.;
+    let mut range_end = TAU;
+    if pro_φ {
+        range_start = PRO_PHI_MIN;
+        range_end = PRO_PHI_MAX;
+    }
+
     ui.add(
-        egui::Slider::from_get_set(0.0..=TAU, |mut v| {
+        egui::Slider::from_get_set(range_start..=range_end, |mut v| {
             if let Some(v_) = v {
                 *val = v_;
                 *entities_changed = true;
@@ -168,33 +182,54 @@ fn add_active_aa_editor(
     let ar_i = state.active_residue - 1;
     let mut active_res = &mut state.protein_descrip.residues[ar_i];
 
+    // For proline, limit φ range.
+    let pro = active_aa_type == AminoAcidType::Pro;
+
     // We use this syntax instead of the more concise `new` syntax, so we know
     // if we need to change the scene.
     // todo: The backbone sliders aren't initializing correctly
-    add_angle_slider(&mut active_res.ψ, "ψ", &mut engine_updates.entities, ui);
+    add_angle_slider(
+        &mut active_res.ψ,
+        "ψ",
+        &mut engine_updates.entities,
+        ui,
+        false,
+    );
     let mut active_res = &mut state.protein_descrip.residues[ar_i];
-    add_angle_slider(&mut active_res.φ, "φ", &mut engine_updates.entities, ui);
+    add_angle_slider(
+        &mut active_res.φ,
+        "φ",
+        &mut engine_updates.entities,
+        ui,
+        pro,
+    );
     let mut active_res = &mut state.protein_descrip.residues[ar_i];
-    add_angle_slider(&mut active_res.ω, "ω", &mut engine_updates.entities, ui);
+    add_angle_slider(
+        &mut active_res.ω,
+        "ω",
+        &mut engine_updates.entities,
+        ui,
+        false,
+    );
 
     ui.label("Sidechain dihedral angles:");
 
     let mut sc = &mut active_res.sidechain;
 
     if let Some(χ) = sc.get_mut_χ1() {
-        add_angle_slider(χ, "χ1", &mut engine_updates.entities, ui);
+        add_angle_slider(χ, "χ1", &mut engine_updates.entities, ui, false);
     }
     if let Some(χ) = sc.get_mut_χ2() {
-        add_angle_slider(χ, "χ2", &mut engine_updates.entities, ui);
+        add_angle_slider(χ, "χ2", &mut engine_updates.entities, ui, false);
     }
     if let Some(χ) = sc.get_mut_χ3() {
-        add_angle_slider(χ, "χ3", &mut engine_updates.entities, ui);
+        add_angle_slider(χ, "χ3", &mut engine_updates.entities, ui, false);
     }
     if let Some(χ) = sc.get_mut_χ4() {
-        add_angle_slider(χ, "χ4", &mut engine_updates.entities, ui);
+        add_angle_slider(χ, "χ4", &mut engine_updates.entities, ui, false);
     }
     if let Some(χ) = sc.get_mut_χ5() {
-        add_angle_slider(χ, "χ5", &mut engine_updates.entities, ui);
+        add_angle_slider(χ, "χ5", &mut engine_updates.entities, ui, false);
     }
 }
 
@@ -482,20 +517,20 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                 } else {
                     "Show sidechains"
                 };
-            if ui.button(show_scs_text).clicked() {
-                state.show_sidechains = !state.show_sidechains;
-                engine_updates.entities = true;
-            }
+                if ui.button(show_scs_text).clicked() {
+                    state.show_sidechains = !state.show_sidechains;
+                    engine_updates.entities = true;
+                }
 
-            let show_h_text = if state.show_hydrogens {
-                "Hide Hs"
-            } else {
-                "Show Hs"
-            };
-            if ui.button(show_h_text).clicked() {
-                state.show_hydrogens = !state.show_hydrogens;
-                engine_updates.entities = true;
-            }
+                let show_h_text = if state.show_hydrogens {
+                    "Hide Hs"
+                } else {
+                    "Show Hs"
+                };
+                if ui.button(show_h_text).clicked() {
+                    state.show_hydrogens = !state.show_hydrogens;
+                    engine_updates.entities = true;
+                }
             });
 
 

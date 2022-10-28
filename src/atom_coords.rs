@@ -2,9 +2,9 @@
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
+use crate::chem_definitions::AminoAcidType;
 use crate::types::ProteinDescription;
 use crate::{chem_definitions::AtomRole, sidechain::Sidechain};
-use crate::chem_definitions::AminoAcidType;
 
 // todo: For chain termination AA, you may need to replace the final backbone N with an O.
 
