@@ -126,7 +126,6 @@ impl Sidechain {
                 χ_1: f64::from_le_bytes(data[1..9].try_into().unwrap()),
                 χ_2: f64::from_le_bytes(data[9..17].try_into().unwrap()),
                 χ_3: f64::from_le_bytes(data[17..25].try_into().unwrap()),
-                χ_4: f64::from_le_bytes(data[25..33].try_into().unwrap()),
             }),
             9 => Self::Cys(Cys {
                 χ_1: f64::from_le_bytes(data[1..9].try_into().unwrap()),

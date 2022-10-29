@@ -656,8 +656,8 @@ impl Asp {
 
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
-            TETRA_A,
-            unsafe { TETRA_B },
+            PLANAR3_A,
+            unsafe { PLANAR3_B },
             // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
             // (world space)
             self.χ_2,
@@ -667,26 +667,48 @@ impl Asp {
             LEN_SC,
         );
 
-        let (o_delta1, _) = find_atom_placement(
+        let (o_delta1, o_delta1_orientation) = find_atom_placement(
             c_gamma_orientation,
             O_BOND_IN,
             unsafe { O_BOND_OUT },
             TAU_DIV2,
             c_gamma,
             c_beta,
-            unsafe { TETRA_B },
+            unsafe { PLANAR3_B },
             LEN_SC,
         );
 
-        let (o_delta2, _) = find_atom_placement(
+        let (o_delta2, o_delta2_orientation) = find_atom_placement(
             c_gamma_orientation,
             O_BOND_IN,
             unsafe { O_BOND_OUT },
             TAU_DIV2,
             c_gamma,
             c_beta,
-            unsafe { TETRA_C },
+            unsafe { PLANAR3_C },
             LEN_SC,
+        );
+
+        let (h_c_beta_a, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_C },
+            LEN_C_H,
+        );
+
+        let (h_c_beta_b, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_D },
+            LEN_C_H,
         );
 
         CoordsAsp {
@@ -694,9 +716,13 @@ impl Asp {
             c_gamma,
             o_delta1,
             o_delta2,
+            h_c_beta_a,
+            h_c_beta_b,
 
             c_beta_orientation,
             c_gamma_orientation,
+            o_delta1_orientation,
+            o_delta2_orientation,
         }
     }
 }
@@ -1077,12 +1103,12 @@ impl Gln {
 
         let (c_delta, c_delta_orientation) = find_atom_placement(
             c_gamma_orientation,
-            TETRA_A,
-            unsafe { TETRA_B },
+            PLANAR3_A,
+            unsafe { PLANAR3_B },
             self.χ_3,
             c_gamma,
             c_beta,
-            unsafe { TETRA_B },
+            unsafe { PLANAR3_B },
             LEN_SC,
         );
 
@@ -1093,7 +1119,7 @@ impl Gln {
             TAU_DIV2,
             c_delta,
             c_gamma,
-            unsafe { TETRA_C },
+            unsafe { PLANAR3_C },
             LEN_SC,
         );
 
@@ -1101,10 +1127,10 @@ impl Gln {
             c_delta_orientation,
             PLANAR3_A,
             unsafe { PLANAR3_B },
-            self.χ_4,
+            TAU_DIV2,
             c_delta,
             c_gamma,
-            unsafe { TETRA_B },
+            unsafe { PLANAR3_B },
             LEN_SC,
         );
 
@@ -1130,6 +1156,50 @@ impl Gln {
             LEN_N_H,
         );
 
+        let (h_c_beta_a, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_C },
+            LEN_N_H,
+        );
+
+        let (h_c_beta_b, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_D },
+            LEN_N_H,
+        );
+
+        let (h_c_gamma_a, _) = find_atom_placement(
+            c_gamma_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_gamma,
+            c_beta,
+            unsafe { TETRA_C },
+            LEN_N_H,
+        );
+
+        let (h_c_gamma_b, _) = find_atom_placement(
+            c_gamma_orientation,
+            H_BOND_IN,
+            H_BOND_OUT,
+            TAU_DIV2,
+            c_gamma,
+            c_beta,
+            unsafe { TETRA_D },
+            LEN_N_H,
+        );
+
         CoordsGln {
             c_beta,
             c_gamma,
@@ -1138,6 +1208,10 @@ impl Gln {
             n_eps2,
             h_n_eps_a,
             h_n_eps_b,
+            h_c_beta_a,
+            h_c_beta_b,
+            h_c_gamma_a,
+            h_c_gamma_b,
 
             c_beta_orientation,
             c_gamma_orientation,

@@ -456,7 +456,6 @@ impl Sidechain {
         match self {
             Self::Arg(aa) => Some(&mut aa.χ_4),
             Self::Lys(aa) => Some(&mut aa.χ_4),
-            Self::Gln(aa) => Some(&mut aa.χ_4),
             _ => None,
         }
     }
@@ -523,7 +522,6 @@ impl Sidechain {
         match self {
             Self::Arg(aa) => aa.χ_4 += val,
             Self::Lys(aa) => aa.χ_4 += val,
-            Self::Gln(aa) => aa.χ_4 += val,
             _ => (),
         }
     }
@@ -701,9 +699,13 @@ pub struct CoordsAsp {
     pub c_gamma: Vec3,
     pub o_delta1: Vec3,
     pub o_delta2: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
+    pub o_delta1_orientation: Quaternion,
+    pub o_delta2_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]
@@ -769,6 +771,10 @@ pub struct CoordsGln {
     pub n_eps2: Vec3,
     pub h_n_eps_a: Vec3,
     pub h_n_eps_b: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_c_gamma_a: Vec3,
+    pub h_c_gamma_b: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
@@ -1113,7 +1119,6 @@ pub struct Gln {
     pub χ_1: f64,
     pub χ_2: f64,
     pub χ_3: f64,
-    pub χ_4: f64,
 }
 
 impl Default for Gln {
@@ -1122,7 +1127,6 @@ impl Default for Gln {
             χ_1: TAU_DIV2,
             χ_2: TAU_DIV2,
             χ_3: TAU_DIV2,
-            χ_4: TAU_DIV2,
         }
     }
 }
