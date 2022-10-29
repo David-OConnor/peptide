@@ -137,15 +137,13 @@ pub fn clamp_angle(angle: &mut f64, pro_φ: bool) {
         *angle = *angle % TAU;
     }
 
-    // todo: Note that we could perhaps clamp instead of "bounce" here. Also note that the bouncing
-    // todo won't behave well if a bounce from one range will put it past the other.
-    // todo: This is so noise still affects in both directions, but it's a   approach.
     if pro_φ {
         if *angle < PRO_PHI_MIN {
-            *angle = PRO_PHI_MIN + (PRO_PHI_MIN - *angle);
+            *angle = PRO_PHI_MIN;
+            // *angle = PRO_PHI_MIN + (PRO_PHI_MIN - *angle);
         }
         if *angle > PRO_PHI_MAX {
-            *angle = PRO_PHI_MAX - (*angle - PRO_PHI_MAX);
+            *angle = PRO_PHI_MAX;
         }
     }
 }

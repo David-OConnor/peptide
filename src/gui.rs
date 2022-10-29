@@ -114,7 +114,7 @@ fn add_angle_slider(
 
             *val
         })
-        .text(label),
+            .text(label),
     );
 
     // ui.add(egui::Slider::new(val, 0.0..=TAU).text(label));
@@ -287,6 +287,11 @@ fn add_aa_selector(
 
         if selected != state.protein_descrip.residues[ar_i].sidechain.aa_type() {
             state.protein_descrip.residues[ar_i].sidechain = Sidechain::from_aa_type(selected);
+
+            if selected == AminoAcidType::Pro {
+                crate::clamp_angle(&mut state.protein_descrip.residues[ar_i].φ, true);
+            }
+
             engine_updates.entities = true;
         }
 
@@ -301,10 +306,14 @@ fn add_aa_selector(
             let val = ident_entry.to_ascii_uppercase();
 
             match Sidechain::from_ident_single_letter(&val) {
-                Some(res) => {
-                    if res.aa_type() != state.protein_descrip.residues[ar_i].sidechain.aa_type() {
-                        state.protein_descrip.residues[ar_i].sidechain = res;
+                Some(sc) => {
+                    if sc.aa_type() != state.protein_descrip.residues[ar_i].sidechain.aa_type() {
+                        state.protein_descrip.residues[ar_i].sidechain = sc;
                         engine_updates.entities = true;
+
+                        if state.protein_descrip.residues[ar_i].sidechain.aa_type() == AminoAcidType::Pro {
+                            crate::clamp_angle(&mut state.protein_descrip.residues[ar_i].φ, true);
+                        }
 
                         response.surrender_focus()
                     }
@@ -326,9 +335,9 @@ fn add_aa_selector(
             .clicked()
         {
             state.active_residue = ar_i + 1;
-            change_lit_res(state, scene);
-
             engine_updates.entities = true; // to change entity color.
+
+            change_lit_res(state, scene);
             engine_updates.lighting = true;
         }
 
@@ -340,6 +349,8 @@ fn add_aa_selector(
             res_removed = true;
 
             engine_updates.entities = true;
+
+            change_lit_res(state, scene);
             engine_updates.lighting = true; // In case the active res was deleted.
         }
     });
@@ -417,8 +428,8 @@ fn add_motion_sim(
             &mut state.sim_time_scale,
             SIM_TIME_SCALE_MIN..=SIM_TIME_SCALE_MAX,
         )
-        .logarithmic(true)
-        .text(""),
+            .logarithmic(true)
+            .text(""),
     );
 
     ui.label("Temperature (K)");
@@ -483,6 +494,7 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                     if num < state.protein_descrip.residues.len() + 1 {
                         state.active_residue = num;
 
+                        change_lit_res(state, scene);
                         engine_updates.entities = true;
                         engine_updates.lighting = true;
                     }
