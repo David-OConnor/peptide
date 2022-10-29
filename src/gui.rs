@@ -114,7 +114,7 @@ fn add_angle_slider(
 
             *val
         })
-            .text(label),
+        .text(label),
     );
 
     // ui.add(egui::Slider::new(val, 0.0..=TAU).text(label));
@@ -311,7 +311,9 @@ fn add_aa_selector(
                         state.protein_descrip.residues[ar_i].sidechain = sc;
                         engine_updates.entities = true;
 
-                        if state.protein_descrip.residues[ar_i].sidechain.aa_type() == AminoAcidType::Pro {
+                        if state.protein_descrip.residues[ar_i].sidechain.aa_type()
+                            == AminoAcidType::Pro
+                        {
                             crate::clamp_angle(&mut state.protein_descrip.residues[ar_i].φ, true);
                         }
 
@@ -428,8 +430,8 @@ fn add_motion_sim(
             &mut state.sim_time_scale,
             SIM_TIME_SCALE_MIN..=SIM_TIME_SCALE_MAX,
         )
-            .logarithmic(true)
-            .text(""),
+        .logarithmic(true)
+        .text(""),
     );
 
     ui.label("Temperature (K)");

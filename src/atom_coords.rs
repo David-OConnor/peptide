@@ -1574,19 +1574,59 @@ impl ProteinCoords {
                     );
                     add_atom(
                         AtomRole::HSidechain,
-                        sc_coords.h_n_delta, // todo: Is this called Amine here?
+                        sc_coords.h_n_delta,
                         Q_I,
                         &mut backbone,
                         3,
                         residue_id,
                         &mut atom_id,
                     );
+                    // add_atom(
+                    //     AtomRole::HSidechain,
+                    //     sc_coords.h_n_eps,
+                    //     Q_I,
+                    //     &mut backbone,
+                    //     3,
+                    //     residue_id,
+                    //     &mut atom_id,
+                    // );
+
                     add_atom(
                         AtomRole::HSidechain,
-                        sc_coords.h_n_eps, // todo: Is this called Amine here?
+                        sc_coords.h_c_beta_a,
                         Q_I,
                         &mut backbone,
-                        3,
+                        7,
+                        residue_id,
+                        &mut atom_id,
+                    );
+
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_beta_b,
+                        Q_I,
+                        &mut backbone,
+                        8,
+                        residue_id,
+                        &mut atom_id,
+                    );
+
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_delta1,
+                        Q_I,
+                        &mut backbone,
+                        7,
+                        residue_id,
+                        &mut atom_id,
+                    );
+
+                    add_atom(
+                        AtomRole::HSidechain,
+                        sc_coords.h_c_eps2,
+                        Q_I,
+                        &mut backbone,
+                        5,
                         residue_id,
                         &mut atom_id,
                     );

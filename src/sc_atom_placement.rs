@@ -339,17 +339,61 @@ impl His {
             unsafe { PLANAR3_C },
             LEN_N_H,
         );
-        let (h_n_eps, _) = find_atom_placement(
-            n_eps1_orientation,
+
+        // let (h_n_eps, _) = find_atom_placement(
+        //     n_eps1_orientation,
+        //     unsafe { H_BOND_IN },
+        //     unsafe { H_BOND_OUT },
+        //     TAU_DIV2,
+        //     n_eps1,
+        //     c_delta1,
+        //     unsafe { PLANAR3_C },
+        //     LEN_N_H,
+        // );
+
+        let (h_c_beta_a, _) = find_atom_placement(
+            c_beta_orientation,
             unsafe { H_BOND_IN },
             unsafe { H_BOND_OUT },
             TAU_DIV2,
-            n_eps1,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_C },
+            LEN_N_H,
+        );
+
+        let (h_c_beta_b, _) = find_atom_placement(
+            c_beta_orientation,
+            unsafe { H_BOND_IN },
+            unsafe { H_BOND_OUT },
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_D },
+            LEN_N_H,
+        );
+
+        let (h_c_delta1, _) = find_atom_placement(
+            c_delta1_orientation,
+            unsafe { H_BOND_IN },
+            unsafe { H_BOND_OUT },
+            TAU_DIV2,
             c_delta1,
+            c_gamma,
             unsafe { PLANAR3_C },
             LEN_N_H,
         );
 
+        let (h_c_eps2, _) = find_atom_placement(
+            c_eps2_orientation,
+            unsafe { H_BOND_IN },
+            unsafe { H_BOND_OUT },
+            TAU_DIV2,
+            c_eps2,
+            n_delta2,
+            unsafe { PLANAR3_C },
+            LEN_N_H,
+        );
         // todo: These bond vecs are wrong! Needs to be tighter angles
         // todo due to there only being 5 atoms in the ring.
 
@@ -360,8 +404,12 @@ impl His {
             n_delta2,
             n_eps1,
             c_eps2,
-            h_n_delta: h_n_delta,
-            h_n_eps: h_n_eps,
+            h_n_delta,
+            // h_n_eps,
+            h_c_beta_a,
+            h_c_beta_b,
+            h_c_delta1,
+            h_c_eps2,
 
             c_beta_orientation,
             c_gamma_orientation,

@@ -655,7 +655,11 @@ pub struct CoordsHis {
     pub n_eps1: Vec3,
     pub c_eps2: Vec3,
     pub h_n_delta: Vec3,
-    pub h_n_eps: Vec3,
+    // pub h_n_eps: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_c_delta1: Vec3,
+    pub h_c_eps2: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
