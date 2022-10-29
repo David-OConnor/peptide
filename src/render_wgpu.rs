@@ -17,7 +17,7 @@ use lin_alg2::{
 };
 
 use crate::{
-    atom_coords::ProteinCoords,
+    atom_coords::{AtomCoords, ProteinCoords},
     bond_vecs::{LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA, LEN_N_H},
     chem_definitions::AtomRole,
     gui,
@@ -316,6 +316,62 @@ fn avg_colors(color1: (f32, f32, f32), color2: (f32, f32, f32)) -> (f32, f32, f3
     (a / mag, b / mag, c / mag)
 }
 
+/// Add bonds from a given atom. Usually 1.
+fn add_bond(
+    atom: &AtomCoords,
+    atoms_backbone: &Vec<AtomCoords>,
+    atom_id: usize,
+    // n_id: &mut usize,
+    // cα_id: &mut usize,
+    // cp_id: &mut usize,
+    atom_prev_id: usize,
+    entities: &mut Vec<Entity>,
+) {
+
+    // Calculate the position of the bond mesh: This is the cylinder's z point,
+    // half way between the 2 atoms it connects.
+
+    let atom_prev = &atoms_backbone[atom_prev_id];
+
+    let bond_center_position = (atom.position + atom_prev.position) * 0.5;
+    let bond_dir = (atom.position - atom_prev.position).to_normalized();
+
+    let bond_orientation = Quaternion::from_unit_vecs(BOND_MODEL_AXIS, bond_dir);
+
+    let color_a = match atom.role {
+        AtomRole::CSidechain | AtomRole::OSidechain | AtomRole::NSidechain => BOND_COLOR_SIDECHAIN,
+        _ => BOND_COLOR_BACKBONE,
+    };
+
+    // let color = Color::rgb(color_a.0, color_a.1, color_a.2).into();
+
+    let (bond_len, bond_mesh, bond_color) = match atom.role {
+        AtomRole::N => (LEN_CP_N as f32, 2, BOND_COLOR_BACKBONE),
+        AtomRole::Cα => (LEN_N_CALPHA as f32, 2, BOND_COLOR_BACKBONE),
+        AtomRole::Cp => (LEN_CALPHA_CP as f32, 2, BOND_COLOR_BACKBONE),
+        AtomRole::O => (LEN_CP_O as f32, 2, BOND_COLOR_BACKBONE),
+        AtomRole::HCα => (LEN_CALPHA_H as f32, 2, BOND_COLOR_BACKBONE),
+        AtomRole::HN => (LEN_N_H as f32, 2, BOND_COLOR_BACKBONE),
+        AtomRole::CSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+        AtomRole::OSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+        AtomRole::NSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+        AtomRole::HSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+        AtomRole::SSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+        AtomRole::SeSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
+    };
+
+    // todo: Sidechain mesh and color.
+    // The bond
+    entities.push(Entity::new(
+        bond_mesh,
+        vec3_to_f32(bond_center_position),
+        quat_to_f32(bond_orientation),
+        1.,
+        bond_color,
+        BOND_SHINYNESS,
+    ));
+}
+
 /// Generates entities from protein coordinates.
 /// todo: don't take both state and atoms_backbone, since ab is part of state.
 // fn generate_entities(state: &State, atoms_backbone: &Vec<AtomCoords>) -> Vec<Entity> {
@@ -395,6 +451,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 
         // Anchor N at position=0; we don't have a bond connected to it.
         if atom_id != 0 {
+
             // Find the previous atom in the chain: The one that connects to this.
             let atom_prev_id = match atom.role {
                 AtomRole::N => {
@@ -423,50 +480,51 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
                 AtomRole::HN => n_id,
             };
 
-            // Calculate the position of the bond mesh: This is the cylinder's z point,
-            // half way between the 2 atoms it connects.
+            add_bond(
+                &atom,
+                &state.protein_coords.atoms_backbone,
+                atom_id,
+                atom_prev_id,
+                &mut result,
+            );
 
-            let atom_prev = &state.protein_coords.atoms_backbone[atom_prev_id];
+            // todo: DRY between these calls.
+            if let Some(second_bond_step) = atom.second_bond_step {
+                let atom_prev_id = match atom.role {
+                    AtomRole::N => {
+                        n_id = atom_id;
+                        cp_id
+                    }
+                    AtomRole::Cα => {
+                        cα_id = atom_id;
+                        n_id
+                    }
+                    AtomRole::CSidechain
+                    | AtomRole::OSidechain
+                    | AtomRole::NSidechain
+                    | AtomRole::SSidechain
+                    | AtomRole::SeSidechain
+                    | AtomRole::HSidechain => {
+                        // This assumes the prev atom added before the sidechain was Cα.
+                        atom_id - second_bond_step
+                    }
+                    AtomRole::Cp => {
+                        cp_id = atom_id;
+                        cα_id
+                    }
+                    AtomRole::O => cp_id,
+                    AtomRole::HCα => cα_id,
+                    AtomRole::HN => n_id,
+                };
 
-            let bond_center_position = (atom.position + atom_prev.position) * 0.5;
-            let bond_dir = (atom.position - atom_prev.position).to_normalized();
-
-            let bond_orientation = Quaternion::from_unit_vecs(BOND_MODEL_AXIS, bond_dir);
-
-            let color_a = match atom.role {
-                AtomRole::CSidechain | AtomRole::OSidechain | AtomRole::NSidechain => {
-                    BOND_COLOR_SIDECHAIN
-                }
-                _ => BOND_COLOR_BACKBONE,
-            };
-
-            // let color = Color::rgb(color_a.0, color_a.1, color_a.2).into();
-
-            let (bond_len, bond_mesh, bond_color) = match atom.role {
-                AtomRole::N => (LEN_CP_N as f32, 2, BOND_COLOR_BACKBONE),
-                AtomRole::Cα => (LEN_N_CALPHA as f32, 2, BOND_COLOR_BACKBONE),
-                AtomRole::Cp => (LEN_CALPHA_CP as f32, 2, BOND_COLOR_BACKBONE),
-                AtomRole::O => (LEN_CP_O as f32, 2, BOND_COLOR_BACKBONE),
-                AtomRole::HCα => (LEN_CALPHA_H as f32, 2, BOND_COLOR_BACKBONE),
-                AtomRole::HN => (LEN_N_H as f32, 2, BOND_COLOR_BACKBONE),
-                AtomRole::CSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
-                AtomRole::OSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
-                AtomRole::NSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
-                AtomRole::HSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
-                AtomRole::SSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
-                AtomRole::SeSidechain => (LEN_SC as f32, 3, BOND_COLOR_SIDECHAIN),
-            };
-
-            // todo: Sidechain mesh and color.
-            // The bond
-            result.push(Entity::new(
-                bond_mesh,
-                vec3_to_f32(bond_center_position),
-                quat_to_f32(bond_orientation),
-                1.,
-                bond_color,
-                BOND_SHINYNESS,
-            ));
+                add_bond(
+                    &atom,
+                    &state.protein_coords.atoms_backbone,
+                    atom_id,
+                    atom_prev_id,
+                    &mut result,
+                );
+            }
         }
     }
 

@@ -914,6 +914,13 @@ pub struct CoordsPhe {
     pub c_eps1: Vec3,
     pub c_eps2: Vec3,
     pub c_zeta: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_c_delta1: Vec3,
+    pub h_c_delta2: Vec3,
+    pub h_c_eps1: Vec3,
+    pub h_c_eps2: Vec3,
+    pub h_c_zeta: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
@@ -921,6 +928,7 @@ pub struct CoordsPhe {
     pub c_delta2_orientation: Quaternion,
     pub c_eps1_orientation: Quaternion,
     pub c_eps2_orientation: Quaternion,
+    pub c_zeta_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]

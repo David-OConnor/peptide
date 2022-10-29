@@ -113,7 +113,7 @@ pub const H_N_BOND: Vec3 = ANCHOR_BOND_VEC;
 // Generic bond geometry; real world values vary slightly from this. Initialized below.
 
 // *const* substitute for `Tetrahedral`.
-pub static mut TETRA_A: Vec3 = ANCHOR_BOND_VEC;
+pub const TETRA_A: Vec3 = ANCHOR_BOND_VEC;
 pub static mut TETRA_B: Vec3 = Vec3 {
     x: 0.,
     y: 0.,
@@ -130,7 +130,7 @@ pub static mut TETRA_D: Vec3 = Vec3 {
     z: 0.,
 };
 
-pub static mut PLANAR3_A: Vec3 = ANCHOR_BOND_VEC;
+pub const PLANAR3_A: Vec3 = ANCHOR_BOND_VEC;
 pub static mut PLANAR3_B: Vec3 = Vec3 {
     x: 0.,
     y: 0.,
@@ -326,13 +326,13 @@ pub fn init_local_bond_vecs() {
     unsafe {
         // Store globals for generic geometric bond angles, to prevent repeated calculation.
         let tetra = Tetrahedral::default();
-        TETRA_A = tetra.bond_a;
+        // TETRA_A = tetra.bond_a; // const; anchor
         TETRA_B = tetra.bond_b;
         TETRA_C = tetra.bond_c;
         TETRA_D = tetra.bond_d;
 
         let planar3 = Planar3::default();
-        PLANAR3_A = planar3.bond_a;
+        // PLANAR3_A = planar3.bond_a; // const; anchor
         PLANAR3_B = planar3.bond_b;
         PLANAR3_C = planar3.bond_c;
 
