@@ -327,7 +327,6 @@ fn add_bond(
     atom_prev_id: usize,
     entities: &mut Vec<Entity>,
 ) {
-
     // Calculate the position of the bond mesh: This is the cylinder's z point,
     // half way between the 2 atoms it connects.
 
@@ -451,7 +450,6 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 
         // Anchor N at position=0; we don't have a bond connected to it.
         if atom_id != 0 {
-
             // Find the previous atom in the chain: The one that connects to this.
             let atom_prev_id = match atom.role {
                 AtomRole::N => {

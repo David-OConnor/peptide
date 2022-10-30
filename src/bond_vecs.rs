@@ -16,6 +16,7 @@ pub const LEN_CP_O: f64 = 1.2; // angstrom // todo placeholder!
 pub const LEN_CALPHA_H: f64 = 1.0; // angstrom // todo placeholder!
 pub const LEN_N_H: f64 = 1.0; // angstrom // todo placeholder!
 pub const LEN_C_H: f64 = 1.0; // angstrom // todo placeholder!
+pub const LEN_O_H: f64 = 1.0; // angstrom // todo placeholder!
 
 // Ideal bond angles. There are an approximation; from averages. Consider replacing with something
 // more robust later. All angles are in radians. We use degrees with math to match common sources.

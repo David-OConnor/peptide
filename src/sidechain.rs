@@ -725,6 +725,9 @@ pub struct CoordsGlu {
 pub struct CoordsSer {
     pub c_beta: Vec3,
     pub o_gamma: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_o_gamma: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub o_gamma_orientation: Quaternion,
@@ -882,6 +885,13 @@ pub struct CoordsMet {
     pub c_gamma: Vec3,
     pub s_delta: Vec3,
     pub c_eps: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_c_gamma_a: Vec3,
+    pub h_c_gamma_b: Vec3,
+    pub h_c_eps_a: Vec3,
+    pub h_c_eps_b: Vec3,
+    pub h_c_eps_c: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
@@ -947,6 +957,13 @@ pub struct CoordsTyr {
     pub c_eps2: Vec3,
     pub c_zeta: Vec3,
     pub o_eta: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_c_delta1: Vec3,
+    pub h_c_delta2: Vec3,
+    pub h_c_eps1: Vec3,
+    pub h_c_eps2: Vec3,
+    pub h_o_eta: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
