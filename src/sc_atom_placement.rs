@@ -2756,6 +2756,92 @@ impl Trp {
             LEN_SC,
         );
 
+        let (h_c_beta_a, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_OUT,
+            unsafe { H_BOND_IN },
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_C },
+            LEN_C_H,
+        );
+
+        let (h_c_beta_b, _) = find_atom_placement(
+            c_beta_orientation,
+            H_BOND_OUT,
+            unsafe { H_BOND_IN },
+            TAU_DIV2,
+            c_beta,
+            c_alpha,
+            unsafe { TETRA_D },
+            LEN_C_H,
+        );
+
+        let (h_c_delta, _) = find_atom_placement(
+            c_delta_orientation,
+            H_BOND_OUT,
+            unsafe { H_BOND_IN },
+            TAU_DIV2,
+            c_delta,
+            c_gamma,
+            unsafe { PLANAR3_C },
+            LEN_C_H,
+        );
+
+        let (h_n_eps, _) = find_atom_placement(
+            n_eps_orientation,
+            H_BOND_OUT,
+            unsafe { H_BOND_IN },
+            TAU_DIV2,
+            n_eps,
+            c_delta,
+            unsafe { PLANAR3_C },
+            LEN_C_H,
+        );
+        let (h_c_theta, _) = find_atom_placement(
+            c_theta_orientation,
+            H_BOND_OUT,
+            unsafe { H_BOND_IN },
+            TAU_DIV2,
+            c_theta,
+            c_eta,
+            unsafe { PLANAR3_C },
+            LEN_C_H,
+        );
+        let (h_c_iota, _) = find_atom_placement(
+            c_iota_orientation,
+            H_BOND_OUT,
+            unsafe { H_BOND_IN },
+            TAU_DIV2,
+            c_iota,
+            c_theta,
+            unsafe { PLANAR3_C },
+            LEN_C_H,
+        );
+        let (h_c_kappa, _) = find_atom_placement(
+            c_kappa_orientation,
+            H_BOND_OUT,
+            unsafe { H_BOND_IN },
+            TAU_DIV2,
+            c_kappa,
+            c_iota,
+            unsafe { PLANAR3_C },
+            LEN_C_H,
+        );
+        let (h_c_lambda, _) = find_atom_placement(
+            c_lambda_orientation,
+            H_BOND_OUT,
+            unsafe { H_BOND_IN },
+            TAU_DIV2,
+            c_lambda,
+            c_kappa,
+            unsafe { PLANAR3_B },
+            LEN_C_H,
+        );
+
+
+
         CoordsTrp {
             c_beta,
             c_gamma,
@@ -2767,6 +2853,14 @@ impl Trp {
             c_iota,
             c_kappa,
             c_lambda,
+            h_c_beta_a,
+            h_c_beta_b,
+            h_c_delta,
+            h_n_eps,
+            h_c_theta,
+            h_c_iota,
+            h_c_kappa,
+            h_c_lambda,
 
             c_beta_orientation,
             c_gamma_orientation,
