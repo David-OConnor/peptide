@@ -976,29 +976,30 @@ pub struct CoordsTyr {
 }
 
 #[derive(Debug, Default)]
+/// We snake around in such a way that there's no branching, and each atom
+/// is informationally-connected to the prev one.
 pub struct CoordsTrp {
     pub c_beta: Vec3,
     pub c_gamma: Vec3,
-    pub c_delta1: Vec3,
-    pub n_delta2: Vec3,
-    /// eps 1 and 2 are shared between the two rings.
-    pub c_eps1: Vec3,
-    pub c_eps2: Vec3,
-    /// zeta 1 is connected to eps1. zeta 2 is connected to eps2.
-    pub c_zeta1: Vec3,
-    pub c_zeta2: Vec3,
-    pub c_eta1: Vec3,
-    pub c_eta2: Vec3,
-    pub h_n_delta: Vec3,
+    pub c_delta: Vec3,
+    pub n_eps: Vec3,
+    pub c_zeta: Vec3,
+    pub c_eta: Vec3,
+    pub c_theta: Vec3,
+    pub c_iota: Vec3,
+    pub c_kappa: Vec3,
+    pub c_lambda: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
-    pub c_delta1_orientation: Quaternion,
-    pub n_delta2_orientation: Quaternion,
-    pub c_eps1_orientation: Quaternion,
-    pub c_eps2_orientation: Quaternion,
-    pub c_zeta1_orientation: Quaternion,
-    pub c_zeta2_orientation: Quaternion,
+    pub c_delta_orientation: Quaternion,
+    pub n_eps_orientation: Quaternion,
+    pub c_zeta_orientation: Quaternion,
+    pub c_eta_orientation: Quaternion,
+    pub c_theta_orientation: Quaternion,
+    pub c_iota_orientation: Quaternion,
+    pub c_kappa_orientation: Quaternion,
+    pub c_lambda_orientation: Quaternion,
 }
 
 // todo: Coord structs for the remaining AAs.

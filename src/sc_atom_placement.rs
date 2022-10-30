@@ -2658,7 +2658,7 @@ impl Trp {
         let (c_gamma, c_gamma_orientation) = find_atom_placement(
             c_beta_orientation,
             TETRA_A,
-            unsafe { TETRA_B },
+            unsafe { RING5_BOND_OUT },
             self.χ_2,
             c_beta,
             c_alpha,
@@ -2666,133 +2666,118 @@ impl Trp {
             LEN_SC,
         );
 
-        // Trp's delta 1 and 2 are the ones not connecting to the second
-        // ring.
-        let (c_delta1, c_delta1_orientation) = find_atom_placement(
+        let (c_delta, c_delta_orientation) = find_atom_placement(
             c_gamma_orientation,
-            TETRA_A,
-            unsafe { TETRA_B },
+            RING_BOND_IN,
+            unsafe { RING5_BOND_OUT },
             TAU_DIV2,
             c_gamma,
             c_beta,
-            unsafe { TETRA_C },
+            unsafe { RING5_BOND_OUT },
             LEN_SC,
         );
 
-        let (n_delta2, n_delta2_orientation) = find_atom_placement(
-            c_delta1_orientation,
+        let (n_eps, n_eps_orientation) = find_atom_placement(
+            c_delta_orientation,
+            RING_BOND_IN,
+            unsafe { RING5_BOND_OUT },
+            0.,
+            c_delta,
+            c_gamma,
+            unsafe { RING5_BOND_OUT },
+            LEN_SC,
+        );
+
+        // Between rings
+        let (c_zeta, c_zeta_orientation) = find_atom_placement(
+            n_eps_orientation,
+            RING_BOND_IN,
+            unsafe { RING5_BOND_OUT },
+            0.,
+            n_eps,
+            c_delta,
+            unsafe { RING5_BOND_OUT },
+            LEN_SC,
+        );
+
+        // Between rings
+        let (c_eta, c_eta_orientation) = find_atom_placement(
+            c_zeta_orientation,
+            RING_BOND_IN,
+            unsafe { PLANAR3_B },
+            TAU_DIV2,
+            c_zeta,
+            n_eps,
+            unsafe { RING5_BOND_OUT },
+            LEN_SC,
+        );
+
+        let (c_theta, c_theta_orientation) = find_atom_placement(
+            c_eta_orientation,
+            PLANAR3_A,
+            unsafe { PLANAR3_B },
+            0.,
+            c_eta,
+            c_zeta,
+            unsafe { PLANAR3_B },
+            LEN_SC,
+        );
+
+        let (c_iota, c_iota_orientation) = find_atom_placement(
+            c_theta_orientation,
+            PLANAR3_A,
+            unsafe { PLANAR3_B },
+            0.,
+            c_theta,
+            c_eta,
+            unsafe { PLANAR3_B },
+            LEN_SC,
+        );
+
+        let (c_kappa, c_kappa_orientation) = find_atom_placement(
+            c_iota_orientation,
+            PLANAR3_A,
+            unsafe { PLANAR3_B },
+            0.,
+            c_iota,
+            c_theta,
+            unsafe { PLANAR3_B },
+            LEN_SC,
+        );
+
+        let (c_lambda, c_lambda_orientation) = find_atom_placement(
+            c_kappa_orientation,
             PLANAR3_A,
             unsafe { PLANAR3_B },
             TAU_DIV2,
-            c_delta1,
-            c_gamma,
-            unsafe { TETRA_B },
+            c_kappa,
+            c_iota,
+            unsafe { PLANAR3_B },
             LEN_SC,
-        );
-
-        // eps1 and eps2 are shared between the 2 rings.
-        let (c_eps1, c_eps1_orientation) = find_atom_placement(
-            c_gamma_orientation,
-            TETRA_A,
-            unsafe { TETRA_B },
-            TAU_DIV2,
-            c_gamma,
-            c_beta,
-            unsafe { TETRA_B },
-            LEN_SC,
-        );
-
-        // Note: We've chosen to attach eps2 to eps1; another option
-        // would be attaching it to delta2.
-        let (c_eps2, c_eps2_orientation) = find_atom_placement(
-            c_eps1_orientation,
-            TETRA_A,
-            unsafe { TETRA_B },
-            TAU_DIV2,
-            c_eps1,
-            c_gamma,
-            unsafe { TETRA_B },
-            LEN_SC,
-        );
-
-        let (c_zeta1, c_zeta1_orientation) = find_atom_placement(
-            c_eps1_orientation,
-            TETRA_A,
-            unsafe { TETRA_B },
-            // TAU_DIV2,
-            self.χ_3, // todo: How do you sort out this hinge?
-            c_eps1,
-            c_gamma,
-            unsafe { TETRA_B },
-            LEN_SC,
-        );
-
-        let (c_zeta2, c_zeta2_orientation) = find_atom_placement(
-            c_eps2_orientation,
-            TETRA_A,
-            unsafe { TETRA_B },
-            self.χ_3, // todo: How do you sort out this hinge?
-            // 0., // todo: How do you sort out this hinge?
-            c_eps2,
-            c_eps1,
-            unsafe { TETRA_B },
-            LEN_SC,
-        );
-
-        let (c_eta1, _) = find_atom_placement(
-            c_zeta1_orientation,
-            TETRA_A,
-            unsafe { TETRA_B },
-            0.,
-            c_zeta1,
-            c_eps1,
-            unsafe { TETRA_B },
-            LEN_SC,
-        );
-
-        let (c_eta2, _) = find_atom_placement(
-            c_zeta2_orientation,
-            TETRA_A,
-            unsafe { TETRA_B },
-            TAU_DIV2,
-            c_zeta2,
-            c_eps2,
-            unsafe { TETRA_B },
-            LEN_SC,
-        );
-
-        let (h_n_delta, _) = find_atom_placement(
-            n_delta2_orientation,
-            TETRA_A,
-            unsafe { TETRA_B },
-            TAU_DIV2,
-            n_delta2,
-            c_gamma,
-            unsafe { TETRA_B },
-            LEN_N_H,
         );
 
         CoordsTrp {
             c_beta,
             c_gamma,
-            c_delta1,
-            n_delta2,
-            c_eps1,
-            c_eps2,
-            c_zeta1,
-            c_zeta2,
-            c_eta1,
-            c_eta2,
-            h_n_delta,
+            c_delta,
+            n_eps,
+            c_zeta,
+            c_eta,
+            c_theta,
+            c_iota,
+            c_kappa,
+            c_lambda,
 
             c_beta_orientation,
             c_gamma_orientation,
-            c_delta1_orientation,
-            n_delta2_orientation,
-            c_eps1_orientation,
-            c_eps2_orientation,
-            c_zeta1_orientation,
-            c_zeta2_orientation,
+            c_delta_orientation,
+            n_eps_orientation,
+            c_zeta_orientation,
+            c_eta_orientation,
+            c_theta_orientation,
+            c_iota_orientation,
+            c_kappa_orientation,
+            c_lambda_orientation,
         }
     }
 }

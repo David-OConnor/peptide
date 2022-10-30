@@ -1659,6 +1659,7 @@ impl ProteinCoords {
                         residue_id,
                         &mut atom_id,
                     );
+
                     add_atom(
                         AtomRole::CSidechain,
                         sc_coords.c_gamma,
@@ -1669,20 +1670,55 @@ impl ProteinCoords {
                         residue_id,
                         &mut atom_id,
                     );
+
                     add_atom(
                         AtomRole::CSidechain,
-                        sc_coords.c_delta1,
-                        sc_coords.c_delta1_orientation,
+                        sc_coords.c_delta,
+                        sc_coords.c_delta_orientation,
                         &mut backbone,
                         1,
                         None,
                         residue_id,
                         &mut atom_id,
                     );
+
                     add_atom(
                         AtomRole::NSidechain,
-                        sc_coords.n_delta2,
-                        sc_coords.n_delta2_orientation,
+                        sc_coords.n_eps,
+                        sc_coords.n_eps_orientation,
+                        &mut backbone,
+                        1,
+                        None,
+                        residue_id,
+                        &mut atom_id,
+                    );
+
+                    add_atom(
+                        AtomRole::CSidechain,
+                        sc_coords.c_zeta, // Border between rings
+                        sc_coords.c_zeta_orientation,
+                        &mut backbone,
+                        1,
+                        None,
+                        residue_id,
+                        &mut atom_id,
+                    );
+
+                    add_atom(
+                        AtomRole::CSidechain,
+                        sc_coords.c_eta, // Border between rings
+                        sc_coords.c_eta_orientation,
+                        &mut backbone,
+                        1,
+                        Some(4), // Connect to C gamma.
+                        residue_id,
+                        &mut atom_id,
+                    );
+
+                    add_atom(
+                        AtomRole::CSidechain,
+                        sc_coords.c_theta,
+                        sc_coords.c_theta_orientation,
                         &mut backbone,
                         1,
                         None,
@@ -1691,71 +1727,32 @@ impl ProteinCoords {
                     );
                     add_atom(
                         AtomRole::CSidechain,
-                        sc_coords.c_eps1,
-                        sc_coords.c_eps1_orientation,
+                        sc_coords.c_iota,
+                        sc_coords.c_iota_orientation,
                         &mut backbone,
-                        3, // Back to gamma.
+                        1,
                         None,
                         residue_id,
                         &mut atom_id,
                     );
                     add_atom(
                         AtomRole::CSidechain,
-                        sc_coords.c_eps2,
-                        sc_coords.c_eps2_orientation,
-                        &mut backbone,
-                        1, // Connected to eps1.
-                        None,
-                        residue_id,
-                        &mut atom_id,
-                    );
-                    add_atom(
-                        AtomRole::CSidechain,
-                        sc_coords.c_zeta1,
-                        sc_coords.c_zeta1_orientation,
-                        &mut backbone,
-                        2, // Back to eps1.
-                        None,
-                        residue_id,
-                        &mut atom_id,
-                    );
-                    add_atom(
-                        AtomRole::CSidechain,
-                        sc_coords.c_zeta2,
-                        sc_coords.c_zeta2_orientation,
-                        &mut backbone,
-                        2, // Back to eps2.
-                        None,
-                        residue_id,
-                        &mut atom_id,
-                    );
-                    add_atom(
-                        AtomRole::CSidechain,
-                        sc_coords.c_eta1,
+                        sc_coords.c_kappa,
                         Q_I,
                         &mut backbone,
-                        2, // Back to zeta1
+                        1,
                         None,
                         residue_id,
                         &mut atom_id,
                     );
                     add_atom(
                         AtomRole::CSidechain,
-                        sc_coords.c_eta2,
+                        sc_coords.c_lambda,
                         Q_I,
                         &mut backbone,
-                        2, // Back to zeta2
-                        None,
-                        residue_id,
-                        &mut atom_id,
-                    );
-                    add_atom(
-                        AtomRole::HSidechain,
-                        sc_coords.h_n_delta, // todo: Is this called Amine here?
-                        Q_I,
-                        &mut backbone,
-                        7,
-                        None,
+                        1,
+                        // Connect to the hinge carbon that's bonded to N.
+                        Some(5),
                         residue_id,
                         &mut atom_id,
                     );
