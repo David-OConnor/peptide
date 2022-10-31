@@ -715,10 +715,16 @@ pub struct CoordsGlu {
     pub c_delta: Vec3,
     pub o_eps1: Vec3,
     pub o_eps2: Vec3,
+    pub h_c_beta_a: Vec3,
+    pub h_c_beta_b: Vec3,
+    pub h_c_gamma_a: Vec3,
+    pub h_c_gamma_b: Vec3,
 
     pub c_beta_orientation: Quaternion,
     pub c_gamma_orientation: Quaternion,
     pub c_delta_orientation: Quaternion,
+    pub o_eps1_orientation: Quaternion,
+    pub o_eps2_orientation: Quaternion,
 }
 
 #[derive(Debug, Default)]

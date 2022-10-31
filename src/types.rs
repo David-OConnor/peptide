@@ -61,17 +61,6 @@ pub struct BackboneCoords {
     pub h_n_orientation: Quaternion,
 }
 
-/// Describes a water molecule. These aren't directly part of a protein, but may play a role in its
-/// folding, among other potential roles.
-#[derive(Debug)]
-// todo: Consider if you want this to be a struct, a const of some other struct etc.
-pub struct _WaterMolecule {
-    /// Worldspace coordinates of the O atom.
-    position_o_world: Vec3,
-    /// Using the same orientation ref as protein atoms.
-    orientation: Quaternion,
-}
-
 /// Store our atom descriptions here, for global state the renderer can access.
 pub struct State {
     /// Descriptions of each amino acid, including its name, and bond angles.

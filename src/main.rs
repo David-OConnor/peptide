@@ -59,6 +59,7 @@ mod sc_atom_placement;
 mod sidechain;
 mod simulate;
 mod types;
+mod water;
 
 use crate::types::State;
 

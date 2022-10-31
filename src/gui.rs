@@ -214,7 +214,7 @@ fn add_active_aa_editor(
 
     ui.label("Sidechain dihedral angles:");
 
-    let mut sc = &mut active_res.sidechain;
+    let sc = &mut active_res.sidechain;
 
     if let Some(χ) = sc.get_mut_χ1() {
         add_angle_slider(χ, "χ1", &mut engine_updates.entities, ui, false);

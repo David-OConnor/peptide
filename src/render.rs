@@ -2,8 +2,6 @@
 
 use crate::chem_definitions::AtomRole;
 
-use lin_alg2::f64::{Quaternion, Vec3};
-
 // pub const BACKGROUND_COLOR: (f32, f32, f32) = (0.9, 0.9, 0.9);
 pub const BACKGROUND_COLOR: (f32, f32, f32) = (0., 0., 0.);
 

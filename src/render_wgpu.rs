@@ -530,7 +530,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 }
 
 /// The entry point for our renderer.
-pub fn run(mut state: State) {
+pub fn run(state: State) {
     // Render our atoms.
     let entities = generate_entities(&state);
 
@@ -594,6 +594,7 @@ pub fn run(mut state: State) {
         // todo: How to handle this? For blocking keyboard and moues inputs when over the UI.
         // width: gui::UI_WIDTH as f64, // todo: Not working correctly.
         width: 500.,
+        icon_path: Some("./resources/icon.png".to_owned()),
     };
 
     // Of note, these functions could be used directly, vice as closures.
