@@ -2,9 +2,13 @@
 
 use std::{f64::consts::TAU, fmt};
 
-use crate::{atom_coords::ProteinCoords, gui::UiMode, proteins, sidechain::Sidechain};
+use crate::{
+    atom_coords::ProteinCoords, gui::UiMode, proteins, sidechain::Sidechain,
+    water::WaterEnvironment,
+};
 
 use lin_alg2::f64::{Quaternion, Vec3};
+use winit::event::VirtualKeyCode::W;
 
 #[derive(Debug)]
 /// A protein defined by AminoAcids: Name and bond angle.
@@ -78,6 +82,8 @@ pub struct State {
     pub sim_running: bool,
     pub show_sidechains: bool,
     pub show_hydrogens: bool,
+    pub show_water_molecules: bool,
+    pub water_env: WaterEnvironment,
 }
 
 impl State {
@@ -96,6 +102,8 @@ impl State {
             sim_running: false,
             show_sidechains: true,
             show_hydrogens: true,
+            show_water_molecules: false,
+            water_env: WaterEnvironment::build(crate::water::N_MOLECULES, 308.15),
         }
     }
 

@@ -545,6 +545,16 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                     state.show_hydrogens = !state.show_hydrogens;
                     engine_updates.entities = true;
                 }
+
+                let show_water_text = if state.show_water_molecules {
+                    "Hide water"
+                } else {
+                    "Show water"
+                };
+                if ui.button(show_water_text).clicked() {
+                    state.show_water_molecules = !state.show_water_molecules;
+                    engine_updates.entities = true;
+                }
             });
 
 

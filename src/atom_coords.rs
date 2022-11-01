@@ -8,7 +8,7 @@ use crate::{chem_definitions::AtomRole, sidechain::Sidechain};
 
 // todo: For chain termination AA, you may need to replace the final backbone N with an O.
 
-const Q_I: Quaternion = Quaternion {
+pub const Q_I: Quaternion = Quaternion {
     w: 1.,
     x: 0.,
     y: 0.,
