@@ -28,6 +28,11 @@ pub const PRO_PHI_MAX: f64 = 5.53269;
 // todo: You might need more xi angles. Eg methyl groups at the end of a hydrophobic chain can
 // todo probably rotate! look this up.
 
+// Notes: Check the Hs on N and O in sidechains. Some depictions I've found have them in various
+// places while others do not. For example, most depictions of ASP and GLU have one H on one of
+// the Oxygens, but Pymol doesn't.
+// For example:
+
 #[derive(Debug, PartialEq)]
 pub enum Sidechain {
     Arg(Arg),

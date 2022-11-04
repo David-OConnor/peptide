@@ -7,6 +7,8 @@ use std::f64::consts::TAU;
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
+// These lengths are in angstroms.
+
 // Double bond len of C' to N.
 pub const LEN_CP_N: f64 = 1.33; // angstrom
 pub const LEN_N_CALPHA: f64 = 1.46; // angstrom
@@ -16,7 +18,8 @@ pub const LEN_CP_O: f64 = 1.2; // angstrom // todo placeholder!
 pub const LEN_CALPHA_H: f64 = 1.0; // angstrom // todo placeholder!
 pub const LEN_N_H: f64 = 1.0; // angstrom // todo placeholder!
 pub const LEN_C_H: f64 = 1.0; // angstrom // todo placeholder!
-pub const LEN_O_H: f64 = 1.0; // angstrom // todo placeholder!
+pub const LEN_O_H: f64 = 0.9572; // angstrom // In water molecules. What is it in proteins?
+pub const LEN_O_H_WATER: f64 = 0.9572; // angstrom // In water molecules. What is it in proteins?
 
 // Ideal bond angles. There are an approximation; from averages. Consider replacing with something
 // more robust later. All angles are in radians. We use degrees with math to match common sources.
@@ -146,6 +149,13 @@ pub static mut PLANAR3_C: Vec3 = Vec3 {
 pub const RING_BOND_IN: Vec3 = Vec3 {
     // The anchor vec
     x: 1.,
+    y: 0.,
+    z: 0.,
+};
+
+pub const WATER_BOND_A: Vec3 = ANCHOR_BOND_VEC;
+pub static mut WATER_BOND_B: Vec3 = Vec3 {
+    x: 0.,
     y: 0.,
     z: 0.,
 };
@@ -341,6 +351,7 @@ pub fn init_local_bond_vecs() {
         let bond_angle_ring5 = TAU / 2. - TAU / 5.;
         let bond_angle_ring6 = TAU / 2. - TAU / 6.;
         let bond_angle_ho = TAU * 0.3;
+        let bond_angle_water = 1.82; // 104.5 degrees
 
         RING5_BOND_OUT =
             Quaternion::from_axis_angle(z, bond_angle_ring5).rotate_vec(ANCHOR_BOND_VEC);
@@ -353,6 +364,8 @@ pub fn init_local_bond_vecs() {
             Quaternion::from_axis_angle(z, -bond_angle_ring6).rotate_vec(ANCHOR_BOND_VEC);
 
         O_BOND_OUT = Quaternion::from_axis_angle(z, bond_angle_ho).rotate_vec(ANCHOR_BOND_VEC);
+
+        WATER_BOND_B = Quaternion::from_axis_angle(z, bond_angle_water).rotate_vec(ANCHOR_BOND_VEC);
 
         // Find the second bond vectors. The initial anchor bonds (eg `CALPHA_CP_BOND`) are rotated
         // along the (underconstrained) normal plane above.

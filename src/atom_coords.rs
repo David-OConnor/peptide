@@ -2,11 +2,17 @@
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
-use crate::chem_definitions::AminoAcidType;
-use crate::types::ProteinDescription;
-use crate::{chem_definitions::AtomRole, sidechain::Sidechain};
+use crate::{
+    chem_definitions::AminoAcidType,
+    chem_definitions::AtomRole,
+    forces::{MAG_N, MAG_O},
+    sidechain::Sidechain,
+    types::ProteinDescription,
+};
 
 // todo: For chain termination AA, you may need to replace the final backbone N with an O.
+
+// todo: Where should this go? interactions mo
 
 pub const Q_I: Quaternion = Quaternion {
     w: 1.,
@@ -29,6 +35,11 @@ pub struct AtomCoords {
     /// Used when this atom needs to initiate 2 bonds; eg for terminating rings, or maybe
     /// for double-bonds?
     pub second_bond_step: Option<usize>,
+    /// Hydrogen-bond dipole. Length is proportional to strenght. Perhaps an Option allows us to easily
+    /// skip computations.
+    pub dipole: Option<Vec3>,
+    /// How an atom interacts with a dipole.
+    pub mag_force: Option<f64>, // todo?
 }
 
 #[derive(Debug)]
@@ -48,7 +59,10 @@ fn add_atom(
     second_bond_step: Option<usize>,
     residue_id: usize,
     atom_id: &mut usize,
+    dipole: Option<Vec3>,
+    mag_force: Option<f64>,
 ) {
+    // todo: Can we infer magnetic force and dipole here? Probably not without nearby H?
     backbone.push(AtomCoords {
         residue_id,
         role,
@@ -56,6 +70,8 @@ fn add_atom(
         orientation,
         sidechain_bond_step: bond_step,
         second_bond_step,
+        dipole,
+        mag_force,
     });
 
     *atom_id += 1;
@@ -82,6 +98,8 @@ impl ProteinCoords {
             None,
             residue_id,
             &mut atom_id,
+            None,
+            Some(MAG_N),
         );
 
         // Start at residue id = 1 after the anchor N.
@@ -116,6 +134,8 @@ impl ProteinCoords {
                     None,
                     residue_id,
                     &mut atom_id,
+                    None,
+                    None,
                 );
                 cα_bond_step = 1;
             }
@@ -129,6 +149,8 @@ impl ProteinCoords {
                 None,
                 residue_id,
                 &mut atom_id,
+                None,
+                None,
             );
 
             // c_alpha_posit = backbone[atom_id - 1].position;
@@ -143,6 +165,8 @@ impl ProteinCoords {
                 None,
                 residue_id,
                 &mut atom_id,
+                None,
+                None,
             );
 
             // Add sidechains
@@ -165,6 +189,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -175,6 +201,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -185,6 +213,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::NSidechain,
@@ -195,6 +225,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_N),
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -205,6 +237,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::NSidechain,
@@ -215,6 +249,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_N),
                     );
                     add_atom(
                         AtomRole::NSidechain,
@@ -225,6 +261,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_N),
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -235,6 +273,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -245,6 +285,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -255,6 +297,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -265,6 +309,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -275,6 +321,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -285,6 +333,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -295,6 +345,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -305,6 +357,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -315,6 +369,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -325,6 +381,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -335,6 +393,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Lys(angles) => {
@@ -353,6 +413,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -363,6 +425,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -373,6 +437,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -383,6 +449,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::NSidechain,
@@ -393,6 +461,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_N),
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -403,6 +473,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -413,6 +485,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     // todo: Amonium group with 3 Hs for Lys?? H3N+?
                     add_atom(
@@ -424,6 +498,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -434,6 +510,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -444,6 +522,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -454,6 +534,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -464,6 +546,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -474,6 +558,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -484,6 +570,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -494,6 +582,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Asp(angles) => {
@@ -512,6 +602,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -522,6 +614,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::OSidechain,
@@ -532,6 +626,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_O),
                     );
                     add_atom(
                         AtomRole::OSidechain,
@@ -542,6 +638,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_O),
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -552,6 +650,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -562,6 +662,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     // todo: H on Os?
                 }
@@ -581,6 +683,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::OSidechain,
@@ -591,6 +695,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_O),
                     );
 
                     add_atom(
@@ -602,6 +708,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -613,6 +721,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -624,6 +734,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Thr(angles) => {
@@ -642,6 +754,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -652,6 +766,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::OSidechain,
@@ -662,6 +778,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_O),
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -672,6 +790,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -682,6 +802,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -692,6 +814,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -702,6 +826,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -712,6 +838,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Asn(angles) => {
@@ -730,6 +858,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -740,6 +870,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::OSidechain,
@@ -750,6 +882,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_O),
                     );
                     add_atom(
                         AtomRole::NSidechain,
@@ -760,6 +894,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_N),
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -770,6 +906,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -780,6 +918,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -790,6 +930,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -800,6 +942,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Gln(angles) => {
@@ -818,6 +962,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -829,6 +975,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -840,6 +988,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -851,6 +1001,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_O),
                     );
 
                     add_atom(
@@ -862,6 +1014,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_N),
                     );
 
                     add_atom(
@@ -873,6 +1027,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -884,6 +1040,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -895,6 +1053,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -906,6 +1066,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -917,6 +1079,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -928,6 +1092,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Gly(angles) => {
@@ -946,6 +1112,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Pro(angles) => {
@@ -964,6 +1132,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -974,6 +1144,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -984,6 +1156,8 @@ impl ProteinCoords {
                         Some(5), // to backbone N.
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -994,6 +1168,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1004,6 +1180,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1014,6 +1192,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1024,6 +1204,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1034,6 +1216,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1044,6 +1228,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Ile(angles) => {
@@ -1062,6 +1248,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1072,6 +1260,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1082,6 +1272,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1092,6 +1284,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1102,6 +1296,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1112,6 +1308,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1122,6 +1320,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1132,6 +1332,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1142,6 +1344,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1152,6 +1356,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1162,6 +1368,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1172,6 +1380,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1182,6 +1392,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Leu(angles) => {
@@ -1200,6 +1412,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1210,6 +1424,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1220,6 +1436,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1230,6 +1448,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1240,6 +1460,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1250,6 +1472,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1261,6 +1485,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1271,6 +1497,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1281,6 +1509,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1291,6 +1521,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1301,6 +1533,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1311,6 +1545,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1321,6 +1557,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Phe(angles) => {
@@ -1338,6 +1576,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1348,6 +1588,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1358,6 +1600,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1368,6 +1612,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1378,6 +1624,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1388,6 +1636,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1398,6 +1648,8 @@ impl ProteinCoords {
                         Some(1), // ep eps2)
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1409,6 +1661,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1420,6 +1674,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1431,6 +1687,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1442,6 +1700,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1453,6 +1713,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1464,6 +1726,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1475,6 +1739,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Tyr(angles) => {
@@ -1493,6 +1759,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1503,6 +1771,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1513,6 +1783,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1523,6 +1795,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1533,6 +1807,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1543,6 +1819,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1553,6 +1831,8 @@ impl ProteinCoords {
                         Some(1), // to eps2.
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::OSidechain,
@@ -1563,6 +1843,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_O),
                     );
 
                     add_atom(
@@ -1574,6 +1856,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1585,6 +1869,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1596,6 +1882,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1607,6 +1895,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1618,6 +1908,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1629,6 +1921,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1640,6 +1934,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Trp(angles) => {
@@ -1658,6 +1954,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1669,6 +1967,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1680,6 +1980,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1691,6 +1993,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1702,6 +2006,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1713,6 +2019,8 @@ impl ProteinCoords {
                         Some(4), // Connect to C gamma.
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1724,6 +2032,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1734,6 +2044,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1744,6 +2056,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -1755,6 +2069,8 @@ impl ProteinCoords {
                         Some(5),
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1766,6 +2082,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1777,6 +2095,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1788,6 +2108,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1799,6 +2121,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1810,6 +2134,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1821,6 +2147,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1832,6 +2160,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1843,6 +2173,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Cys(angles) => {
@@ -1861,6 +2193,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::SSidechain,
@@ -1871,6 +2205,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1881,6 +2217,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1891,6 +2229,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1901,6 +2241,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Sec(angles) => {
@@ -1919,6 +2261,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::SeSidechain,
@@ -1929,6 +2273,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1939,6 +2285,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -1949,6 +2297,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Met(angles) => {
@@ -1968,6 +2318,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1979,6 +2331,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -1990,6 +2344,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2001,6 +2357,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2012,6 +2370,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2023,6 +2383,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2034,6 +2396,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2045,6 +2409,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2056,6 +2422,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2067,6 +2435,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2078,6 +2448,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::His(angles) => {
@@ -2096,6 +2468,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -2106,6 +2480,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -2116,6 +2492,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::NSidechain,
@@ -2126,6 +2504,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_N),
                     );
                     add_atom(
                         AtomRole::NSidechain,
@@ -2136,6 +2516,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_N),
                     );
                     add_atom(
                         AtomRole::CSidechain,
@@ -2146,6 +2528,8 @@ impl ProteinCoords {
                         Some(1),
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     add_atom(
                         AtomRole::HSidechain,
@@ -2156,6 +2540,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                     // add_atom(
                     //     AtomRole::HSidechain,
@@ -2176,6 +2562,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2187,6 +2575,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2198,6 +2588,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2209,6 +2601,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Glu(angles) => {
@@ -2227,6 +2621,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2238,6 +2634,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2249,6 +2647,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2260,6 +2660,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_O),
                     );
 
                     add_atom(
@@ -2271,6 +2673,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        Some(MAG_O),
                     );
 
                     add_atom(
@@ -2282,6 +2686,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2293,6 +2699,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2304,6 +2712,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2315,6 +2725,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Ala(angles) => {
@@ -2333,6 +2745,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2344,6 +2758,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2355,6 +2771,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2366,6 +2784,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
                 Sidechain::Val(angles) => {
@@ -2384,6 +2804,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2395,6 +2817,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2406,6 +2830,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2417,6 +2843,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2428,6 +2856,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2439,6 +2869,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2450,6 +2882,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2461,6 +2895,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2472,6 +2908,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
 
                     add_atom(
@@ -2483,6 +2921,8 @@ impl ProteinCoords {
                         None,
                         residue_id,
                         &mut atom_id,
+                        None,
+                        None,
                     );
                 }
             }
@@ -2496,6 +2936,8 @@ impl ProteinCoords {
                 None,
                 residue_id,
                 &mut atom_id,
+                None,
+                None,
             );
 
             prev_cp_posit = backbone[atom_id - 1].position;
@@ -2509,6 +2951,8 @@ impl ProteinCoords {
                 None,
                 residue_id,
                 &mut atom_id,
+                None,
+                Some(MAG_O),
             );
 
             add_atom(
@@ -2520,6 +2964,8 @@ impl ProteinCoords {
                 None,
                 residue_id,
                 &mut atom_id,
+                None,
+                Some(MAG_O),
             );
 
             prev_n_posit = backbone[atom_id - 1].position;

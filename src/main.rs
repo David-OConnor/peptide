@@ -49,6 +49,7 @@ use types::ProteinDescription;
 mod atom_coords;
 mod bond_vecs;
 mod chem_definitions;
+mod forces;
 mod gui;
 mod kinematics;
 mod proteins;

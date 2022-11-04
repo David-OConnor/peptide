@@ -11,6 +11,7 @@ pub enum AtomType {
     O,
     P,
     S,
+    Se,
 }
 
 impl AtomType {
@@ -25,6 +26,19 @@ impl AtomType {
     //         Self::S => 0., // (-2., 2., 4., 6.)
     //     }
     // }
+
+    /// Returns mass, in atomic mass units.
+    pub fn mass(&self) -> f64 {
+        match self {
+            Self::C => 12.011,
+            Self::N => 14.007,
+            Self::H => 1.0078,
+            Self::O => 15.999,
+            Self::P => 30.974,
+            Self::S => 32.065,
+            Self::Se => 78.960,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

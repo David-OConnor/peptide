@@ -145,7 +145,7 @@ pub struct Residue {
     pub ψ: f64,
     /// Contains the χ angles that define t
     pub sidechain: Sidechain,
-    pub dipole: Vec3,
+    // pub dipole: Vec3,
 }
 
 impl Default for Residue {
@@ -158,7 +158,7 @@ impl Default for Residue {
             φ: proteins::PHI_HELIX,
             ψ: proteins::PSI_HELIX,
             sidechain: Sidechain::Arg(Default::default()),
-            dipole: Vec3::new_zero(),
+            // dipole: Vec3::new_zero(),
         }
     }
 }
@@ -183,7 +183,7 @@ impl Residue {
             φ,
             ψ,
             sidechain,
-            dipole: Vec3::new_zero(),
+            // dipole: Vec3::new_zero(),
         }
     }
 }

@@ -191,8 +191,7 @@ impl Residue {
             ψ: f64::from_le_bytes(data[2 * F64_SIZE..3 * F64_SIZE].try_into().unwrap()),
 
             sidechain: Sidechain::from_bytes(&data[3 * F64_SIZE..RESIDUE_SIZE]),
-
-            dipole: Vec3::new_zero(), // not currently saved.
+            // dipole: Vec3::new_zero(), // not currently saved.
         }
     }
 }

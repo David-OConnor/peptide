@@ -50,7 +50,7 @@ pub const WINDOW_SIZE_Y: f32 = 1_000.0;
 
 // Changes the far end of the frustrum; try to have this shortly past the farthest
 // view distance you expect. Possible to make this dynamic?
-pub const RENDER_DIST: f32 = 200.;
+pub const RENDER_DIST: f32 = 100.;
 
 // Render size of an atom, on a [polyhedron] side.
 pub const SIDE_LEN: f32 = 0.4;

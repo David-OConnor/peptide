@@ -16,23 +16,22 @@ use lin_alg2::{
     f64::{Quaternion, Vec3},
 };
 
-use crate::bond_vecs::H_BOND_IN;
-use crate::render::H_SCALE;
 use crate::{
     atom_coords::{AtomCoords, ProteinCoords},
     bond_vecs::{
-        H_BOND_OUT, H_CALPHA_BOND, LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA,
-        LEN_N_H, O_BOND_IN, O_BOND_OUT, PLANAR3_A, PLANAR3_B, PLANAR3_C,
+        H_BOND_IN, H_BOND_OUT, H_CALPHA_BOND, LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O,
+        LEN_N_CALPHA, LEN_N_H, O_BOND_IN, O_BOND_OUT, PLANAR3_A, PLANAR3_B, PLANAR3_C,
     },
     chem_definitions::AtomRole,
     gui, kinematics,
     render::{
         self, ACTIVE_CALPHA_COLOR, ACTIVE_COLOR_ATOM, ACTIVE_N_COLOR, ATOM_SHINYNESS,
         BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN, BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN,
-        BOND_SHINYNESS, RENDER_DIST, WINDOW_SIZE_X, WINDOW_SIZE_Y, WINDOW_TITLE,
+        BOND_SHINYNESS, H_SCALE, RENDER_DIST, WINDOW_SIZE_X, WINDOW_SIZE_Y, WINDOW_TITLE,
     },
     sidechain::LEN_SC,
     types::State,
+    water::WaterAtomType,
     AminoAcidType,
 };
 
@@ -309,10 +308,16 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
         for water_molecule in state.water_env.water_molecules.iter_mut() {
             // todo: Beter way to incorporate temp. Isn't it KE, which is vel sq? so maybe take sqrt of temp?
             let fudge_factor = 100.;
-            water_molecule.position_o_world += water_molecule.velocity * state.temperature * state.sim_time_scale * dt as f64 * fudge_factor;
+            water_molecule.position_o_world += water_molecule.velocity
+                * state.temperature
+                * state.sim_time_scale
+                * dt as f64
+                * fudge_factor;
 
             // todo: Code to re-generate out-of-bond molecules?
         }
+
+        state.water_env.update_atom_posits();
 
         scene.entities = generate_entities(&state);
 
@@ -549,60 +554,25 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
     }
 
     // Genererate entities for water molecules.
+    // todo: We shouldn't create this here; this should be stored somewhere else, perhaps.
+
     if state.show_water_molecules {
-        for water_molecule in &state.water_env.water_molecules {
+        for water_atom in &state.water_env.atom_positions {
+            let (color, scale) = match water_atom.atom_type {
+                WaterAtomType::O => (render::O_COLOR, 1.),
+                WaterAtomType::H => (render::H_COLOR, H_SCALE),
+            };
+
             // Oxygen
             result.push(Entity::new(
-                1,
-                vec3_to_f32(water_molecule.position_o_world),
-                quat_to_f32(water_molecule.orientation),
-                1.,
-                render::O_COLOR,
+                1, // sphere
+                vec3_to_f32(water_atom.position),
+                Q_I, // todo: Is this OK? Probably.
+                scale,
+                color,
                 ATOM_SHINYNESS,
             ));
 
-            let (h_a_position, _) = kinematics::find_atom_placement(
-                water_molecule.orientation,
-                H_BOND_IN,
-                unsafe { H_BOND_OUT },
-                // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
-                // (world space)
-                0.,
-                water_molecule.position_o_world,
-                Vec3::new_zero(),     // todo?
-                unsafe { PLANAR3_B }, // todo
-                1.,                   // todo temp
-            );
-            let (h_b_position, _) = kinematics::find_atom_placement(
-                water_molecule.orientation,
-                H_BOND_IN,
-                unsafe { H_BOND_OUT },
-                // Use our info about the previous 2 atoms so we can define the dihedral angle properly.
-                // (world space)
-                0.,
-                water_molecule.position_o_world,
-                Vec3::new_zero(),     // todo?
-                unsafe { PLANAR3_C }, // todo
-                1.,                   // todo temp
-            );
-
-            // 2x hydrogen
-            result.push(Entity::new(
-                1,
-                vec3_to_f32(h_a_position),
-                Q_I,
-                H_SCALE,
-                render::H_COLOR,
-                ATOM_SHINYNESS,
-            ));
-            result.push(Entity::new(
-                1,
-                vec3_to_f32(h_b_position),
-                Q_I,
-                H_SCALE,
-                render::H_COLOR,
-                ATOM_SHINYNESS,
-            ));
             // todo: bonds.
         }
     }
