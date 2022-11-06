@@ -269,6 +269,8 @@ fn rng() -> f64 {
 fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdates {
     let mut entities_changed = false;
 
+    // delegate to a sim fn/module
+
     if state.sim_running {
         // Constant term in our noise.
         let c = state.temperature * state.sim_time_scale * dt as f64;
@@ -305,7 +307,18 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
 
         state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
 
+        // todo: Hack to prevent editing the loop we're itereating through.
+        let wm_dup = state.water_env.water_molecules.clone();
+
         for water_molecule in state.water_env.water_molecules.iter_mut() {
+
+            let mut force = 0.;
+            // todo: Oh boy...
+            for other in &wm_dup {
+                // todo: Figure out how magnetic forces work.
+            }
+
+
             // todo: Beter way to incorporate temp. Isn't it KE, which is vel sq? so maybe take sqrt of temp?
             let fudge_factor = 100.;
             water_molecule.position_o_world += water_molecule.velocity

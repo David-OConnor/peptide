@@ -33,7 +33,7 @@ pub struct WaterAtom {
 
 /// Describes a water molecule. These aren't directly part of a protein, but may play a role in its
 /// folding, among other potential roles.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 // todo: Consider if you want this to be a struct, a const of some other struct etc.
 pub struct WaterMolecule {
     /// Worldspace coordinates of the O atom.

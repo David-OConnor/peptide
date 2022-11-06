@@ -5,6 +5,7 @@
 use std::{
     fs::File,
     io::{BufReader, BufWriter, Read, Write},
+    path::PathBuf,
     str,
 };
 
@@ -198,7 +199,7 @@ impl Residue {
 
 impl ProteinDescription {
     /// Save the protein description (metadata, dihedral angles etc) to our custom binary file format.
-    pub fn save(&self, filename: &str) {
+    pub fn save(&self, path: &PathBuf) {
         let mut file_buf = Vec::new();
 
         file_buf.resize(RESIDUE_START_I + self.residues.len() * RESIDUE_SIZE, 0);
@@ -222,7 +223,7 @@ impl ProteinDescription {
         // Overwrite teh existing file. Commented-out code below doesn't do anything if
         // the file exists.
 
-        let f = File::create(filename).unwrap();
+        let f = File::create(path).unwrap();
 
         // let f = match File::open(filename) {
         //     Ok(f_) => {
@@ -238,8 +239,8 @@ impl ProteinDescription {
         writer.write_all(&file_buf).unwrap();
     }
 
-    pub fn load(filename: &str) -> Self {
-        let f = File::open(filename).unwrap();
+    pub fn load(path: &PathBuf) -> Self {
+        let f = File::open(path).unwrap();
         let mut reader = BufReader::new(f);
         let mut file_buf = Vec::new();
 

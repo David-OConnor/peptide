@@ -4,6 +4,8 @@ use egui::{self, Color32, RichText};
 
 use graphics::{EngineUpdates, Scene};
 
+use rfd::FileDialog;
+
 use crate::{
     atom_coords::ProteinCoords,
     chem_definitions::{AminoAcidType, AtomRole},
@@ -114,7 +116,7 @@ fn add_angle_slider(
 
             *val
         })
-        .text(label),
+            .text(label),
     );
 
     // ui.add(egui::Slider::new(val, 0.0..=TAU).text(label));
@@ -430,8 +432,8 @@ fn add_motion_sim(
             &mut state.sim_time_scale,
             SIM_TIME_SCALE_MIN..=SIM_TIME_SCALE_MAX,
         )
-        .logarithmic(true)
-        .text(""),
+            .logarithmic(true)
+            .text(""),
     );
 
     ui.label("Temperature (K)");
@@ -475,10 +477,27 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
 
             ui.horizontal(|ui| {
                 if ui.button("Save").clicked() {
-                    state.protein_descrip.save(&format!("{}.prot", state.protein_descrip.name));
+                    let file = FileDialog::new()
+                        .set_file_name(&((&state.protein_descrip.name).to_owned() + ".prot"))
+                        .add_filter("prot", &["prot"])
+                        .set_directory("/")
+                        .save_file();
+
+                    if let Some(f) = file {
+                        state.protein_descrip.save(&f);
+                    }
+
                 }
                 if ui.button("Load").clicked() {
-                    state.protein_descrip = ProteinDescription::load(&format!("{}.prot", state.protein_descrip.name));
+                    let file = FileDialog::new()
+                        .add_filter("prot", &["prot"])
+                        .set_directory("/")
+                        .pick_file();
+
+                    if let Some(f) = file {
+                        state.protein_descrip = ProteinDescription::load(&f);
+                    }
+
                     engine_updates.entities = true;
                 }
             });
