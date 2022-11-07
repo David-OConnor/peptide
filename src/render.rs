@@ -21,6 +21,7 @@ pub const H_COLOR: (f32, f32, f32) = (0.8, 0.8, 0.8);
 
 // Fraction of C radius.
 pub const H_SCALE: f32 = 0.8;
+pub const M_SCALE: f32 = 0.3; // artificial point on water molecules
 
 // Note: This active color is deliberately not normalized, so it comes out weaker in saturation,
 // but brighter in the avg with the atom color.

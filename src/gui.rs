@@ -116,7 +116,7 @@ fn add_angle_slider(
 
             *val
         })
-            .text(label),
+        .text(label),
     );
 
     // ui.add(egui::Slider::new(val, 0.0..=TAU).text(label));
@@ -432,8 +432,8 @@ fn add_motion_sim(
             &mut state.sim_time_scale,
             SIM_TIME_SCALE_MIN..=SIM_TIME_SCALE_MAX,
         )
-            .logarithmic(true)
-            .text(""),
+        .logarithmic(true)
+        .text(""),
     );
 
     ui.label("Temperature (K)");

@@ -5,6 +5,8 @@
 //! [A paper on modelling proteins](https://cnx.org/contents/9cMfjngH@6.3:WjXbYFJI@15/Representing-Proteins-in-Silico-and-Protein-Forward-Kinematics)
 //! [Article on hydrogen bond modelling](https://www.nature.com/articles/ncomms6803)
 
+#![allow(non_upper_case_globals)]
+
 // todo: Consider starting with a known folded protein, applying heat, and seeing how
 // todo it unfolds; this may provide some insight. Perhaps it's a reversal??
 

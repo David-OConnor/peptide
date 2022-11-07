@@ -16,6 +16,7 @@ use lin_alg2::{
     f64::{Quaternion, Vec3},
 };
 
+use crate::render::{CALPHA_COLOR, H_COLOR, O_COLOR};
 use crate::{
     atom_coords::{AtomCoords, ProteinCoords},
     bond_vecs::{
@@ -23,11 +24,11 @@ use crate::{
         LEN_N_CALPHA, LEN_N_H, O_BOND_IN, O_BOND_OUT, PLANAR3_A, PLANAR3_B, PLANAR3_C,
     },
     chem_definitions::AtomRole,
-    gui, kinematics,
+    forces, gui, kinematics,
     render::{
         self, ACTIVE_CALPHA_COLOR, ACTIVE_COLOR_ATOM, ACTIVE_N_COLOR, ATOM_SHINYNESS,
         BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN, BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN,
-        BOND_SHINYNESS, H_SCALE, RENDER_DIST, WINDOW_SIZE_X, WINDOW_SIZE_Y, WINDOW_TITLE,
+        BOND_SHINYNESS, H_SCALE, M_SCALE, RENDER_DIST, WINDOW_SIZE_X, WINDOW_SIZE_Y, WINDOW_TITLE,
     },
     sidechain::LEN_SC,
     types::State,
@@ -310,18 +311,35 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
         // todo: Hack to prevent editing the loop we're itereating through.
         let wm_dup = state.water_env.water_molecules.clone();
 
-        for water_molecule in state.water_env.water_molecules.iter_mut() {
+        // todo: is thsi right?
+        let m_water = forces::O_MASS + 2. * forces::H_MASS;
+        for (i, water) in state.water_env.water_molecules.iter_mut().enumerate() {
+            // let v_o = forces::potential(water.o_posit_world, forces::O_CHARGE, &wm_dup);
+            // let v_h_a = forces::potential(water.h_a_posit_world, forces::H_CHARGE, &wm_dup);
+            // let v_h_b = forces::potential(water.h_b_posit_world, forces::H_CHARGE, &wm_dup);
+            // let v_m = forces::potential(water.m_posit_world, forces::M_CHARGE, &wm_dup);
 
-            let mut force = 0.;
-            // todo: Oh boy...
-            for other in &wm_dup {
-                // todo: Figure out how magnetic forces work.
-            }
+            // let f_o = v_o * forces::CH
 
+            // let potential = v_o + v_h_a + v_h_b + v_m;
+
+            let f_o = forces::force(water.o_posit_world, forces::O_CHARGE, &wm_dup, i);
+            let f_h_a = forces::force(water.h_a_posit_world, forces::H_CHARGE, &wm_dup, i);
+            let f_h_b = forces::force(water.h_b_posit_world, forces::H_CHARGE, &wm_dup, i);
+            let f_m = forces::force(water.m_posit_world, forces::M_CHARGE, &wm_dup, i);
+
+            // todo: Dist of just O?
+            // let force = (water.o_posit_world)
+
+            let a = (f_o + f_h_a + f_h_b + f_m) / m_water;
+
+            // println!("A {:?}", a);
+
+            water.velocity += a; // todo: Euler integration - not great
 
             // todo: Beter way to incorporate temp. Isn't it KE, which is vel sq? so maybe take sqrt of temp?
-            let fudge_factor = 100.;
-            water_molecule.position_o_world += water_molecule.velocity
+            let fudge_factor = 0.01;
+            water.o_posit_world += water.velocity
                 * state.temperature
                 * state.sim_time_scale
                 * dt as f64
@@ -570,22 +588,46 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
     // todo: We shouldn't create this here; this should be stored somewhere else, perhaps.
 
     if state.show_water_molecules {
-        for water_atom in &state.water_env.atom_positions {
-            let (color, scale) = match water_atom.atom_type {
-                WaterAtomType::O => (render::O_COLOR, 1.),
-                WaterAtomType::H => (render::H_COLOR, H_SCALE),
-            };
-
+        for water in &state.water_env.water_molecules {
             // Oxygen
             result.push(Entity::new(
                 1, // sphere
-                vec3_to_f32(water_atom.position),
+                vec3_to_f32(water.o_posit_world),
                 Q_I, // todo: Is this OK? Probably.
-                scale,
-                color,
+                1.,
+                O_COLOR,
                 ATOM_SHINYNESS,
             ));
 
+            // H a
+            result.push(Entity::new(
+                1, // sphere
+                vec3_to_f32(water.h_a_posit_world),
+                Q_I, // todo: Is this OK? Probably.
+                H_SCALE,
+                H_COLOR,
+                ATOM_SHINYNESS,
+            ));
+
+            // H b
+            result.push(Entity::new(
+                1, // sphere
+                vec3_to_f32(water.h_b_posit_world),
+                Q_I, // todo: Is this OK? Probably.
+                H_SCALE,
+                H_COLOR,
+                ATOM_SHINYNESS,
+            ));
+
+            // M (artificial point)
+            result.push(Entity::new(
+                1, // sphere
+                vec3_to_f32(water.m_posit_world),
+                Q_I, // todo: Is this OK? Probably.
+                M_SCALE,
+                CALPHA_COLOR,
+                ATOM_SHINYNESS,
+            ));
             // todo: bonds.
         }
     }

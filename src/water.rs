@@ -3,7 +3,8 @@
 use rand;
 
 use crate::{
-    bond_vecs::{H_BOND_IN, H_BOND_OUT, LEN_O_H_WATER, PLANAR3_C, WATER_BOND_A, WATER_BOND_B},
+    bond_vecs::{H_BOND_IN, H_BOND_OUT, PLANAR3_C, WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
+    forces::{self, O_M_DIST},
     kinematics,
 };
 
@@ -13,10 +14,10 @@ use egui::Key::Q;
 use lin_alg2::f64::{Quaternion, Vec3};
 
 // Distance from the origin.
-const SIM_BOX_DIST: f64 = 100.;
-const VEL_SCALER: f64 = 1.;
+const SIM_BOX_DIST: f64 = 20.;
+const VEL_SCALER: f64 = 0.0; // todo: increase A/R
 
-pub const N_MOLECULES: usize = 1_000;
+pub const N_MOLECULES: usize = 100;
 
 #[derive(Clone, Copy, Debug)]
 pub enum WaterAtomType {
@@ -24,12 +25,12 @@ pub enum WaterAtomType {
     H,
 }
 
-#[derive(Debug)]
-// todo: Consider if you want this to be a struct, a const of some other struct etc.
-pub struct WaterAtom {
-    pub atom_type: WaterAtomType,
-    pub position: Vec3,
-}
+// #[derive(Debug)]
+// // todo: Consider if you want this to be a struct, a const of some other struct etc.
+// pub struct WaterAtom {
+//     pub atom_type: WaterAtomType,
+//     pub position: Vec3,
+// }
 
 /// Describes a water molecule. These aren't directly part of a protein, but may play a role in its
 /// folding, among other potential roles.
@@ -37,10 +38,58 @@ pub struct WaterAtom {
 // todo: Consider if you want this to be a struct, a const of some other struct etc.
 pub struct WaterMolecule {
     /// Worldspace coordinates of the O atom.
-    pub position_o_world: Vec3,
+    pub o_posit_world: Vec3,
     /// Using the same orientation ref as protein atoms.
     pub orientation: Quaternion,
     pub velocity: Vec3,
+    /// Generated from above vars. todo: Consider a method etc instead.
+    pub h_a_posit_world: Vec3,
+    /// Generated from above vars. todo: Consider a method etc instead.
+    pub h_b_posit_world: Vec3,
+    /// TIP4P M position. Generated from above vars. todo: Consider a method etc instead.
+    pub m_posit_world: Vec3,
+}
+
+impl WaterMolecule {
+    /// Update h and m posits.
+    pub fn update_posits(&mut self) {
+        let (h_a_posit, _) = kinematics::find_atom_placement(
+            self.orientation,
+            H_BOND_IN,
+            unsafe { H_BOND_OUT },
+            0.,
+            self.o_posit_world,
+            Vec3::new_zero(), // todo?
+            WATER_BOND_H_A,
+            forces::R_OH_BOND,
+        );
+
+        let (h_b_posit, _) = kinematics::find_atom_placement(
+            self.orientation,
+            H_BOND_IN,
+            unsafe { H_BOND_OUT },
+            0.,
+            self.o_posit_world,
+            Vec3::new_zero(), // todo?
+            unsafe { WATER_BOND_H_B },
+            forces::R_OH_BOND,
+        );
+
+        // todo: At least at the start, visualize this by drawing a small sphere on it.
+        let (m_posit, _) = kinematics::find_atom_placement(
+            self.orientation,
+            H_BOND_IN,
+            unsafe { H_BOND_OUT },
+            0.,
+            self.o_posit_world,
+            Vec3::new_zero(), // todo?
+            unsafe { WATER_BOND_M },
+            O_M_DIST,
+        );
+        self.h_a_posit_world = h_a_posit;
+        self.h_b_posit_world = h_b_posit;
+        self.m_posit_world = m_posit;
+    }
 }
 
 /// State for the water molecule environment surrounding a protein or other molecule collection
@@ -48,8 +97,8 @@ pub struct WaterMolecule {
 pub struct WaterEnvironment {
     /// Persistent state
     pub water_molecules: Vec<WaterMolecule>,
-    /// Generated from `water_molecules`.
-    pub atom_positions: Vec<WaterAtom>,
+    // /// Generated from `water_molecules`.
+    // pub atom_positions: Vec<WaterAtom>,
 }
 
 impl WaterEnvironment {
@@ -82,15 +131,18 @@ impl WaterEnvironment {
             );
 
             molecules.push(WaterMolecule {
-                position_o_world,
+                o_posit_world: position_o_world,
                 orientation,
                 velocity,
+                h_a_posit_world: Vec3::new_zero(),
+                h_b_posit_world: Vec3::new_zero(),
+                m_posit_world: Vec3::new_zero(),
             });
         }
 
         let mut result = Self {
             water_molecules: molecules,
-            atom_positions: Vec::new(),
+            // atom_positions: Vec::new(),
         };
 
         result.update_atom_posits();
@@ -99,46 +151,8 @@ impl WaterEnvironment {
     }
 
     pub fn update_atom_posits(&mut self) {
-        self.atom_positions = Vec::new();
-
-        for water_molecule in &self.water_molecules {
-            // Oxygen
-            self.atom_positions.push(WaterAtom {
-                atom_type: WaterAtomType::O,
-                position: water_molecule.position_o_world,
-            });
-
-            let (h_a_posit, _) = kinematics::find_atom_placement(
-                water_molecule.orientation,
-                H_BOND_IN,
-                unsafe { H_BOND_OUT },
-                0.,
-                water_molecule.position_o_world,
-                Vec3::new_zero(), // todo?
-                WATER_BOND_A,
-                LEN_O_H_WATER,
-            );
-
-            let (h_b_posit, _) = kinematics::find_atom_placement(
-                water_molecule.orientation,
-                H_BOND_IN,
-                unsafe { H_BOND_OUT },
-                0.,
-                water_molecule.position_o_world,
-                Vec3::new_zero(), // todo?
-                unsafe { WATER_BOND_B },
-                LEN_O_H_WATER,
-            );
-
-            self.atom_positions.push(WaterAtom {
-                atom_type: WaterAtomType::H,
-                position: h_a_posit,
-            });
-
-            self.atom_positions.push(WaterAtom {
-                atom_type: WaterAtomType::H,
-                position: h_b_posit,
-            });
+        for water_molecule in &mut self.water_molecules {
+            water_molecule.update_posits()
         }
     }
 }
