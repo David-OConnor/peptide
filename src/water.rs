@@ -33,21 +33,21 @@ pub enum WaterAtomType {
 // }
 
 /// Describes a water molecule. These aren't directly part of a protein, but may play a role in its
-/// folding, among other potential roles.
+/// folding, among other potential roles. All positions are in world space.
 #[derive(Clone, Debug)]
 // todo: Consider if you want this to be a struct, a const of some other struct etc.
 pub struct WaterMolecule {
     /// Worldspace coordinates of the O atom.
-    pub o_posit_world: Vec3,
+    pub o_posit: Vec3,
     /// Using the same orientation ref as protein atoms.
     pub orientation: Quaternion,
     pub velocity: Vec3,
     /// Generated from above vars. todo: Consider a method etc instead.
-    pub h_a_posit_world: Vec3,
+    pub ha_posit: Vec3,
     /// Generated from above vars. todo: Consider a method etc instead.
-    pub h_b_posit_world: Vec3,
+    pub hb_posit: Vec3,
     /// TIP4P M position. Generated from above vars. todo: Consider a method etc instead.
-    pub m_posit_world: Vec3,
+    pub m_posit: Vec3,
 }
 
 impl WaterMolecule {
@@ -58,7 +58,7 @@ impl WaterMolecule {
             H_BOND_IN,
             unsafe { H_BOND_OUT },
             0.,
-            self.o_posit_world,
+            self.o_posit,
             Vec3::new_zero(), // todo?
             WATER_BOND_H_A,
             forces::R_OH_BOND,
@@ -69,7 +69,7 @@ impl WaterMolecule {
             H_BOND_IN,
             unsafe { H_BOND_OUT },
             0.,
-            self.o_posit_world,
+            self.o_posit,
             Vec3::new_zero(), // todo?
             unsafe { WATER_BOND_H_B },
             forces::R_OH_BOND,
@@ -81,14 +81,14 @@ impl WaterMolecule {
             H_BOND_IN,
             unsafe { H_BOND_OUT },
             0.,
-            self.o_posit_world,
+            self.o_posit,
             Vec3::new_zero(), // todo?
             unsafe { WATER_BOND_M },
             O_M_DIST,
         );
-        self.h_a_posit_world = h_a_posit;
-        self.h_b_posit_world = h_b_posit;
-        self.m_posit_world = m_posit;
+        self.ha_posit = h_a_posit;
+        self.hb_posit = h_b_posit;
+        self.m_posit = m_posit;
     }
 }
 
@@ -131,12 +131,12 @@ impl WaterEnvironment {
             );
 
             molecules.push(WaterMolecule {
-                o_posit_world: position_o_world,
+                o_posit: position_o_world,
                 orientation,
                 velocity,
-                h_a_posit_world: Vec3::new_zero(),
-                h_b_posit_world: Vec3::new_zero(),
-                m_posit_world: Vec3::new_zero(),
+                ha_posit: Vec3::new_zero(),
+                hb_posit: Vec3::new_zero(),
+                m_posit: Vec3::new_zero(),
             });
         }
 

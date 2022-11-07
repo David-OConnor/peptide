@@ -323,10 +323,10 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
 
             // let potential = v_o + v_h_a + v_h_b + v_m;
 
-            let f_o = forces::force(water.o_posit_world, forces::O_CHARGE, &wm_dup, i);
-            let f_h_a = forces::force(water.h_a_posit_world, forces::H_CHARGE, &wm_dup, i);
-            let f_h_b = forces::force(water.h_b_posit_world, forces::H_CHARGE, &wm_dup, i);
-            let f_m = forces::force(water.m_posit_world, forces::M_CHARGE, &wm_dup, i);
+            let f_o = forces::force(water.o_posit, forces::O_CHARGE, &wm_dup, i);
+            let f_h_a = forces::force(water.ha_posit, forces::H_CHARGE, &wm_dup, i);
+            let f_h_b = forces::force(water.hb_posit, forces::H_CHARGE, &wm_dup, i);
+            let f_m = forces::force(water.m_posit, forces::M_CHARGE, &wm_dup, i);
 
             // todo: Dist of just O?
             // let force = (water.o_posit_world)
@@ -339,7 +339,7 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
 
             // todo: Beter way to incorporate temp. Isn't it KE, which is vel sq? so maybe take sqrt of temp?
             let fudge_factor = 0.01;
-            water.o_posit_world += water.velocity
+            water.o_posit += water.velocity
                 * state.temperature
                 * state.sim_time_scale
                 * dt as f64
@@ -592,7 +592,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             // Oxygen
             result.push(Entity::new(
                 1, // sphere
-                vec3_to_f32(water.o_posit_world),
+                vec3_to_f32(water.o_posit),
                 Q_I, // todo: Is this OK? Probably.
                 1.,
                 O_COLOR,
@@ -602,7 +602,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             // H a
             result.push(Entity::new(
                 1, // sphere
-                vec3_to_f32(water.h_a_posit_world),
+                vec3_to_f32(water.ha_posit),
                 Q_I, // todo: Is this OK? Probably.
                 H_SCALE,
                 H_COLOR,
@@ -612,7 +612,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             // H b
             result.push(Entity::new(
                 1, // sphere
-                vec3_to_f32(water.h_b_posit_world),
+                vec3_to_f32(water.hb_posit),
                 Q_I, // todo: Is this OK? Probably.
                 H_SCALE,
                 H_COLOR,
@@ -622,7 +622,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             // M (artificial point)
             result.push(Entity::new(
                 1, // sphere
-                vec3_to_f32(water.m_posit_world),
+                vec3_to_f32(water.m_posit),
                 Q_I, // todo: Is this OK? Probably.
                 M_SCALE,
                 CALPHA_COLOR,
