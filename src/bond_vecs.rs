@@ -7,7 +7,7 @@ use std::f64::consts::TAU;
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
-use crate::{forces, water};
+use crate::forces;
 
 // These lengths are in angstroms.
 
@@ -29,7 +29,7 @@ pub const LEN_O_H: f64 = 0.9572; // angstrom // In water molecules. What is it i
 
 // todo: N is listed as 121.7 or 122.7 depending on which side??
 pub const BOND_ANGLE_N_CALPHA_CP: f64 = 122.7 * TAU / 360.; // This is to Calpha and C'.
-pub const BOND_ANGLE_N_CALPHA_H: f64 = 120. * TAU / 360.; // todo: Placeholder; not real data
+                                                            // pub const BOND_ANGLE_N_CALPHA_H: f64 = 120. * TAU / 360.; // todo: Placeholder; not real data
 
 // Bond from the Calpha atom
 pub const BOND_ANGLE_CALPHA_CP_R: f64 = 110.6 * TAU / 360.;

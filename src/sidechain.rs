@@ -3,7 +3,7 @@
 // Don't show warnings for un`
 use std::{f64::consts::TAU, fmt};
 
-use crate::{bond_vecs::*, chem_definitions::AminoAcidType, kinematics::find_atom_placement};
+use crate::chem_definitions::AminoAcidType;
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
@@ -523,14 +523,14 @@ impl Sidechain {
             _ => (),
         }
     }
-    pub fn add_to_χ4(&mut self, val: f64) {
+    pub fn _add_to_χ4(&mut self, val: f64) {
         match self {
             Self::Arg(aa) => aa.χ_4 += val,
             Self::Lys(aa) => aa.χ_4 += val,
             _ => (),
         }
     }
-    pub fn add_to_χ5(&mut self, val: f64) {
+    pub fn _add_to_χ5(&mut self, val: f64) {
         match self {
             Self::Arg(aa) => aa.χ_5 += val,
             _ => (),

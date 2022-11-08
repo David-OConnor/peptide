@@ -2,8 +2,6 @@
 
 use std::f64::consts::TAU;
 
-use rand;
-
 use graphics::{
     self, Camera, ControlScheme, DeviceEvent, ElementState, EngineUpdates, Entity, InputSettings,
     LightType, Lighting, Mesh, PointLight, Scene, UiSettings,
@@ -16,23 +14,19 @@ use lin_alg2::{
     f64::{Quaternion, Vec3},
 };
 
-use crate::render::{CALPHA_COLOR, H_COLOR, O_COLOR};
 use crate::{
     atom_coords::{AtomCoords, ProteinCoords},
-    bond_vecs::{
-        H_BOND_IN, H_BOND_OUT, H_CALPHA_BOND, LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O,
-        LEN_N_CALPHA, LEN_N_H, O_BOND_IN, O_BOND_OUT, PLANAR3_A, PLANAR3_B, PLANAR3_C,
-    },
+    bond_vecs::{LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA, LEN_N_H},
     chem_definitions::AtomRole,
-    forces, gui, kinematics,
+    gui,
     render::{
-        self, ACTIVE_CALPHA_COLOR, ACTIVE_COLOR_ATOM, ACTIVE_N_COLOR, ATOM_SHINYNESS,
-        BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN, BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN,
-        BOND_SHINYNESS, H_SCALE, M_SCALE, RENDER_DIST, WINDOW_SIZE_X, WINDOW_SIZE_Y, WINDOW_TITLE,
+        self, ACTIVE_CALPHA_COLOR, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
+        BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS, CALPHA_COLOR, H_COLOR,
+        H_SCALE, M_SCALE, O_COLOR, RENDER_DIST, WINDOW_SIZE_X, WINDOW_SIZE_Y, WINDOW_TITLE,
     },
     sidechain::LEN_SC,
+    time_sim,
     types::State,
-    water::WaterAtomType,
     AminoAcidType,
 };
 
@@ -232,7 +226,7 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
 
         if active_res_changed || active_res_backbone_changed {
             // todo: Break this out by psi, phi etc instead of always updating all?
-            let mut res = &mut state.protein_descrip.residues[state.active_residue - 1];
+            let res = &mut state.protein_descrip.residues[state.active_residue - 1];
 
             // todo: Only do this for backbone changd; not acive res
 
@@ -260,12 +254,6 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
     }
 }
 
-// todo: Util?
-/// Get a random value from -0.5 to 0.5
-fn rng() -> f64 {
-    rand::random::<f64>() - 0.5
-}
-
 /// This runs each frame. Update our time-based simulation here.
 fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdates {
     let mut entities_changed = false;
@@ -273,82 +261,7 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
     // delegate to a sim fn/module
 
     if state.sim_running {
-        // Constant term in our noise.
-        let c = state.temperature * state.sim_time_scale * dt as f64;
-        // Crude approach, where we add random noise to the angles.
-
-        for res in &mut state.protein_descrip.residues {
-            res.ψ += rng() * c;
-            res.φ += rng() * c;
-
-            crate::clamp_angle(&mut res.φ, res.sidechain.aa_type() == AminoAcidType::Pro);
-            crate::clamp_angle(&mut res.ψ, false);
-
-            if let Some(χ) = res.sidechain.get_mut_χ1() {
-                *χ += rng() * c;
-                crate::clamp_angle(χ, false);
-            }
-            if let Some(χ) = res.sidechain.get_mut_χ2() {
-                *χ += rng() * c;
-                crate::clamp_angle(χ, false);
-            }
-            if let Some(χ) = res.sidechain.get_mut_χ3() {
-                *χ += rng() * c;
-                crate::clamp_angle(χ, false);
-            }
-            if let Some(χ) = res.sidechain.get_mut_χ4() {
-                *χ += rng() * c;
-                crate::clamp_angle(χ, false);
-            }
-            if let Some(χ) = res.sidechain.get_mut_χ5() {
-                *χ += rng() * c;
-                crate::clamp_angle(χ, false);
-            }
-        }
-
-        state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
-
-        // todo: Hack to prevent editing the loop we're itereating through.
-        let wm_dup = state.water_env.water_molecules.clone();
-
-        // todo: is thsi right?
-        let m_water = forces::O_MASS + 2. * forces::H_MASS;
-        for (i, water) in state.water_env.water_molecules.iter_mut().enumerate() {
-            // let v_o = forces::potential(water.o_posit_world, forces::O_CHARGE, &wm_dup);
-            // let v_h_a = forces::potential(water.h_a_posit_world, forces::H_CHARGE, &wm_dup);
-            // let v_h_b = forces::potential(water.h_b_posit_world, forces::H_CHARGE, &wm_dup);
-            // let v_m = forces::potential(water.m_posit_world, forces::M_CHARGE, &wm_dup);
-
-            // let f_o = v_o * forces::CH
-
-            // let potential = v_o + v_h_a + v_h_b + v_m;
-
-            let f_o = forces::force(water.o_posit, forces::O_CHARGE, &wm_dup, i);
-            let f_h_a = forces::force(water.ha_posit, forces::H_CHARGE, &wm_dup, i);
-            let f_h_b = forces::force(water.hb_posit, forces::H_CHARGE, &wm_dup, i);
-            let f_m = forces::force(water.m_posit, forces::M_CHARGE, &wm_dup, i);
-
-            // todo: Dist of just O?
-            // let force = (water.o_posit_world)
-
-            let a = (f_o + f_h_a + f_h_b + f_m) / m_water;
-
-            // println!("A {:?}", a);
-
-            water.velocity += a; // todo: Euler integration - not great
-
-            // todo: Beter way to incorporate temp. Isn't it KE, which is vel sq? so maybe take sqrt of temp?
-            let fudge_factor = 0.01;
-            water.o_posit += water.velocity
-                * state.temperature
-                * state.sim_time_scale
-                * dt as f64
-                * fudge_factor;
-
-            // todo: Code to re-generate out-of-bond molecules?
-        }
-
-        state.water_env.update_atom_posits();
+        time_sim::run(state, dt);
 
         scene.entities = generate_entities(&state);
 

@@ -11,7 +11,7 @@ use crate::{
     chem_definitions::{AminoAcidType, AtomRole},
     render_wgpu,
     sidechain::{Sidechain, PRO_PHI_MAX, PRO_PHI_MIN},
-    types::{Residue, State},
+    types::State,
     ProteinDescription,
 };
 
@@ -182,7 +182,7 @@ fn add_active_aa_editor(
 
     // Update `ar_i` since it may have changed.
     let ar_i = state.active_residue - 1;
-    let mut active_res = &mut state.protein_descrip.residues[ar_i];
+    let active_res = &mut state.protein_descrip.residues[ar_i];
 
     // For proline, limit φ range.
     let pro = active_aa_type == AminoAcidType::Pro;
@@ -197,7 +197,7 @@ fn add_active_aa_editor(
         ui,
         false,
     );
-    let mut active_res = &mut state.protein_descrip.residues[ar_i];
+    let active_res = &mut state.protein_descrip.residues[ar_i];
     add_angle_slider(
         &mut active_res.φ,
         "φ",

@@ -60,7 +60,7 @@ mod render_wgpu;
 mod save_load;
 mod sc_atom_placement;
 mod sidechain;
-mod simulate;
+mod time_sim;
 mod types;
 mod water;
 

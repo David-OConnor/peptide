@@ -9,8 +9,6 @@ use std::{
     str,
 };
 
-use lin_alg2::f64::Vec3;
-
 use crate::{
     sidechain::*,
     types::{ProteinDescription, Residue},

@@ -102,7 +102,7 @@ impl State {
             sim_running: false,
             show_sidechains: true,
             show_hydrogens: true,
-            show_water_molecules: false,
+            show_water_molecules: true,
             water_env: WaterEnvironment::build(crate::water::N_MOLECULES, 308.15),
         }
     }

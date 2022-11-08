@@ -7,7 +7,6 @@ use lin_alg2::f64::{self, Quaternion, Vec3};
 
 use crate::{
     bond_vecs::*,
-    sidechain::Sidechain,
     types::{BackboneCoords, Residue},
 };
 

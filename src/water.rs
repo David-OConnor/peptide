@@ -3,27 +3,25 @@
 use rand;
 
 use crate::{
-    bond_vecs::{H_BOND_IN, H_BOND_OUT, PLANAR3_C, WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
+    bond_vecs::{H_BOND_IN, H_BOND_OUT, WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
     forces::{self, O_M_DIST},
     kinematics,
 };
 
-use crate::atom_coords::AtomCoords;
-use crate::chem_definitions::AtomType;
-use egui::Key::Q;
 use lin_alg2::f64::{Quaternion, Vec3};
 
 // Distance from the origin.
 const SIM_BOX_DIST: f64 = 20.;
 const VEL_SCALER: f64 = 0.0; // todo: increase A/R
+const ANG_VEL_SCALER: f64 = 0.0; // todo: increase A/R
 
 pub const N_MOLECULES: usize = 100;
 
-#[derive(Clone, Copy, Debug)]
-pub enum WaterAtomType {
-    O,
-    H,
-}
+// #[derive(Clone, Copy, Debug)]
+// pub enum WaterAtomType {
+//     O,
+//     H,
+// }
 
 // #[derive(Debug)]
 // // todo: Consider if you want this to be a struct, a const of some other struct etc.
@@ -40,13 +38,17 @@ pub struct WaterMolecule {
     /// Worldspace coordinates of the O atom.
     pub o_posit: Vec3,
     /// Using the same orientation ref as protein atoms.
-    pub orientation: Quaternion,
+    pub o_orientation: Quaternion,
     pub velocity: Vec3,
-    /// Generated from above vars. todo: Consider a method etc instead.
+    // todo: Is this right? Seems reasonable if we assume it means apply this rotation
+    // todo per second?
+    // pub angular_velocity: Quaternion,
+    pub angular_velocity: Vec3, // magnitude is rate.
+    /// Generated from above vars.
     pub ha_posit: Vec3,
-    /// Generated from above vars. todo: Consider a method etc instead.
+    /// Generated from above vars.
     pub hb_posit: Vec3,
-    /// TIP4P M position. Generated from above vars. todo: Consider a method etc instead.
+    /// TIP4P M position. Generated from above vars.
     pub m_posit: Vec3,
 }
 
@@ -54,32 +56,32 @@ impl WaterMolecule {
     /// Update h and m posits.
     pub fn update_posits(&mut self) {
         let (h_a_posit, _) = kinematics::find_atom_placement(
-            self.orientation,
+            self.o_orientation,
             H_BOND_IN,
-            unsafe { H_BOND_OUT },
+            H_BOND_OUT,
             0.,
             self.o_posit,
             Vec3::new_zero(), // todo?
             WATER_BOND_H_A,
-            forces::R_OH_BOND,
+            forces::O_H_DIST,
         );
 
         let (h_b_posit, _) = kinematics::find_atom_placement(
-            self.orientation,
+            self.o_orientation,
             H_BOND_IN,
-            unsafe { H_BOND_OUT },
+            H_BOND_OUT,
             0.,
             self.o_posit,
             Vec3::new_zero(), // todo?
             unsafe { WATER_BOND_H_B },
-            forces::R_OH_BOND,
+            forces::O_H_DIST,
         );
 
         // todo: At least at the start, visualize this by drawing a small sphere on it.
         let (m_posit, _) = kinematics::find_atom_placement(
-            self.orientation,
+            self.o_orientation,
             H_BOND_IN,
-            unsafe { H_BOND_OUT },
+            H_BOND_OUT,
             0.,
             self.o_posit,
             Vec3::new_zero(), // todo?
@@ -130,15 +132,44 @@ impl WaterEnvironment {
                 rand::random::<f64>() * VEL_SCALER - VEL_SCALER / 2.,
             );
 
+            let angular_velocity = Vec3::new(
+                rand::random::<f64>() * ANG_VEL_SCALER - ANG_VEL_SCALER / 2.,
+                rand::random::<f64>() * ANG_VEL_SCALER - ANG_VEL_SCALER / 2.,
+                rand::random::<f64>() * ANG_VEL_SCALER - ANG_VEL_SCALER / 2.,
+            );
+
             molecules.push(WaterMolecule {
                 o_posit: position_o_world,
-                orientation,
+                o_orientation: orientation,
                 velocity,
+                angular_velocity,
                 ha_posit: Vec3::new_zero(),
                 hb_posit: Vec3::new_zero(),
                 m_posit: Vec3::new_zero(),
             });
         }
+
+        // todo: Temp
+        let molecules = vec![
+            WaterMolecule {
+                o_posit: Vec3::new(10., -10., 0.),
+                o_orientation: Quaternion::new_identity(),
+                velocity: Vec3::new_zero(),
+                angular_velocity: Vec3::new_zero(),
+                ha_posit: Vec3::new_zero(),
+                hb_posit: Vec3::new_zero(),
+                m_posit: Vec3::new_zero(),
+            },
+            WaterMolecule {
+                o_posit: Vec3::new(12., -10., 0.),
+                o_orientation: Quaternion::new_identity(),
+                velocity: Vec3::new_zero(),
+                angular_velocity: Vec3::new_zero(),
+                ha_posit: Vec3::new_zero(),
+                hb_posit: Vec3::new_zero(),
+                m_posit: Vec3::new_zero(),
+            }
+        ];
 
         let mut result = Self {
             water_molecules: molecules,

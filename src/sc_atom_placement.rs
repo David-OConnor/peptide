@@ -1,10 +1,6 @@
 //! Add positions and orientations for all sidechain atoms. Quite repetative!
 
-use std::f64::consts::TAU;
-
-use crate::{
-    bond_vecs::*, chem_definitions::AminoAcidType, kinematics::find_atom_placement, sidechain::*,
-};
+use crate::{bond_vecs::*, kinematics::find_atom_placement, sidechain::*};
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
