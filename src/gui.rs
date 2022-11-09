@@ -415,10 +415,10 @@ fn add_motion_sim(
     // entities_changed: &mut bool,
 ) {
     ui.horizontal(|ui| {
-        if ui.button("Start thermal sim").clicked() {
+        if ui.button("Start sim").clicked() {
             state.sim_running = true;
         }
-        if ui.button("Stop thermal sim").clicked() {
+        if ui.button("Stop sim").clicked() {
             state.sim_running = false;
         }
     });

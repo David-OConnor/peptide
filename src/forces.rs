@@ -64,8 +64,8 @@ const K_C: f64 = 332.1; // Å·kcal/(mol·e²);
 // const σ: f64 = 2.725; // Angstroms
 // const ε: f64 = 4.9115; // *10^-21 J
 
-// static A: Lazy<f64> = Lazy::new(|| 4. * LJ_ε_OO * LJ_σ_OO.powi(12));
-// static B: Lazy<f64> = Lazy::new(|| 4. * LJ_ε_OO * LJ_σ_OO.powi(6));
+static A: Lazy<f64> = Lazy::new(|| 4. * LJ_ε_OO * LJ_σ_OO.powi(12));
+static B: Lazy<f64> = Lazy::new(|| 4. * LJ_ε_OO * LJ_σ_OO.powi(6));
 
 // Saves computation?
 const LJ_4ε: f64 = 4. * LJ_ε_OO;
@@ -141,7 +141,7 @@ pub fn force(
     let mut f_m = Vec3::new_zero();
 
     let mut f_total = Vec3::new_zero();
-    let mut t_total = Vec3::new_zero();
+    let mut τ_total = Vec3::new_zero();
 
     for (j, water) in water_molecules.iter().enumerate() {
         if i == j {
@@ -150,30 +150,24 @@ pub fn force(
 
         // Charge is from M, but LJ potential is from O?
 
+        // todo: I think these subtraction directions are backwards by traditional definitions,
+        // todo but we've compensated elsewhere.
+        // These intermediate variables prevent preventcalculation repetitions.
         let o_o = acted_on.o_posit - water.o_posit;
-        let o_ha = acted_on.o_posit - water.ha_posit;
-        let o_hb = acted_on.o_posit - water.hb_posit;
-        let o_m = acted_on.o_posit - water.m_posit;
 
-        let ha_o = acted_on.ha_posit - water.o_posit;
         let ha_ha = acted_on.ha_posit - water.ha_posit;
         let ha_hb = acted_on.ha_posit - water.hb_posit;
         let ha_m = acted_on.ha_posit - water.m_posit;
 
-        let hb_o = acted_on.hb_posit - water.o_posit;
         let hb_ha = acted_on.hb_posit - water.ha_posit;
         let hb_hb = acted_on.hb_posit - water.hb_posit;
         let hb_m = acted_on.hb_posit - water.o_posit;
 
-        let m_o = acted_on.m_posit - water.o_posit;
         let m_ha = acted_on.m_posit - water.ha_posit;
         let m_hb = acted_on.m_posit - water.hb_posit;
         let m_m = acted_on.m_posit - water.m_posit;
 
         let r_o_o = o_o.magnitude();
-        let r_o_ha = o_ha.magnitude();
-        let r_o_hb = o_hb.magnitude();
-        let r_o_m = o_m.magnitude();
 
         let r_ha_ha = ha_ha.magnitude();
         let r_ha_hb = ha_hb.magnitude();
@@ -191,14 +185,14 @@ pub fn force(
         let q_h_m = H_CHARGE * M_CHARGE;
 
         // Note: We don't include the coulomb const `K_C` in this section; we've factored
-        // it out to save computations. See below.
+        // it out to save computations. Additionally, we factor out the -1 term. See below.
         let f_ha_ha = (ha_ha / r_ha_ha) * q_h_h / r_ha_ha.powi(2);
         let f_ha_hb = (ha_hb / r_ha_hb) * q_h_h / r_ha_hb.powi(2);
         let f_ha_m = (ha_m / r_ha_m) * q_h_m / r_ha_m.powi(2);
 
-        let f_hb_ha = (hb_ha / r_ha_hb) * q_h_h / r_ha_m.powi(2);
+        let f_hb_ha = (hb_ha / r_ha_hb) * q_h_h / r_ha_hb.powi(2);
         let f_hb_hb = (hb_hb / r_hb_hb) * q_h_h / r_hb_hb.powi(2);
-        let f_hb_m = (hb_m / r_hb_m) * H_CHARGE * M_CHARGE / r_hb_m.powi(2);
+        let f_hb_m = (hb_m / r_hb_m) * q_h_m / r_hb_m.powi(2);
 
         let f_m_ha = (m_ha / r_ha_m) * q_h_m / r_ha_m.powi(2);
         let f_m_hb = (m_hb / r_hb_m) * q_h_m / r_hb_m.powi(2);
@@ -215,19 +209,27 @@ pub fn force(
 
         let f_coulomb = (f_ha + f_hb + f_m) * K_C;
 
-        let f_lj = (o_o / r_o_o) * LJ_4ε * ((LJ_σ_OO / r_o_o).powi(12) - (LJ_σ_OO / r_o_o).powi(6));
+        // let σ_div_r = LJ_σ_OO / r_o_o; // computation simplifier
+        // let f_lj = (o_o / r_o_o) * LJ_4ε * c.powi(12) - c.powi(6));
+
+        // Differentiate the LJ potential to find its force, in conjunction with the vector
+        // bewteen O molecules.
+        let f_lj = -(o_o / r_o_o) * 6. * (*B * r_o_o.powi(6) - 2. * *A) / r_o_o.powi(13);
 
         // todo: This proably won't work, since the atoms have diff masses. (?)
+
         f_total += f_coulomb + f_lj;
+        // f_total += f_coulomb;
+        f_total += f_lj;
 
         // I suppose Lennard-Jones forces don't affect torque, due to them interacting between O,
         // the center of our rotation. (?) // todo: This might not be right.
-        let t_ha = (WATER_BOND_H_A * O_H_DIST).cross(f_ha);
-        let t_hb = unsafe { WATER_BOND_H_B * O_H_DIST }.cross(f_hb);
-        let t_m = unsafe { WATER_BOND_M * O_M_DIST }.cross(f_m);
+        let τ_ha = (WATER_BOND_H_A * O_H_DIST).cross(f_ha);
+        let τ_hb = unsafe { WATER_BOND_H_B * O_H_DIST }.cross(f_hb);
+        let τ_m = unsafe { WATER_BOND_M * O_M_DIST }.cross(f_m);
 
         // let t_total =
-        t_total += t_ha + t_hb + t_m;
+        τ_total += τ_ha + τ_hb + τ_m;
 
         // todo: Is this right?
 
@@ -242,5 +244,5 @@ pub fn force(
     }
 
     // (f_o, f_h_a, f_h_b, f_m)
-    (f_total, t_total)
+    (f_total, τ_total)
 }

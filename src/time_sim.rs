@@ -82,7 +82,7 @@ pub fn run(state: &mut State, dt: f32) {
 
         // todo: Beter way to incorporate temp. Isn't it KE, which is vel sq? so maybe take sqrt of temp?
         let fudge_factor = 0.01;
-        let fudge_factor_rot = 0.0001;
+        let fudge_factor_rot = 0.001;
 
         water.o_posit +=
             water.velocity * state.temperature * state.sim_time_scale * dt as f64 * fudge_factor;
@@ -92,7 +92,7 @@ pub fn run(state: &mut State, dt: f32) {
             water.angular_velocity.magnitude() * fudge_factor_rot,
         );
 
-        water.o_orientation = r * water.o_orientation;
+        // water.o_orientation = r * water.o_orientation;
 
         // todo: Code to re-generate out-of-bond molecules?
     }
