@@ -1,7 +1,15 @@
 //! This module contains code for running a simulation over time. Related to the concept of
 //! integration.
 
-use crate::{atom_coords::ProteinCoords, forces, AminoAcidType, State};
+use core::f64::consts::TAU;
+
+use crate::{
+    atom_coords::ProteinCoords,
+    bond_vecs::{WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
+    forces::{self},
+    water::{self, H_MASS, O_H_DIST},
+    AminoAcidType, State,
+};
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
@@ -52,7 +60,7 @@ pub fn run(state: &mut State, dt: f32) {
     let wm_dup = state.water_env.water_molecules.clone();
 
     // todo: is thsi right?
-    let m_water = forces::O_MASS + 2. * forces::H_MASS;
+    let m_water = water::O_MASS + 2. * water::H_MASS;
     for (i, water) in state.water_env.water_molecules.iter_mut().enumerate() {
         // let v_o = forces::potential(water.o_posit_world, forces::O_CHARGE, &wm_dup);
         // let v_h_a = forces::potential(water.h_a_posit_world, forces::H_CHARGE, &wm_dup);
@@ -74,15 +82,47 @@ pub fn run(state: &mut State, dt: f32) {
         // let force = (water.o_posit_world)
         // let a = (f_o + f_h_a + f_h_b + f_m) / m_water;
 
-        let a = force / m_water;
-        let ω = torque / m_water;
+        // Calculate inertial moments for each hydrogen atom, on the given torque axis.
+        // Note that these are already normalized.
+        let o_ha_bond_world = water.o_orientation.rotate_vec(WATER_BOND_H_A);
+        let o_hb_bond_world = water.o_orientation.rotate_vec(unsafe { WATER_BOND_H_B });
 
-        water.velocity += a; // todo: Euler integration - not great
-        water.angular_velocity += ω; // todo: Euler integration - not great
+        // Calculate an effective radius; the radius that's going in the direction of rotation.
+        // Take the dot product between each hydrogen, and the perpendicular vector of the
+        // normalized torque closest to it to find the cosine loss.
+
+        let torque_norm = torque.to_normalized();
+
+        // todo: Can we use this shortcut?
+        // let r_ha_effective = 1. - (o_ha_bond_world.dot(torque_norm));
+        // let r_hb_effective = 1. - (o_hb_bond_world.dot(torque_norm));
+
+        // Calculate the vector orthonormal to torque, and each of the O-H bonds.
+        // We use this as an axis of rotation to find the perpendicular vec
+        // to torque along each of the O-H axes.
+        let orthonorm_τ_ha = torque_norm.cross(o_ha_bond_world);
+        let orthonorm_τ_hb = torque_norm.cross(o_hb_bond_world);
+
+        let rotation_ha = Quaternion::from_axis_angle(orthonorm_τ_ha, TAU / 4.);
+        let rotation_hb = Quaternion::from_axis_angle(orthonorm_τ_hb, TAU / 4.);
+
+        let torque_perp_along_ha = rotation_ha.rotate_vec(torque_norm);
+        let torque_perp_along_hb = rotation_hb.rotate_vec(torque_norm);
+
+        let r_ha_effective = torque_perp_along_ha.dot(torque_perp_along_ha) * O_H_DIST;
+        let r_hb_effective = torque_perp_along_hb.dot(torque_perp_along_hb) * O_H_DIST;
+
+        let l = H_MASS * (r_ha_effective.powi(2) + r_hb_effective.powi(2));
+
+        let a = force / m_water;
+        let α = torque / l;
+
+        water.velocity += a * dt as f64; // todo: Euler integration - not great
+        water.angular_velocity += α * dt as f64; // todo: Euler integration - not great
 
         // todo: Beter way to incorporate temp. Isn't it KE, which is vel sq? so maybe take sqrt of temp?
-        let fudge_factor = 0.01;
-        let fudge_factor_rot = 0.001;
+        let fudge_factor = 10.;
+        let fudge_factor_rot = 0.1;
 
         water.o_posit +=
             water.velocity * state.temperature * state.sim_time_scale * dt as f64 * fudge_factor;
@@ -92,7 +132,7 @@ pub fn run(state: &mut State, dt: f32) {
             water.angular_velocity.magnitude() * fudge_factor_rot,
         );
 
-        // water.o_orientation = r * water.o_orientation;
+        water.o_orientation = r * water.o_orientation;
 
         // todo: Code to re-generate out-of-bond molecules?
     }

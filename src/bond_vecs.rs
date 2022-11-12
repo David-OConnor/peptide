@@ -7,7 +7,7 @@ use std::f64::consts::TAU;
 
 use lin_alg2::f64::{Quaternion, Vec3};
 
-use crate::forces;
+use crate::{forces, water};
 
 // These lengths are in angstroms.
 
@@ -358,7 +358,7 @@ pub fn init_local_bond_vecs() {
         let bond_angle_ring5 = TAU / 2. - TAU / 5.;
         let bond_angle_ring6 = TAU / 2. - TAU / 6.;
         let bond_angle_ho = TAU * 0.3;
-        let bond_angle_water = forces::θ_HOH_ANGLE;
+        let bond_angle_water = water::θ_HOH_ANGLE;
 
         RING5_BOND_OUT =
             Quaternion::from_axis_angle(z, bond_angle_ring5).rotate_vec(ANCHOR_BOND_VEC);

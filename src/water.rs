@@ -4,18 +4,57 @@ use rand;
 
 use crate::{
     bond_vecs::{H_BOND_IN, H_BOND_OUT, WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
-    forces::{self, O_M_DIST},
+    forces::{self},
     kinematics,
 };
 
 use lin_alg2::f64::{Quaternion, Vec3};
+use once_cell::sync::Lazy;
 
 // Distance from the origin.
 const SIM_BOX_DIST: f64 = 20.;
 const VEL_SCALER: f64 = 0.0; // todo: increase A/R
 const ANG_VEL_SCALER: f64 = 0.0; // todo: increase A/R
 
-pub const N_MOLECULES: usize = 100;
+pub const N_MOLECULES: usize = 200;
+
+// Water model vars below.
+
+// Consts for TIP4P/2005 (See LAMMPS docs above):
+pub const O_MASS: f64 = 15.9994;
+// Atomic mass units
+pub const H_MASS: f64 = 1.008;
+
+pub const H_CHARGE: f64 = 0.5564;
+// Coulombs?
+// The O char is placed at M in this model; no charge on O itself.
+pub const _O_CHARGE: f64 = 0.;
+// Coulombs?
+pub const M_CHARGE: f64 = -2. * H_CHARGE;
+
+// Called in the creation of our bond vecs
+pub const θ_HOH_ANGLE: f64 = 1.82421813;
+
+pub const O_H_DIST: f64 = 0.9572;
+
+// Distance between the center of the oxygen atom, and the charge-center point M; along
+// axis between the bonds to H.
+pub const O_M_DIST: f64 = 0.1546;
+
+// todo: Does this vary with temp? Ie the `sklogwiki` article above lists ε/k (K) as 78.0
+const LJ_ε_OO: f64 = 0.1852;
+const LJ_σ_OO: f64 = 3.1589;
+const LJ_εσ_OH_HH: f64 = 0.;
+const coulomb_cutoff: f64 = 8.5;
+
+// todo: Is this the unit we want?
+pub const K_C: f64 = 332.1;
+
+pub static A: Lazy<f64> = Lazy::new(|| 4. * LJ_ε_OO * LJ_σ_OO.powi(12));
+pub static B: Lazy<f64> = Lazy::new(|| 4. * LJ_ε_OO * LJ_σ_OO.powi(6));
+
+// Saves computation?
+const LJ_4ε: f64 = 4. * LJ_ε_OO;
 
 // #[derive(Clone, Copy, Debug)]
 // pub enum WaterAtomType {
@@ -63,7 +102,7 @@ impl WaterMolecule {
             self.o_posit,
             Vec3::new_zero(), // todo?
             WATER_BOND_H_A,
-            forces::O_H_DIST,
+            O_H_DIST,
         );
 
         let (h_b_posit, _) = kinematics::find_atom_placement(
@@ -74,7 +113,7 @@ impl WaterMolecule {
             self.o_posit,
             Vec3::new_zero(), // todo?
             unsafe { WATER_BOND_H_B },
-            forces::O_H_DIST,
+            O_H_DIST,
         );
 
         // todo: At least at the start, visualize this by drawing a small sphere on it.
@@ -150,26 +189,26 @@ impl WaterEnvironment {
         }
 
         // todo: Temp
-        let molecules = vec![
-            WaterMolecule {
-                o_posit: Vec3::new(10., -10., 0.),
-                o_orientation: Quaternion::new_identity(),
-                velocity: Vec3::new_zero(),
-                angular_velocity: Vec3::new_zero(),
-                ha_posit: Vec3::new_zero(),
-                hb_posit: Vec3::new_zero(),
-                m_posit: Vec3::new_zero(),
-            },
-            WaterMolecule {
-                o_posit: Vec3::new(16., -10., 0.),
-                o_orientation: Quaternion::new_identity(),
-                velocity: Vec3::new_zero(),
-                angular_velocity: Vec3::new_zero(),
-                ha_posit: Vec3::new_zero(),
-                hb_posit: Vec3::new_zero(),
-                m_posit: Vec3::new_zero(),
-            },
-        ];
+        // let molecules = vec![
+        //     WaterMolecule {
+        //         o_posit: Vec3::new(10., -10., 0.),
+        //         o_orientation: Quaternion::new_identity(),
+        //         velocity: Vec3::new_zero(),
+        //         angular_velocity: Vec3::new_zero(),
+        //         ha_posit: Vec3::new_zero(),
+        //         hb_posit: Vec3::new_zero(),
+        //         m_posit: Vec3::new_zero(),
+        //     },
+        //     WaterMolecule {
+        //         o_posit: Vec3::new(16., -10., 0.),
+        //         o_orientation: Quaternion::new_identity(),
+        //         velocity: Vec3::new_zero(),
+        //         angular_velocity: Vec3::new_zero(),
+        //         ha_posit: Vec3::new_zero(),
+        //         hb_posit: Vec3::new_zero(),
+        //         m_posit: Vec3::new_zero(),
+        //     },
+        // ];
 
         let mut result = Self {
             water_molecules: molecules,
