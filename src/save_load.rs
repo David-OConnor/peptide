@@ -9,6 +9,8 @@ use std::{
     str,
 };
 
+use lin_alg2::f64::{Quaternion, Vec3};
+
 use crate::{
     sidechain::*,
     types::{ProteinDescription, Residue},
@@ -264,10 +266,16 @@ impl ProteinDescription {
             i += RESIDUE_SIZE
         }
 
+        // todo: Save and load these!
+        let anchor_n_posit = Vec3::new_zero();
+        let anchor_n_orientation = Quaternion::new_identity();
+
         Self {
             name,
             pdb_ident,
             residues,
+            anchor_n_posit,
+            anchor_n_orientation,
         }
     }
 }

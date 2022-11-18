@@ -94,6 +94,27 @@ pub fn _force(point: Vec3, q: f64, water_molecules: &Vec<WaterMolecule>, i: usiz
     result
 }
 
+/// Calculate the coulomb force on a particle, from other particles in a system. The arguments are
+/// of type (position, charge).
+fn coulomb_force(particle: (Vec3, f64), others: &Vec<(Vec3, f64)>) -> Vec3 {
+    let mut result = Vec3::new_zero();
+
+    let (posit_this, charge_this) = particle;
+
+    for (posit_other, charge_other) in others {
+        let posit_diff = posit_this - *posit_other; // todo: Order
+        let r = posit_diff.magnitude();
+
+        // Without coulomb const
+        let force = posit_diff / r * charge_this * *charge_other / r.powi(2);
+
+        result += force;
+    }
+
+    // todo: Apply K_C downstream?
+    result * K_C
+}
+
 // todo: Consider a compute shader for these iterate-over-water-mol operations.
 
 /// Attempt at force; dup of above
@@ -107,6 +128,12 @@ pub fn force(
 ) -> (Vec3, Vec3) {
     let mut f_total = Vec3::new_zero();
     let mut τ_total = Vec3::new_zero();
+
+    // The first letter here is the molecule acted on.
+    // Coulomb forces
+    // todo: Consts for these.
+    let q_h_h = H_CHARGE * H_CHARGE; // todo: Const?
+    let q_h_m = H_CHARGE * M_CHARGE;
 
     for (j, water_other) in water_molecules.iter().enumerate() {
         if i == j {
@@ -143,12 +170,6 @@ pub fn force(
 
         let r_m_m = m_m.magnitude();
 
-        // The first letter here is the molecule acted on.
-        // Coulomb forces
-        // todo: Consts for these.
-        let q_h_h = H_CHARGE * H_CHARGE; // todo: Const?
-        let q_h_m = H_CHARGE * M_CHARGE;
-
         // Note: We don't include the coulomb const `K_C` in this section; we've factored
         // it out to save computations. Additionally, we factor out the -1 term. See below.
         let f_ha_ha = (ha_ha / r_ha_ha) * q_h_h / r_ha_ha.powi(2);
@@ -180,6 +201,10 @@ pub fn force(
         // Differentiate the LJ potential to find its force, in conjunction with the vector
         // bewteen O molecules.
         let f_lj = -(o_o / r_o_o) * 6. * (*B * r_o_o.powi(6) - 2. * *A) / r_o_o.powi(13);
+        // todo: Try the answer here:
+        // https://math.stackexchange.com/questions/1742524/numerical-force-due-to-lennard-jones-potential
+        // todo: May or may not be equiv to the A/B formulation above.
+        // todo: Or here: https://towardsdatascience.com/the-lennard-jones-potential-35b2bae9446c
 
         // todo: This proably won't work, since the atoms have diff masses. (?)
 

@@ -1,6 +1,7 @@
 //! This module contains descriptions of known proteins.
 
 use core::f64::consts::TAU;
+use lin_alg2::f64::{Quaternion, Vec3};
 
 use crate::{
     sidechain::Sidechain,
@@ -177,5 +178,7 @@ pub fn make_trp_cage() -> ProteinDescription {
             r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18, r19,
             r20,
         ],
+        anchor_n_posit: Vec3::new_zero(),
+        anchor_n_orientation: Quaternion::new_identity(),
     }
 }

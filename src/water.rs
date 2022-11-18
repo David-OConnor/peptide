@@ -226,3 +226,15 @@ impl WaterEnvironment {
         }
     }
 }
+
+/// Experimental Born-Oppenheimer model of water, where positive charges are point charges at the
+/// center of each atom, and negative charges are spread out over the electron cloud, using
+/// experimental data. They sum to equal the full negative charge. More points is more computationally
+/// expensive, but more accurate.
+///
+/// The coordinate system is with regards to the 2 bond vectors we use for H, with the oxygen atom
+/// at its origin.
+struct WaterElecCloud {
+    /// Our negative point charges, representing electron density. Sums to (10? 8 O + 2 H)
+    electron_charges: Vec<(Vec3, f64)>,
+}

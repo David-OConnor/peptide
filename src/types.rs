@@ -8,7 +8,6 @@ use crate::{
 };
 
 use lin_alg2::f64::{Quaternion, Vec3};
-use winit::event::VirtualKeyCode::W;
 
 #[derive(Debug)]
 /// A protein defined by AminoAcids: Name and bond angle.
@@ -16,6 +15,8 @@ pub struct ProteinDescription {
     pub name: String,
     pub pdb_ident: String,
     pub residues: Vec<Residue>,
+    pub anchor_n_posit: Vec3,
+    pub anchor_n_orientation: Quaternion,
 }
 
 impl fmt::Display for ProteinDescription {

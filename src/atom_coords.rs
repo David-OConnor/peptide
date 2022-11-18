@@ -91,8 +91,8 @@ impl ProteinCoords {
         // and an identity-quaternion orientation.
         add_atom(
             AtomRole::N,
-            Vec3::new(0., 0., 0.),
-            Q_I,
+            descrip.anchor_n_posit,
+            descrip.anchor_n_orientation,
             &mut backbone,
             1,
             None,
