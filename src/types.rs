@@ -15,6 +15,9 @@ pub struct ProteinDescription {
     pub name: String,
     pub pdb_ident: String,
     pub residues: Vec<Residue>,
+    /// We may need to adjust anchor position and orientation in response to forces on
+    /// atoms in the chain. Eg on the anchor atom itself, or propogated torque from forces
+    /// anywhere on the chain.
     pub anchor_n_posit: Vec3,
     pub anchor_n_orientation: Quaternion,
 }

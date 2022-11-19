@@ -120,8 +120,80 @@ fn coulomb_force(particle: (Vec3, f64), others: &Vec<(Vec3, f64)>) -> Vec3 {
 /// Attempt at force; dup of above
 /// Output: Forces on O, H_A, H_B, M.
 /// todo: Maybe output a single force for the O molecule, and a 3-axis torque (or a quaternion torque?)
+/// This approach for coulomb force skips some of our optomizations, but is more general than the
+/// hand-tuned code below, and is easier to inspect and debug.
+/// This terser approach involves looping through the other molecules multiple times, which isn't great!
 // pub fn force(acted_on: &WaterMolecule, water_molecules: &Vec<WaterMolecule>, i: usize) -> (Vec3, Vec3, Vec3, Vec3) {
 pub fn force(
+    acted_on: &WaterMolecule,
+    water_molecules: &Vec<WaterMolecule>,
+    i: usize,
+) -> (Vec3, Vec3) {
+    let mut f_total = Vec3::new_zero();
+
+    // This approach for coulomb force skips some of our optomizations, but is more general than the
+    // hand-tuned code below, and is easier to inspect and debug.
+    // This terser approach involves looping through the other molecules multiple times, which isn't great!
+    let mut coulomb_data = Vec::new();
+    for (j, w) in water_molecules.iter().enumerate() {
+        if i == j {
+            continue;
+        }
+        coulomb_data.push((w.m_posit, M_CHARGE));
+        coulomb_data.push((w.ha_posit, H_CHARGE));
+        coulomb_data.push((w.hb_posit, H_CHARGE));
+    }
+
+    // todo: maybe handle this itereating in `coulomb_force()` by making the acted_on first arg a Vec.
+    let mut force_coulomb = Vec3::new_zero();
+    let mut torque_coulomb = Vec3::new_zero();
+
+    let force_on_m = coulomb_force((acted_on.m_posit, M_CHARGE), &coulomb_data);
+    let force_on_ha = coulomb_force((acted_on.ha_posit, H_CHARGE), &coulomb_data);
+    let force_on_hb = coulomb_force((acted_on.hb_posit, H_CHARGE), &coulomb_data);
+
+    let torque_on_m =
+        (acted_on.o_orientation.rotate_vec(unsafe { WATER_BOND_M }) * O_M_DIST).cross(force_on_m);
+
+    let torque_on_ha =
+        (acted_on.o_orientation.rotate_vec(WATER_BOND_H_A) * O_M_DIST).cross(force_on_m);
+
+    let torque_on_hb =
+        (acted_on.o_orientation.rotate_vec(unsafe { WATER_BOND_M }) * O_M_DIST).cross(force_on_m);
+
+    force_coulomb += force_on_m + force_on_ha + force_on_hb;
+    torque_coulomb += torque_on_m + torque_on_ha + torque_on_hb;
+
+    // The first letter here is the molecule acted on.
+    // Coulomb forces
+    // todo: Consts for these.
+    let q_h_h = H_CHARGE * H_CHARGE; // todo: Const?
+    let q_h_m = H_CHARGE * M_CHARGE;
+
+    let mut force_lj = Vec3::new_zero();
+    for (j, water_other) in water_molecules.iter().enumerate() {
+        if i == j {
+            continue;
+        }
+
+        let o_o = acted_on.o_posit - water_other.o_posit;
+        let r_o_o = o_o.magnitude();
+        force_lj += -(o_o / r_o_o) * 6. * (*B * r_o_o.powi(6) - 2. * *A) / r_o_o.powi(13);
+    }
+
+    let force = force_coulomb + force_lj;
+
+    // (f_o, f_h_a, f_h_b, f_m)
+    (f_total, torque_coulomb)
+}
+
+/// Attempt at force; dup of above
+/// Output: Forces on O, H_A, H_B, M.
+///  todo: THis commented-out code is more efficient, but less flexible, and tougher to
+/// todo reason about.
+/// todo: Maybe output a single force for the O molecule, and a 3-axis torque (or a quaternion torque?)
+// pub fn force(acted_on: &WaterMolecule, water_molecules: &Vec<WaterMolecule>, i: usize) -> (Vec3, Vec3, Vec3, Vec3) {
+pub fn force2(
     acted_on: &WaterMolecule,
     water_molecules: &Vec<WaterMolecule>,
     i: usize,
@@ -214,9 +286,11 @@ pub fn force(
 
         // I suppose Lennard-Jones forces don't affect torque, due to them interacting between O,
         // the center of our rotation. (?) // todo: This might not be right.
-        let τ_ha = (WATER_BOND_H_A * O_H_DIST).cross(f_ha);
-        let τ_hb = unsafe { WATER_BOND_H_B * O_H_DIST }.cross(f_hb);
-        let τ_m = unsafe { WATER_BOND_M * O_M_DIST }.cross(f_m);
+        let τ_m =
+            (acted_on.o_orientation.rotate_vec(unsafe { WATER_BOND_M }) * O_M_DIST).cross(f_m);
+        let τ_ha = (acted_on.o_orientation.rotate_vec(WATER_BOND_H_A) * O_H_DIST).cross(f_ha);
+        let τ_hb =
+            (acted_on.o_orientation.rotate_vec(unsafe { WATER_BOND_H_B }) * O_H_DIST).cross(f_hb);
 
         // let t_total =
         τ_total += τ_ha + τ_hb + τ_m;

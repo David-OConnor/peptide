@@ -189,26 +189,26 @@ impl WaterEnvironment {
         }
 
         // todo: Temp
-        // let molecules = vec![
-        //     WaterMolecule {
-        //         o_posit: Vec3::new(10., -10., 0.),
-        //         o_orientation: Quaternion::new_identity(),
-        //         velocity: Vec3::new_zero(),
-        //         angular_velocity: Vec3::new_zero(),
-        //         ha_posit: Vec3::new_zero(),
-        //         hb_posit: Vec3::new_zero(),
-        //         m_posit: Vec3::new_zero(),
-        //     },
-        //     WaterMolecule {
-        //         o_posit: Vec3::new(16., -10., 0.),
-        //         o_orientation: Quaternion::new_identity(),
-        //         velocity: Vec3::new_zero(),
-        //         angular_velocity: Vec3::new_zero(),
-        //         ha_posit: Vec3::new_zero(),
-        //         hb_posit: Vec3::new_zero(),
-        //         m_posit: Vec3::new_zero(),
-        //     },
-        // ];
+        let molecules = vec![
+            WaterMolecule {
+                o_posit: Vec3::new(10., -10., 0.),
+                o_orientation: Quaternion::new_identity(),
+                velocity: Vec3::new_zero(),
+                angular_velocity: Vec3::new_zero(),
+                ha_posit: Vec3::new_zero(),
+                hb_posit: Vec3::new_zero(),
+                m_posit: Vec3::new_zero(),
+            },
+            WaterMolecule {
+                o_posit: Vec3::new(16., -10., 0.),
+                o_orientation: Quaternion::from_axis_angle(Vec3::new(0., 0., 1.), 5.),
+                velocity: Vec3::new_zero(),
+                angular_velocity: Vec3::new_zero(),
+                ha_posit: Vec3::new_zero(),
+                hb_posit: Vec3::new_zero(),
+                m_posit: Vec3::new_zero(),
+            },
+        ];
 
         let mut result = Self {
             water_molecules: molecules,
