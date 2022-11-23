@@ -15,15 +15,23 @@
 
 use once_cell::sync::Lazy;
 
-use crate::water::{WaterMolecule, A, B, H_CHARGE, K_C, M_CHARGE, O_H_DIST, O_M_DIST};
+use crate::water::{WaterMolecule, A, B, H_CHARGE,M_CHARGE, O_H_DIST, O_M_DIST};
 
 use crate::bond_vecs::{WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M};
 use lin_alg2::f64::Vec3;
+
+// todo: Is this the unit we want?
+pub const K_C: f64 = 332.1;
 
 // todo: Temp. Get rid of these mag values. A/R
 pub const MAG_O: f64 = 1.;
 pub const MAG_N: f64 = 1.; // Atomic mass units
                            // Coulombs?
+
+// todo?
+pub const CHARGE_PROTON: f64 = 1.;
+pub const CHARGE_ELECTRON: f64 = 1.;
+pub const MASS_PROT: f64 = 1.; // todo?
 
 // todo: Move these to the `water` module?
 // 104.52 to radians.

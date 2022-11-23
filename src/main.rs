@@ -63,6 +63,8 @@ mod sidechain;
 mod time_sim;
 mod types;
 mod water;
+mod wf_lab;
+mod util;
 
 use crate::types::State;
 

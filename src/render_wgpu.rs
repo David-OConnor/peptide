@@ -1,6 +1,7 @@
 //! This module contains code for use with our custom renderer.
 
 use std::f64::consts::TAU;
+use egui::Color32;
 
 use graphics::{
     self, Camera, ControlScheme, DeviceEvent, ElementState, EngineUpdates, Entity, InputSettings,
@@ -543,6 +544,28 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             ));
             // todo: bonds.
         }
+    }
+
+    for proton in &state.wavefunction_lab.protons {
+        result.push(Entity::new(
+            1,
+            vec3_to_f32(proton.position),
+            Q_I,
+            0.5,
+            O_COLOR,
+            ATOM_SHINYNESS,
+        ));
+    }
+
+    for electron in &state.wavefunction_lab.electron_posits_dynamic {
+        result.push(Entity::new(
+            1,
+            vec3_to_f32(*electron),
+            Q_I,
+            0.1,
+            (0., 0.5, 1.),
+            1.
+        ));
     }
 
     result

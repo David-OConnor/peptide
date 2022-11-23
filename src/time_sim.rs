@@ -5,13 +5,12 @@ use core::f64::consts::TAU;
 
 use crate::{
     atom_coords::ProteinCoords,
-    bond_vecs::{WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
+    bond_vecs::{WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M, LEN_O_H},
     forces::{self},
     water::{self, H_MASS, O_H_DIST},
     AminoAcidType, State,
 };
 
-use crate::bond_vecs::LEN_O_H;
 use lin_alg2::f64::{Quaternion, Vec3};
 
 // todo: Util?
@@ -131,5 +130,45 @@ pub fn run(state: &mut State, dt: f32) {
         // todo: Code to re-generate out-of-bond molecules?
     }
 
+    let prot_dup = state.wavefunction_lab.protons.clone();
+
+    // todo: Move to forces
+    for (i, prot_this) in state.wavefunction_lab.protons.iter_mut().enumerate() {
+        let mut force = Vec3::new_zero();
+
+        for (j, prot_other) in prot_dup.iter().enumerate() {
+            if i == j {
+                continue
+            }
+            // todo: Come back to this
+        }
+
+        // todo: DRY with forces::coulomb_force
+        for elec in &state.wavefunction_lab.electron_posits_dynamic {
+            let posit_diff = prot_this.position - *elec; // todo: Order
+            let r = posit_diff.magnitude();
+
+            // Without coulomb const
+            let force_this = posit_diff / r * forces::CHARGE_PROTON * forces::CHARGE_ELECTRON / r.powi(2);
+
+            force += force_this;
+        }
+
+        force *= forces::K_C;
+        let a = force / forces::MASS_PROT;
+        prot_this.velocity += a * dt as f64 * 0.00001; // todo: Euler integration - not great
+    }
+    //
+    // for (i, elec) in state.wavefunction_lab.electron_posits_dynamic.iter_mut().enumerate() {
+    //
+    // }
+
     state.water_env.update_atom_posits();
+
+    state.wavefunction_lab.update_posits(dt);
+
+    // todo: Since we don't have a way to update teh electron centers properly, do this fudge.
+    for (i, elec) in state.wavefunction_lab.electron_centers.iter_mut().enumerate() {
+        *elec = state.wavefunction_lab.protons[i].position;
+    }
 }

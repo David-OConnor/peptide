@@ -104,7 +104,7 @@ fn add_angle_slider(
     }
 
     ui.add(
-        egui::Slider::from_get_set(range_start..=range_end, |mut v| {
+        egui::Slider::from_get_set(range_start..=range_end, |v| {
             if let Some(v_) = v {
                 *val = v_;
                 *entities_changed = true;

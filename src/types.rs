@@ -8,6 +8,7 @@ use crate::{
 };
 
 use lin_alg2::f64::{Quaternion, Vec3};
+use crate::wf_lab::{Proton, WaveFunctionState};
 
 #[derive(Debug)]
 /// A protein defined by AminoAcids: Name and bond angle.
@@ -119,6 +120,7 @@ pub struct State {
     pub protein: ProteinState, // todo: As required, allow multiple proteins.
     pub ui: UiState,
     pub water_env: WaterEnvironment,
+    pub wavefunction_lab: WaveFunctionState,
 }
 
 impl State {
@@ -143,10 +145,23 @@ impl State {
             show_water_molecules: true,
         };
 
+        let mut wavefunction_lab = WaveFunctionState {
+            protons: vec![
+                Proton {
+                    position: Vec3::new(10., -15., 0.),
+                    velocity: Vec3::new_zero(),
+                }
+            ],
+            electron_centers: vec![Vec3::new(10., -15., 0.)],
+            electron_posits_dynamic: Vec::new(),
+        };
+        wavefunction_lab.update_posits(0.);
+
         Self {
             protein,
             ui,
             water_env: WaterEnvironment::build(crate::water::N_MOLECULES, 308.15),
+            wavefunction_lab,
         }
     }
 }

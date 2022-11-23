@@ -6,6 +6,7 @@ use crate::{
     bond_vecs::{H_BOND_IN, H_BOND_OUT, WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
     forces::{self},
     kinematics,
+    util,
 };
 
 use lin_alg2::f64::{Quaternion, Vec3};
@@ -46,9 +47,6 @@ const LJ_ε_OO: f64 = 0.1852;
 const LJ_σ_OO: f64 = 3.1589;
 const LJ_εσ_OH_HH: f64 = 0.;
 const coulomb_cutoff: f64 = 8.5;
-
-// todo: Is this the unit we want?
-pub const K_C: f64 = 332.1;
 
 pub static A: Lazy<f64> = Lazy::new(|| 4. * LJ_ε_OO * LJ_σ_OO.powi(12));
 pub static B: Lazy<f64> = Lazy::new(|| 4. * LJ_ε_OO * LJ_σ_OO.powi(6));
@@ -157,13 +155,7 @@ impl WaterEnvironment {
                 rand::random::<f64>() * SIM_BOX_DIST - SIM_BOX_DIST / 2.,
             );
 
-            let orientation = Quaternion::new(
-                rand::random::<f64>(),
-                rand::random::<f64>(),
-                rand::random::<f64>(),
-                rand::random::<f64>(),
-            )
-            .to_normalized();
+            let orientation = util::rand_orientation();
 
             let velocity = Vec3::new(
                 rand::random::<f64>() * VEL_SCALER - VEL_SCALER / 2.,
