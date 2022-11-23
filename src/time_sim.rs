@@ -11,6 +11,7 @@ use crate::{
     AminoAcidType, State,
 };
 
+use crate::bond_vecs::LEN_O_H;
 use lin_alg2::f64::{Quaternion, Vec3};
 
 // todo: Util?
@@ -22,10 +23,10 @@ fn rng() -> f64 {
 /// Execute our simulation.
 pub fn run(state: &mut State, dt: f32) {
     // Constant term in our noise.
-    let c = state.temperature * state.sim_time_scale * dt as f64;
+    let c = state.ui.temperature * state.ui.sim_time_scale * dt as f64;
     // Crude approach, where we add random noise to the angles.
 
-    for res in &mut state.protein_descrip.residues {
+    for res in &mut state.protein.descrip.residues {
         res.ψ += rng() * c;
         res.φ += rng() * c;
 
@@ -54,7 +55,7 @@ pub fn run(state: &mut State, dt: f32) {
         }
     }
 
-    state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
+    state.protein.coords = ProteinCoords::from_descrip(&state.protein.descrip);
 
     // todo: Hack to prevent editing the loop we're itereating through.
     let wm_dup = state.water_env.water_molecules.clone();
@@ -76,6 +77,7 @@ pub fn run(state: &mut State, dt: f32) {
         // let f_h_b = forces::force(water.hb_posit, forces::H_CHARGE, &wm_dup, i);
         // let f_m = forces::force(water.m_posit, forces::M_CHARGE, &wm_dup, i);
 
+        // let (force, torque) = forces::force_tipt4(water, &wm_dup, i);
         let (force, torque) = forces::force(water, &wm_dup, i);
 
         // todo: Dist of just O?
@@ -94,23 +96,12 @@ pub fn run(state: &mut State, dt: f32) {
         let torque_norm = torque.to_normalized();
 
         // todo: Can we use this shortcut?
-        // let r_ha_effective = 1. - (o_ha_bond_world.dot(torque_norm));
-        // let r_hb_effective = 1. - (o_hb_bond_world.dot(torque_norm));
+        let r_ha_effective = (1. - (o_ha_bond_world.dot(torque_norm))) * O_H_DIST;
+        let r_hb_effective = (1. - (o_hb_bond_world.dot(torque_norm))) * O_H_DIST;
 
-        // Calculate the vector orthonormal to torque, and each of the O-H bonds.
-        // We use this as an axis of rotation to find the perpendicular vec
-        // to torque along each of the O-H axes.
-        let orthonorm_τ_ha = torque_norm.cross(o_ha_bond_world);
-        let orthonorm_τ_hb = torque_norm.cross(o_hb_bond_world);
-
-        let rotation_ha = Quaternion::from_axis_angle(orthonorm_τ_ha, TAU / 4.);
-        let rotation_hb = Quaternion::from_axis_angle(orthonorm_τ_hb, TAU / 4.);
-
-        let torque_perp_along_ha = rotation_ha.rotate_vec(torque_norm);
-        let torque_perp_along_hb = rotation_hb.rotate_vec(torque_norm);
-
-        let r_ha_effective = torque_perp_along_ha.dot(torque_perp_along_ha) * O_H_DIST;
-        let r_hb_effective = torque_perp_along_hb.dot(torque_perp_along_hb) * O_H_DIST;
+        // // todo: QC this
+        // let r_ha_effective = bond_o_ha_world_norm.dot(torque_norm) * LEN_O_H;
+        // let r_hb_effective = bond_o_hb_world_norm.dot(torque_norm) * LEN_O_H;
 
         let l = H_MASS * (r_ha_effective.powi(2) + r_hb_effective.powi(2));
 
@@ -124,8 +115,11 @@ pub fn run(state: &mut State, dt: f32) {
         let fudge_factor = 10.;
         let fudge_factor_rot = 0.1;
 
-        water.o_posit +=
-            water.velocity * state.temperature * state.sim_time_scale * dt as f64 * fudge_factor;
+        water.o_posit += water.velocity
+            * state.ui.temperature
+            * state.ui.sim_time_scale
+            * dt as f64
+            * fudge_factor;
 
         let r = Quaternion::from_axis_angle(
             water.angular_velocity.to_normalized(),

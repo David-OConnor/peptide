@@ -201,7 +201,10 @@ impl WaterEnvironment {
             },
             WaterMolecule {
                 o_posit: Vec3::new(16., -10., 0.),
-                o_orientation: Quaternion::from_axis_angle(Vec3::new(0., 0., 1.), 5.),
+                o_orientation: Quaternion::from_axis_angle(
+                    Vec3::new(0., 1., 1.).to_normalized(),
+                    5.,
+                ),
                 velocity: Vec3::new_zero(),
                 angular_velocity: Vec3::new_zero(),
                 ha_posit: Vec3::new_zero(),

@@ -85,10 +85,10 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
         let mut lighting_changed = false;
 
         // We count starting at 1, per chem conventions.
-        let ar_i = state.active_residue - 1;
+        let ar_i = state.ui.active_residue - 1;
         // code shortener
 
-        let mut active_res = &mut state.protein_descrip.residues[ar_i];
+        let mut active_res = &mut state.protein.descrip.residues[ar_i];
         let rotation_amt = crate::BOND_ROTATION_SPEED * dt as f64;
 
         match event {
@@ -99,16 +99,16 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
                         // todo: Why are these scan codes for up/down so high??
                         57_416 => {
                             // Up arrow
-                            if state.active_residue != state.protein_descrip.residues.len() {
-                                state.active_residue += 1;
+                            if state.ui.active_residue != state.protein.descrip.residues.len() {
+                                state.ui.active_residue += 1;
                                 entities_changed = true;
                                 active_res_changed = true;
                             }
                         }
                         57_424 => {
                             // Down arrow
-                            if state.active_residue != 1 {
-                                state.active_residue -= 1;
+                            if state.ui.active_residue != 1 {
+                                state.ui.active_residue -= 1;
                                 entities_changed = true;
                                 active_res_changed = true;
                             }
@@ -206,16 +206,16 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
 
         if entities_changed {
             // Recalculate coordinates now that we've updated our bond angles
-            state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
+            state.protein.coords = ProteinCoords::from_descrip(&state.protein.descrip);
             scene.entities = generate_entities(&state);
         }
 
         if active_res_changed {
-            // state.ui.active_res_id = state.active_residue;
+            // state.ui.active_res_id = state.ui.active_residue;
             //
-            // // let aa_name = format!("{}", state.protein_descrip.residues[state.active_residue].sidechain);
+            // // let aa_name = format!("{}", state.protein.descrip.residues[state.ui.active_residue].sidechain);
             // // let aa_name =
-            // state.ui.active_res_aa_name = state.protein_descrip.residues[ar_i]
+            // state.ui.active_res_aa_name = state.protein.descrip.residues[ar_i]
             //     .sidechain
             //     .aa_name()
             //     .to_owned();
@@ -226,7 +226,7 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
 
         if active_res_changed || active_res_backbone_changed {
             // todo: Break this out by psi, phi etc instead of always updating all?
-            let res = &mut state.protein_descrip.residues[state.active_residue - 1];
+            let res = &mut state.protein.descrip.residues[state.ui.active_residue - 1];
 
             // todo: Only do this for backbone changd; not acive res
 
@@ -237,7 +237,7 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
 
         // if active_res_changed || active_res_sidechain_changed {
         //     // todo: Break this out by psi, phi etc instead of always updating all?
-        //     // let sc = &state.protein_descrip.residues[state.active_residue - 1].sidechain;
+        //     // let sc = &state.protein.descrip.residues[state.ui.active_residue - 1].sidechain;
         //     //
         //     // state.ui.active_res_χ1 = sc.get_χ1();
         //     // state.ui.active_res_χ2 = sc.get_χ2();
@@ -260,7 +260,7 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
 
     // delegate to a sim fn/module
 
-    if state.sim_running {
+    if state.ui.sim_running {
         time_sim::run(state, dt);
 
         scene.entities = generate_entities(&state);
@@ -354,8 +354,8 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
     let mut cp_id = 0;
 
     // Atom id is used for station-keeping here.
-    for (atom_id, atom) in state.protein_coords.atoms_backbone.iter().enumerate() {
-        // let atom_color = if state.active_residue == atom.residue_id {
+    for (atom_id, atom) in state.protein.coords.atoms_backbone.iter().enumerate() {
+        // let atom_color = if state.ui.active_residue == atom.residue_id {
         //     avg_colors(ACTIVE_COLOR_ATOM, atom.role.render_color())
         // } else {
         //     atom.role.render_color()
@@ -365,7 +365,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 
         // todo, until we can find a better way to highlight the active atoms.
         // Highlight the active Nitrogen in an eye-catching color.
-        if state.active_residue == atom.residue_id {
+        if state.ui.active_residue == atom.residue_id {
             match atom.role {
                 AtomRole::Cα => {
                     atom_color = ACTIVE_CALPHA_COLOR;
@@ -384,7 +384,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             _ => 1.,
         };
 
-        if !state.show_hydrogens {
+        if !state.ui.show_hydrogens {
             match atom.role {
                 AtomRole::HCα | AtomRole::HN | AtomRole::HSidechain => continue,
                 _ => (),
@@ -397,7 +397,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
         //     SSidechain,
         //     SeSidechain,
         //     HSidechain,
-        if !state.show_sidechains {
+        if !state.ui.show_sidechains {
             match atom.role {
                 AtomRole::CSidechain
                 | AtomRole::OSidechain
@@ -451,7 +451,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 
             add_bond(
                 &atom,
-                &state.protein_coords.atoms_backbone,
+                &state.protein.coords.atoms_backbone,
                 atom_id,
                 atom_prev_id,
                 &mut result,
@@ -488,7 +488,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 
                 add_bond(
                     &atom,
-                    &state.protein_coords.atoms_backbone,
+                    &state.protein.coords.atoms_backbone,
                     atom_id,
                     atom_prev_id,
                     &mut result,
@@ -500,7 +500,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
     // Genererate entities for water molecules.
     // todo: We shouldn't create this here; this should be stored somewhere else, perhaps.
 
-    if state.show_water_molecules {
+    if state.ui.show_water_molecules {
         for water in &state.water_env.water_molecules {
             // Oxygen
             result.push(Entity::new(

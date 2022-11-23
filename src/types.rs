@@ -69,13 +69,38 @@ pub struct BackboneCoords {
     pub h_n_orientation: Quaternion,
 }
 
-/// Store our atom descriptions here, for global state the renderer can access.
-pub struct State {
+/// Information about a single protein.
+pub struct ProteinState {
     /// Descriptions of each amino acid, including its name, and bond angles.
-    pub protein_descrip: ProteinDescription,
-    /// Stored coordinates, calculated in `coord_gen`.
-    pub protein_coords: ProteinCoords,
-    /// Residue id that's selected for rotation. Starts at 1.
+    pub descrip: ProteinDescription,
+    /// Cartesian coordinates; generated from the description. Calculated in `coord_gen`.
+    pub coords: ProteinCoords,
+}
+
+impl ProteinState {
+    /// Change the amino acid sequence.
+    pub fn change_sequence(
+        &mut self,
+        name: Option<String>,
+        pdb_ident: Option<String>,
+        residues: Option<Vec<Residue>>,
+    ) {
+        if let Some(n) = name {
+            self.descrip.name = n;
+        }
+
+        if let Some(p) = pdb_ident {
+            self.descrip.pdb_ident = p
+        }
+
+        if let Some(r) = residues {
+            self.descrip.residues = r;
+        }
+    }
+}
+
+pub struct UiState {
+    /// Residue id that's selected for rotation. Starts at 1. (Proteins)
     pub active_residue: usize,
     pub ui_mode: UiMode,
     // pub ui: StateUi,
@@ -87,6 +112,12 @@ pub struct State {
     pub show_sidechains: bool,
     pub show_hydrogens: bool,
     pub show_water_molecules: bool,
+}
+
+/// Store our atom descriptions here, for global state the renderer can access.
+pub struct State {
+    pub protein: ProteinState, // todo: As required, allow multiple proteins.
+    pub ui: UiState,
     pub water_env: WaterEnvironment,
 }
 
@@ -95,9 +126,12 @@ impl State {
     pub fn new(protein_descrip: ProteinDescription) -> Self {
         let protein_coords = ProteinCoords::from_descrip(&protein_descrip);
 
-        Self {
-            protein_descrip,
-            protein_coords,
+        let protein = ProteinState {
+            descrip: protein_descrip,
+            coords: protein_coords,
+        };
+
+        let ui = UiState {
             active_residue: 1,
             ui_mode: UiMode::ActiveAaEditor,
             // ui: Default::default(),
@@ -107,27 +141,12 @@ impl State {
             show_sidechains: true,
             show_hydrogens: true,
             show_water_molecules: true,
+        };
+
+        Self {
+            protein,
+            ui,
             water_env: WaterEnvironment::build(crate::water::N_MOLECULES, 308.15),
-        }
-    }
-
-    /// Change the amino acid sequence.
-    pub fn change_sequence(
-        &mut self,
-        name: Option<String>,
-        pdb_ident: Option<String>,
-        residues: Option<Vec<Residue>>,
-    ) {
-        if let Some(n) = name {
-            self.protein_descrip.name = n;
-        }
-
-        if let Some(p) = pdb_ident {
-            self.protein_descrip.pdb_ident = p
-        }
-
-        if let Some(r) = residues {
-            self.protein_descrip.residues = r;
         }
     }
 }

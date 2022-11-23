@@ -11,7 +11,7 @@ use crate::{
     chem_definitions::{AminoAcidType, AtomRole},
     render_wgpu,
     sidechain::{Sidechain, PRO_PHI_MAX, PRO_PHI_MIN},
-    types::State,
+    types::{State, UiState},
     ProteinDescription,
 };
 
@@ -47,10 +47,6 @@ const TEMPERATURE_MAX: f64 = 373.15;
 
 use lin_alg2::f32::Vec3;
 
-// todo: Unused
-#[derive(Default)]
-pub struct _StateUi {}
-
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum UiMode {
     ActiveAaEditor,
@@ -68,7 +64,7 @@ pub enum UiMode {
 //     let mut active_res_changed = false;
 //
 //     // We count starting at 1, per chem conventions.
-//     let ar_i = state.active_residue - 1;
+//     let ar_i = state.ui.active_residue - 1;
 //     // code shortener
 //
 //     // Box::new(move |event: DeviceEvent, scene: &mut Scene, dt: f32| {
@@ -77,10 +73,10 @@ pub enum UiMode {
 /// Updating the position of the light source on the active residue.
 pub fn change_lit_res(state: &State, scene: &mut Scene) {
     let active_n_posit = state
-        .protein_coords
+        .protein.coords
         .atoms_backbone
         .iter()
-        .find(|a| a.residue_id == state.active_residue && a.role == AtomRole::N)
+        .find(|a| a.residue_id == state.ui.active_residue && a.role == AtomRole::N)
         .unwrap()
         .position;
 
@@ -134,7 +130,8 @@ fn add_focus_btn(
     if ui.button("Focus").clicked() {
         // todo: DRY here between this and the lighting update.
         let active_n_posit = state
-            .protein_coords
+            .protein
+            .coords
             .atoms_backbone
             .iter()
             .find(|a| a.residue_id == res_id && a.role == AtomRole::Cα)
@@ -160,14 +157,14 @@ fn add_active_aa_editor(
     engine_updates: &mut EngineUpdates,
 ) {
     // todo: Is this the right way for text input?
-    let ar_i = state.active_residue - 1;
-    ui.label(state.protein_descrip.residues[ar_i].sidechain.aa_name());
+    let ar_i = state.ui.active_residue - 1;
+    ui.label(state.protein.descrip.residues[ar_i].sidechain.aa_name());
 
-    let active_aa_type = state.protein_descrip.residues[ar_i].sidechain.aa_type();
+    let active_aa_type = state.protein.descrip.residues[ar_i].sidechain.aa_type();
     let removed = add_aa_selector(ui, state, scene, engine_updates, ar_i, active_aa_type, 0);
 
     if removed {
-        state.protein_descrip.residues.remove(ar_i);
+        state.protein.descrip.residues.remove(ar_i);
     }
 
     // if response.lost_focus() && ui.input().key_pressed(egui::Key::Enter) {
@@ -181,8 +178,8 @@ fn add_active_aa_editor(
     // todo: Put the display in terms of Tau.
 
     // Update `ar_i` since it may have changed.
-    let ar_i = state.active_residue - 1;
-    let active_res = &mut state.protein_descrip.residues[ar_i];
+    let ar_i = state.ui.active_residue - 1;
+    let active_res = &mut state.protein.descrip.residues[ar_i];
 
     // For proline, limit φ range.
     let pro = active_aa_type == AminoAcidType::Pro;
@@ -197,7 +194,7 @@ fn add_active_aa_editor(
         ui,
         false,
     );
-    let active_res = &mut state.protein_descrip.residues[ar_i];
+    let active_res = &mut state.protein.descrip.residues[ar_i];
     add_angle_slider(
         &mut active_res.φ,
         "φ",
@@ -205,7 +202,7 @@ fn add_active_aa_editor(
         ui,
         pro,
     );
-    let mut active_res = &mut state.protein_descrip.residues[ar_i];
+    let mut active_res = &mut state.protein.descrip.residues[ar_i];
     add_angle_slider(
         &mut active_res.ω,
         "ω",
@@ -287,11 +284,11 @@ fn add_aa_selector(
                 ui.selectable_value(&mut selected, AminoAcidType::Trp, "Trp (W)");
             });
 
-        if selected != state.protein_descrip.residues[ar_i].sidechain.aa_type() {
-            state.protein_descrip.residues[ar_i].sidechain = Sidechain::from_aa_type(selected);
+        if selected != state.protein.descrip.residues[ar_i].sidechain.aa_type() {
+            state.protein.descrip.residues[ar_i].sidechain = Sidechain::from_aa_type(selected);
 
             if selected == AminoAcidType::Pro {
-                crate::clamp_angle(&mut state.protein_descrip.residues[ar_i].φ, true);
+                crate::clamp_angle(&mut state.protein.descrip.residues[ar_i].φ, true);
             }
 
             engine_updates.entities = true;
@@ -299,7 +296,7 @@ fn add_aa_selector(
 
         // todo: If we want this field to start with the current value, we probably
         // todo need an intermediate state-tracking var.
-        // let mut ident_entry = state.protein_descrip.residues[ar_i].sidechain.aa_ident_single_letter();
+        // let mut ident_entry = state.protein.descrip.residues[ar_i].sidechain.aa_ident_single_letter();
         let mut ident_entry = String::new();
 
         let response = ui.add(egui::TextEdit::singleline(&mut ident_entry).desired_width(16.));
@@ -309,14 +306,14 @@ fn add_aa_selector(
 
             match Sidechain::from_ident_single_letter(&val) {
                 Some(sc) => {
-                    if sc.aa_type() != state.protein_descrip.residues[ar_i].sidechain.aa_type() {
-                        state.protein_descrip.residues[ar_i].sidechain = sc;
+                    if sc.aa_type() != state.protein.descrip.residues[ar_i].sidechain.aa_type() {
+                        state.protein.descrip.residues[ar_i].sidechain = sc;
                         engine_updates.entities = true;
 
-                        if state.protein_descrip.residues[ar_i].sidechain.aa_type()
+                        if state.protein.descrip.residues[ar_i].sidechain.aa_type()
                             == AminoAcidType::Pro
                         {
-                            crate::clamp_angle(&mut state.protein_descrip.residues[ar_i].φ, true);
+                            crate::clamp_angle(&mut state.protein.descrip.residues[ar_i].φ, true);
                         }
 
                         response.surrender_focus()
@@ -330,7 +327,7 @@ fn add_aa_selector(
         // todo: button .fill() method to change BG color
         if ui
             .button(
-                RichText::new("Sel").color(if state.active_residue == ar_i + 1 {
+                RichText::new("Sel").color(if state.ui.active_residue == ar_i + 1 {
                     ACTIVE_MODE_COLOR
                 } else {
                     INACTIVE_MODE_COLOR
@@ -338,7 +335,7 @@ fn add_aa_selector(
             )
             .clicked()
         {
-            state.active_residue = ar_i + 1;
+            state.ui.active_residue = ar_i + 1;
             engine_updates.entities = true; // to change entity color.
 
             change_lit_res(state, scene);
@@ -373,7 +370,7 @@ fn add_sequence_editor(
         ui.label("Add a new residue");
         // todo: Set button width.
         if ui.button("+").clicked() {
-            state.protein_descrip.residues.push(Default::default());
+            state.protein.descrip.residues.push(Default::default());
             engine_updates.entities = true;
         }
     });
@@ -381,11 +378,11 @@ fn add_sequence_editor(
     egui::containers::ScrollArea::vertical().show(ui, |ui| {
         let mut res_i_removed = None;
 
-        for ar_i in 0..state.protein_descrip.residues.len() {
+        for ar_i in 0..state.protein.descrip.residues.len() {
             // Each selector (combo box) needs a unique id.
             let sel_id = 100 + ar_i; // todo?
 
-            let aa_type = state.protein_descrip.residues[ar_i].sidechain.aa_type();
+            let aa_type = state.protein.descrip.residues[ar_i].sidechain.aa_type();
 
             ui.horizontal(|ui| {
                 ui.label((ar_i + 1).to_string());
@@ -400,7 +397,7 @@ fn add_sequence_editor(
         // Only remove residues from the state after the loop is complete, to prevent
         // modifying the iterator while iterating.
         if let Some(ar_i) = res_i_removed {
-            state.protein_descrip.residues.remove(ar_i);
+            state.protein.descrip.residues.remove(ar_i);
         }
 
         ui.spacing_mut().window_margin = WINDOW_MARGIN;
@@ -410,7 +407,7 @@ fn add_sequence_editor(
 /// Adds a ui area for editing the primary (AA) sequence.
 fn add_motion_sim(
     ui: &mut egui::Ui,
-    state: &mut State,
+    state: &mut UiState,
     // scene: &mut Scene,
     // entities_changed: &mut bool,
 ) {
@@ -472,19 +469,19 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
             // ui.label("Protein: ".to_owned().push_str(prot_name));
             ui.heading(format!(
                 "Protein: {}. PDB: {}",
-                state.protein_descrip.name, state.protein_descrip.pdb_ident
+                state.protein.descrip.name, state.protein.descrip.pdb_ident
             ));
 
             ui.horizontal(|ui| {
                 if ui.button("Save").clicked() {
                     let file = FileDialog::new()
-                        .set_file_name(&((&state.protein_descrip.name).to_owned() + ".prot"))
+                        .set_file_name(&((&state.protein.descrip.name).to_owned() + ".prot"))
                         .add_filter("prot", &["prot"])
                         .set_directory("/")
                         .save_file();
 
                     if let Some(f) = file {
-                        state.protein_descrip.save(&f);
+                        state.protein.descrip.save(&f);
                     }
 
                 }
@@ -495,7 +492,7 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                         .pick_file();
 
                     if let Some(f) = file {
-                        state.protein_descrip = ProteinDescription::load(&f);
+                        state.protein.descrip = ProteinDescription::load(&f);
                     }
 
                     engine_updates.entities = true;
@@ -507,13 +504,13 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
             ui.horizontal(|ui| {
                 ui.label("Active residue:");
 
-                let mut res_entry = state.active_residue.to_string();
+                let mut res_entry = state.ui.active_residue.to_string();
 
                 let response = ui.add(egui::TextEdit::singleline(&mut res_entry).desired_width(30.));
                 if response.changed() {
                     let num = res_entry.parse::<usize>().unwrap_or(1);
-                    if num < state.protein_descrip.residues.len() + 1 {
-                        state.active_residue = num;
+                    if num < state.protein.descrip.residues.len() + 1 {
+                        state.ui.active_residue = num;
 
                         change_lit_res(state, scene);
                         engine_updates.entities = true;
@@ -523,8 +520,8 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
 
                 // todo: Set button width.
                 if ui.button("+").clicked() {
-                    if state.active_residue != state.protein_descrip.residues.len() {
-                        state.active_residue += 1;
+                    if state.ui.active_residue != state.protein.descrip.residues.len() {
+                        state.ui.active_residue += 1;
 
                         change_lit_res(state, scene);
                         engine_updates.entities = true;
@@ -532,8 +529,8 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                     }
                 }
                 if ui.button("-").clicked() {
-                    if state.active_residue != 1 {
-                        state.active_residue -= 1;
+                    if state.ui.active_residue != 1 {
+                        state.ui.active_residue -= 1;
 
                         change_lit_res(state, scene);
                         engine_updates.entities = true;
@@ -541,37 +538,37 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                     }
                 }
 
-                add_focus_btn(ui, state, scene, state.active_residue, &mut engine_updates.camera);
+                add_focus_btn(ui, state, scene, state.ui.active_residue, &mut engine_updates.camera);
             });
 
             ui.horizontal(|ui| {
-                let show_scs_text = if state.show_sidechains {
+                let show_scs_text = if state.ui.show_sidechains {
                     "Hide sidechains"
                 } else {
                     "Show sidechains"
                 };
                 if ui.button(show_scs_text).clicked() {
-                    state.show_sidechains = !state.show_sidechains;
+                    state.ui.show_sidechains = !state.ui.show_sidechains;
                     engine_updates.entities = true;
                 }
 
-                let show_h_text = if state.show_hydrogens {
+                let show_h_text = if state.ui.show_hydrogens {
                     "Hide Hs"
                 } else {
                     "Show Hs"
                 };
                 if ui.button(show_h_text).clicked() {
-                    state.show_hydrogens = !state.show_hydrogens;
+                    state.ui.show_hydrogens = !state.ui.show_hydrogens;
                     engine_updates.entities = true;
                 }
 
-                let show_water_text = if state.show_water_molecules {
+                let show_water_text = if state.ui.show_water_molecules {
                     "Hide water"
                 } else {
                     "Show water"
                 };
                 if ui.button(show_water_text).clicked() {
-                    state.show_water_molecules = !state.show_water_molecules;
+                    state.ui.show_water_molecules = !state.ui.show_water_molecules;
                     engine_updates.entities = true;
                 }
             });
@@ -583,29 +580,29 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                 // todo: BG color instead of text color?
 
                 // todo: Something to let you know current mode; highlight etc.
-                // if ui.selectable_label(state.ui_mode == UiMode::ActiveAaEditor, "Aa editor").clicked() {
+                // if ui.selectable_label(state.ui.ui_mode == UiMode::ActiveAaEditor, "Aa editor").clicked() {
                 if ui.button(RichText::new("AA editor").color(
-                    if state.ui_mode == UiMode::ActiveAaEditor { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
+                    if state.ui.ui_mode == UiMode::ActiveAaEditor { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
                 )).clicked() {
-                    state.ui_mode = UiMode::ActiveAaEditor
+                    state.ui.ui_mode = UiMode::ActiveAaEditor
                 }
-                // if ui.selectable_label(state.ui_mode == UiMode::SeqEditor, "Seq editor").clicked() {
+                // if ui.selectable_label(state.ui.ui_mode == UiMode::SeqEditor, "Seq editor").clicked() {
                 if ui.button(RichText::new("Seq editor").color(
-                    if state.ui_mode == UiMode::SeqEditor { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
+                    if state.ui.ui_mode == UiMode::SeqEditor { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
                 )).clicked() {
-                    state.ui_mode = UiMode::SeqEditor;
+                    state.ui.ui_mode = UiMode::SeqEditor;
                 }
-                // if ui.selectable_label(state.ui_mode == UiMode::MotionSim, "Motion sim").clicked() {
+                // if ui.selectable_label(state.ui.ui_mode == UiMode::MotionSim, "Motion sim").clicked() {
                 if ui.button(RichText::new("Motion sim").color(
-                    if state.ui_mode == UiMode::MotionSim { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
+                    if state.ui.ui_mode == UiMode::MotionSim { ACTIVE_MODE_COLOR } else { INACTIVE_MODE_COLOR }
                 )).clicked() {
-                    state.ui_mode = UiMode::MotionSim;
+                    state.ui.ui_mode = UiMode::MotionSim;
                 }
             });
 
             ui.add_space(SPACE_BETWEEN_SECTIONS);
 
-            match state.ui_mode {
+            match state.ui.ui_mode {
                 UiMode::ActiveAaEditor => {
                     add_active_aa_editor(ui, state, scene, &mut engine_updates);
                 }
@@ -614,7 +611,7 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                 }
                 UiMode::MotionSim => {
                     // add_motion_sim(ui, state, &mut entities_changed);
-                    add_motion_sim(ui, state);
+                    add_motion_sim(ui, &mut state.ui);
                 }
             }
 
@@ -631,7 +628,7 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
 
         if engine_updates.entities {
             // Recalculate coordinates, eg if we've changed an angle, or AA.
-            state.protein_coords = ProteinCoords::from_descrip(&state.protein_descrip);
+            state.protein.coords = ProteinCoords::from_descrip(&state.protein.descrip);
             scene.entities = render_wgpu::generate_entities(&state);
         }
 
