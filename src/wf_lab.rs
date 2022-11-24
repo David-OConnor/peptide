@@ -44,18 +44,29 @@ fn h_wavefn(r: f64, n: u8, l: u8, m: u8) -> f64 {
 
 /// todo: Temp sloppy way to map random uniform numbers to hydrogen distance
 fn map_h_wf(v: f64) -> f64 {
-    if v < 0.5 {
-        1.
+    let x = if v < 0.1 {
+        0.68
+    } else if v < 0.2 {
+        0.74
+    } else if v < 0.3 {
+        0.78
+    } else if v < 0.4 {
+        0.80
+    } else if v < 0.5 {
+        0.83
+    } else if v < 0.6 {
+        0.85
     } else if v < 0.7 {
-        1.6
+        0.88
+    } else if v < 0.8 {
+        0.91
     } else if v < 0.9 {
-        0.4
-    } else if v < 0.95 {
-        4.
+        0.94
     } else {
-        6.
-    }
+        1.
+    };
 
+    x * 1.18
 }
 
 impl WaveFunctionState {
