@@ -148,11 +148,18 @@ impl State {
         let mut wavefunction_lab = WaveFunctionState {
             protons: vec![
                 Proton {
-                    position: Vec3::new(10., -15., 0.),
+                    position: Vec3::new(5., -10., 0.),
+                    velocity: Vec3::new_zero(),
+                },
+                Proton {
+                    position: Vec3::new(5., -14., 0.),
                     velocity: Vec3::new_zero(),
                 }
             ],
-            electron_centers: vec![Vec3::new(10., -15., 0.)],
+            electron_centers: vec![
+                Vec3::new(5., -10., 0.),
+                Vec3::new(5., -14., 0.),
+            ],
             electron_posits_dynamic: Vec::new(),
         };
         wavefunction_lab.update_posits(0.);

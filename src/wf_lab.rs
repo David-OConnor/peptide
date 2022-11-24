@@ -1,10 +1,15 @@
 //! Wave function lab.
 
+use core::f64::consts::{PI};
+
 use crate::util;
 
 use lin_alg2::f64::{Vec3, Quaternion};
 
 use rand;
+
+const A_0: f64 = 1.; // Bohr radius.
+const Z_H: f64 = 1.; // Z is the atomic number.
 
 #[derive(Clone, Default, Debug)]
 pub struct Proton {
@@ -28,6 +33,31 @@ pub struct WaveFunctionState {
 
 }
 
+/// https://chem.libretexts.org/Courses/University_of_California_Davis/UCD_Chem_107B%3A_Physical_Chemistry_for_Life_Scientists/Chapters/4%3A_Quantum_Theory/
+/// 4.10%3A_The_Schr%C3%B6dinger_Wave_Equation_for_the_Hydrogen_Atom
+fn h_wavefn(r: f64, n: u8, l: u8, m: u8) -> f64 {
+    // todo: QC this.
+    // todo: Hardcoded for n=1, l=m=0
+    let ρ = Z_H * r / A_0;
+    1. / PI.sqrt() * (Z_H / A_0).powf(3./2.) * (-ρ).exp() * r
+}
+
+/// todo: Temp sloppy way to map random uniform numbers to hydrogen distance
+fn map_h_wf(v: f64) -> f64 {
+    if v < 0.5 {
+        1.
+    } else if v < 0.7 {
+        1.6
+    } else if v < 0.9 {
+        0.4
+    } else if v < 0.95 {
+        4.
+    } else {
+        6.
+    }
+
+}
+
 impl WaveFunctionState {
     /// Update proton positions based on their velocity. Update electroncs based on their wavefunction.
     pub fn update_posits(&mut self, dt: f32) {
@@ -39,11 +69,45 @@ impl WaveFunctionState {
         for ctr_pt in &mut self.electron_centers {
             let rotation = util:: rand_orientation();
 
-            let dist = rand::random::<f64>(); // todo: Concentrate in center?
+            // Radial component of hydrogen with n = 1, l = 0, m = 0
+            let uniform_sample = rand::random::<f64>();
+            let r = map_h_wf(uniform_sample);
 
-            let posit = *ctr_pt + rotation.rotate_vec(Vec3::new(dist, 0., 0.));
+            // let dist = h_wavefn( * dist, 1, 0, 0);
+
+            // let r = HWaveFunction.sample(R);
+
+
+            let posit = *ctr_pt + rotation.rotate_vec(Vec3::new(r, 0., 0.));
 
             self.electron_posits_dynamic.push(posit);
         }
     }
 }
+
+// struct HWaveFunction {
+//
+// }
+//
+// impl Distribution<T> for HWaveFunction {
+//         fn sample<R>(&self, rng: &mut R) -> T
+//     where
+//         R: Rng + ?Sized {
+//
+//         }
+//
+//     fn sample_iter<R>(self, rng: R) -> DistIter<Self, R, T>
+//     where
+//         R: Rng,
+//     {
+//
+//     }
+//
+//     fn map<F, S>(self, func: F) -> DistMap<Self, F, T, S>
+//     where
+//         F: Fn(T) -> S,
+//     {
+//
+//     }
+//
+// }

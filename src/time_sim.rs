@@ -6,7 +6,7 @@ use core::f64::consts::TAU;
 use crate::{
     atom_coords::ProteinCoords,
     bond_vecs::{WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M, LEN_O_H},
-    forces::{self},
+    forces::{self, CHARGE_ELECTRON, CHARGE_PROTON, K_C},
     water::{self, H_MASS, O_H_DIST},
     AminoAcidType, State,
 };
@@ -134,29 +134,25 @@ pub fn run(state: &mut State, dt: f32) {
 
     // todo: Move to forces
     for (i, prot_this) in state.wavefunction_lab.protons.iter_mut().enumerate() {
-        let mut force = Vec3::new_zero();
+        let mut charges = Vec::new();
 
         for (j, prot_other) in prot_dup.iter().enumerate() {
             if i == j {
                 continue
             }
             // todo: Come back to this
+            charges.push((prot_other.position, CHARGE_PROTON));
         }
 
         // todo: DRY with forces::coulomb_force
         for elec in &state.wavefunction_lab.electron_posits_dynamic {
-            let posit_diff = prot_this.position - *elec; // todo: Order
-            let r = posit_diff.magnitude();
-
-            // Without coulomb const
-            let force_this = posit_diff / r * forces::CHARGE_PROTON * forces::CHARGE_ELECTRON / r.powi(2);
-
-            force += force_this;
+            charges.push((*elec, CHARGE_ELECTRON));
         }
 
-        force *= forces::K_C;
+        let force = forces::coulomb_force((prot_this.position, CHARGE_PROTON), &charges) * K_C;
+
         let a = force / forces::MASS_PROT;
-        prot_this.velocity += a * dt as f64 * 0.00001; // todo: Euler integration - not great
+        prot_this.velocity += a * dt as f64 * 0.001; // todo: Euler integration - not great
     }
     //
     // for (i, elec) in state.wavefunction_lab.electron_posits_dynamic.iter_mut().enumerate() {

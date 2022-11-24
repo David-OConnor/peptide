@@ -30,7 +30,7 @@ pub const MAG_N: f64 = 1.; // Atomic mass units
 
 // todo?
 pub const CHARGE_PROTON: f64 = 1.;
-pub const CHARGE_ELECTRON: f64 = 1.;
+pub const CHARGE_ELECTRON: f64 = -1.;
 pub const MASS_PROT: f64 = 1.; // todo?
 
 // todo: Move these to the `water` module?
@@ -105,7 +105,7 @@ pub fn _force(point: Vec3, q: f64, water_molecules: &Vec<WaterMolecule>, i: usiz
 /// Calculate the coulomb force on a particle, from other particles in a system. The arguments are
 /// of type (position, charge). Note that we don't apply the coulomb const here; factored
 /// out for computational reasons; apply to the result.
-fn coulomb_force(particle: (Vec3, f64), others: &Vec<(Vec3, f64)>) -> Vec3 {
+pub fn coulomb_force(particle: (Vec3, f64), others: &Vec<(Vec3, f64)>) -> Vec3 {
     let mut result = Vec3::new_zero();
 
     let (posit_this, charge_this) = particle;

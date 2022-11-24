@@ -562,7 +562,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             1,
             vec3_to_f32(*electron),
             Q_I,
-            0.1,
+            0.2,
             (0., 0.5, 1.),
             1.
         ));
