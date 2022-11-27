@@ -30,6 +30,8 @@ pub const ACTIVE_N_COLOR: (f32, f32, f32) = (0.2, 0.9, 0.9);
 // pub const ACTIVE_CALPHA_COLOR: (f32, f32, f32) = (0.4, 0.9, 0.4);
 pub const ACTIVE_CALPHA_COLOR: (f32, f32, f32) = (0.8, 0.0, 0.8);
 
+pub const ELECTRON_COLOR: (f32, f32, f32) = (0., 0.7, 1.);
+
 // Shinyness affects specular intensity.
 pub const ATOM_SHINYNESS: f32 = 1.;
 pub const BOND_SHINYNESS: f32 = 1.;

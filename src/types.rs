@@ -3,12 +3,17 @@
 use std::{f64::consts::TAU, fmt};
 
 use crate::{
-    atom_coords::ProteinCoords, gui::UiMode, proteins, sidechain::Sidechain,
-    water::WaterEnvironment,
+    atom_coords::ProteinCoords,
+    gui::UiMode,
+    proteins,
+    sidechain::Sidechain,
+    time_sim::SIM_BOX_DIST,
+    util,
+    water::{WaterEnvironment, N_MOLECULES},
+    wf_lab::{Proton, WaveFunctionState},
 };
 
 use lin_alg2::f64::{Quaternion, Vec3};
-use crate::wf_lab::{Proton, WaveFunctionState};
 
 #[derive(Debug)]
 /// A protein defined by AminoAcids: Name and bond angle.
@@ -145,30 +150,11 @@ impl State {
             show_water_molecules: true,
         };
 
-        let mut wavefunction_lab = WaveFunctionState {
-            protons: vec![
-                Proton {
-                    position: Vec3::new(5., -10., 0.),
-                    velocity: Vec3::new_zero(),
-                },
-                Proton {
-                    position: Vec3::new(5., -14., 0.),
-                    velocity: Vec3::new_zero(),
-                }
-            ],
-            electron_centers: vec![
-                Vec3::new(5., -10., 0.),
-                Vec3::new(5., -14., 0.),
-            ],
-            electron_posits_dynamic: Vec::new(),
-        };
-        wavefunction_lab.update_posits(0.);
-
         Self {
             protein,
             ui,
             water_env: WaterEnvironment::build(crate::water::N_MOLECULES, 308.15),
-            wavefunction_lab,
+            wavefunction_lab: WaveFunctionState::build(),
         }
     }
 }

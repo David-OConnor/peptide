@@ -73,7 +73,8 @@ pub enum UiMode {
 /// Updating the position of the light source on the active residue.
 pub fn change_lit_res(state: &State, scene: &mut Scene) {
     let active_n_posit = state
-        .protein.coords
+        .protein
+        .coords
         .atoms_backbone
         .iter()
         .find(|a| a.residue_id == state.ui.active_residue && a.role == AtomRole::N)
@@ -409,7 +410,7 @@ fn add_motion_sim(
     ui: &mut egui::Ui,
     state: &mut UiState,
     // scene: &mut Scene,
-    // entities_changed: &mut bool,
+    entities_changed: &mut bool,
 ) {
     ui.horizontal(|ui| {
         if ui.button("Start sim").clicked() {
@@ -417,6 +418,7 @@ fn add_motion_sim(
         }
         if ui.button("Stop sim").clicked() {
             state.sim_running = false;
+            *entities_changed = true; // Eg hide extra electrons.
         }
     });
 
@@ -611,7 +613,7 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
                 }
                 UiMode::MotionSim => {
                     // add_motion_sim(ui, state, &mut entities_changed);
-                    add_motion_sim(ui, &mut state.ui);
+                    add_motion_sim(ui, &mut state.ui, &mut engine_updates.entities);
                 }
             }
 

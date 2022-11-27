@@ -5,13 +5,17 @@ use core::f64::consts::TAU;
 
 use crate::{
     atom_coords::ProteinCoords,
-    bond_vecs::{WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M, LEN_O_H},
+    bond_vecs::{LEN_O_H, WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
     forces::{self, CHARGE_ELECTRON, CHARGE_PROTON, K_C},
     water::{self, H_MASS, O_H_DIST},
+    wf_lab::Electron,
     AminoAcidType, State,
 };
 
 use lin_alg2::f64::{Quaternion, Vec3};
+
+// Distance from the origin.
+pub const SIM_BOX_DIST: f64 = 40.;
 
 // todo: Util?
 /// Get a random value from -0.5 to 0.5
@@ -22,39 +26,42 @@ fn rng() -> f64 {
 /// Execute our simulation.
 pub fn run(state: &mut State, dt: f32) {
     // Constant term in our noise.
-    let c = state.ui.temperature * state.ui.sim_time_scale * dt as f64;
+    let dt_modified = state.ui.temperature * state.ui.sim_time_scale * dt as f64;
     // Crude approach, where we add random noise to the angles.
 
     for res in &mut state.protein.descrip.residues {
-        res.ψ += rng() * c;
-        res.φ += rng() * c;
+        res.ψ += rng() * dt_modified;
+        res.φ += rng() * dt_modified;
 
         crate::clamp_angle(&mut res.φ, res.sidechain.aa_type() == AminoAcidType::Pro);
         crate::clamp_angle(&mut res.ψ, false);
 
         if let Some(χ) = res.sidechain.get_mut_χ1() {
-            *χ += rng() * c;
+            *χ += rng() * dt_modified;
             crate::clamp_angle(χ, false);
         }
         if let Some(χ) = res.sidechain.get_mut_χ2() {
-            *χ += rng() * c;
+            *χ += rng() * dt_modified;
             crate::clamp_angle(χ, false);
         }
         if let Some(χ) = res.sidechain.get_mut_χ3() {
-            *χ += rng() * c;
+            *χ += rng() * dt_modified;
             crate::clamp_angle(χ, false);
         }
         if let Some(χ) = res.sidechain.get_mut_χ4() {
-            *χ += rng() * c;
+            *χ += rng() * dt_modified;
             crate::clamp_angle(χ, false);
         }
         if let Some(χ) = res.sidechain.get_mut_χ5() {
-            *χ += rng() * c;
+            *χ += rng() * dt_modified;
             crate::clamp_angle(χ, false);
         }
     }
 
     state.protein.coords = ProteinCoords::from_descrip(&state.protein.descrip);
+
+    let mut dt_modified = state.ui.sim_time_scale * dt as f64;
+    dt_modified *= 1000.; // todo: Temp fudge factor
 
     // todo: Hack to prevent editing the loop we're itereating through.
     let wm_dup = state.water_env.water_molecules.clone();
@@ -77,7 +84,7 @@ pub fn run(state: &mut State, dt: f32) {
         // let f_m = forces::force(water.m_posit, forces::M_CHARGE, &wm_dup, i);
 
         // let (force, torque) = forces::force_tipt4(water, &wm_dup, i);
-        let (force, torque) = forces::force(water, &wm_dup, i);
+        let (force, torque) = forces::water_tipt4(water, &wm_dup, i);
 
         // todo: Dist of just O?
         // let force = (water.o_posit_world)
@@ -107,22 +114,21 @@ pub fn run(state: &mut State, dt: f32) {
         let a = force / m_water;
         let α = torque / l;
 
-        water.velocity += a * dt as f64; // todo: Euler integration - not great
-        water.angular_velocity += α * dt as f64; // todo: Euler integration - not great
+        // todo: Do we want the time sim var in here too?
+        water.velocity += a * dt_modified as f64; // todo: Euler integration - not great
+        water.angular_velocity += α * dt_modified as f64; // todo: Euler integration - not great
 
         // todo: Beter way to incorporate temp. Isn't it KE, which is vel sq? so maybe take sqrt of temp?
-        let fudge_factor = 10.;
-        let fudge_factor_rot = 0.1;
+        // let fudge_factor = 10.;
+        // let fudge_factor_rot = 0.1;
 
         water.o_posit += water.velocity
-            * state.ui.temperature
-            * state.ui.sim_time_scale
-            * dt as f64
-            * fudge_factor;
+            // * state.ui.temperature
+            * dt_modified as f64;
 
         let r = Quaternion::from_axis_angle(
             water.angular_velocity.to_normalized(),
-            water.angular_velocity.magnitude() * fudge_factor_rot,
+            water.angular_velocity.magnitude() * dt_modified,
         );
 
         water.o_orientation = r * water.o_orientation;
@@ -132,27 +138,22 @@ pub fn run(state: &mut State, dt: f32) {
 
     let prot_dup = state.wavefunction_lab.protons.clone();
 
-    // todo: Move to forces
     for (i, prot_this) in state.wavefunction_lab.protons.iter_mut().enumerate() {
-        let mut charges = Vec::new();
+        let (force_prot, force_elec) = forces::hydrogen_atoms(
+            prot_this,
+            &Electron {
+                position: Vec3::new_zero(),
+                velocity: Vec3::new_zero(),
+                spin: Default::default(),
+            }, // unused
+            &prot_dup,
+            &state.wavefunction_lab.electron_posits_dynamic,
+            i,
+        );
 
-        for (j, prot_other) in prot_dup.iter().enumerate() {
-            if i == j {
-                continue
-            }
-            // todo: Come back to this
-            charges.push((prot_other.position, CHARGE_PROTON));
-        }
-
-        // todo: DRY with forces::coulomb_force
-        for elec in &state.wavefunction_lab.electron_posits_dynamic {
-            charges.push((*elec, CHARGE_ELECTRON));
-        }
-
-        let force = forces::coulomb_force((prot_this.position, CHARGE_PROTON), &charges) * K_C;
-
-        let a = force / forces::MASS_PROT;
-        prot_this.velocity += a * dt as f64 * 0.001; // todo: Euler integration - not great
+        let a = force_prot / forces::MASS_PROT;
+        // todo: dt or dt_modified here, as above?
+        prot_this.velocity += a * dt_modified as f64 * 0.001; // todo: Euler integration - not great
     }
     //
     // for (i, elec) in state.wavefunction_lab.electron_posits_dynamic.iter_mut().enumerate() {
@@ -161,10 +162,15 @@ pub fn run(state: &mut State, dt: f32) {
 
     state.water_env.update_atom_posits();
 
-    state.wavefunction_lab.update_posits(dt);
+    state.wavefunction_lab.update_posits(dt_modified);
 
     // todo: Since we don't have a way to update teh electron centers properly, do this fudge.
-    for (i, elec) in state.wavefunction_lab.electron_centers.iter_mut().enumerate() {
-        *elec = state.wavefunction_lab.protons[i].position;
+    for (i, elec) in state
+        .wavefunction_lab
+        .electron_centers
+        .iter_mut()
+        .enumerate()
+    {
+        elec.position = state.wavefunction_lab.protons[i].position;
     }
 }

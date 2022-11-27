@@ -62,9 +62,9 @@ mod sc_atom_placement;
 mod sidechain;
 mod time_sim;
 mod types;
+mod util;
 mod water;
 mod wf_lab;
-mod util;
 
 use crate::types::State;
 

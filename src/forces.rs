@@ -15,9 +15,11 @@
 
 use once_cell::sync::Lazy;
 
-use crate::water::{WaterMolecule, A, B, H_CHARGE,M_CHARGE, O_H_DIST, O_M_DIST};
-
-use crate::bond_vecs::{WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M};
+use crate::{
+    bond_vecs::{WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
+    water::{WaterMolecule, A, B, H_CHARGE, M_CHARGE, O_H_DIST, O_M_DIST},
+    wf_lab::{Electron, Proton},
+};
 use lin_alg2::f64::Vec3;
 
 // todo: Is this the unit we want?
@@ -132,7 +134,7 @@ pub fn coulomb_force(particle: (Vec3, f64), others: &Vec<(Vec3, f64)>) -> Vec3 {
 /// hand-tuned code below, and is easier to inspect and debug.
 /// This terser approach involves looping through the other molecules multiple times, which isn't great!
 // pub fn force(acted_on: &WaterMolecule, water_molecules: &Vec<WaterMolecule>, i: usize) -> (Vec3, Vec3, Vec3, Vec3) {
-pub fn force(
+pub fn water_tipt4(
     acted_on: &WaterMolecule,
     water_molecules: &Vec<WaterMolecule>,
     i: usize,
@@ -311,4 +313,32 @@ pub fn force_tipt4(
 
     // (f_o, f_h_a, f_h_b, f_m)
     (f_total, τ_total)
+}
+
+pub fn hydrogen_atoms(
+    acted_on_prot: &Proton,
+    acted_on_elec: &Electron,
+    protons: &Vec<Proton>,
+    elec_posits_dynamic: &Vec<Vec3>,
+    i: usize,
+) -> (Vec3, Vec3) {
+    let mut charges = Vec::new();
+
+    for (j, prot_other) in protons.iter().enumerate() {
+        if i == j {
+            continue;
+        }
+        // todo: Come back to this
+        charges.push((prot_other.position, CHARGE_PROTON));
+    }
+
+    // todo: DRY with forces::coulomb_force
+    for elec in elec_posits_dynamic {
+        charges.push((*elec, CHARGE_ELECTRON));
+    }
+
+    (
+        coulomb_force((acted_on_prot.position, CHARGE_PROTON), &charges) * K_C,
+        coulomb_force((acted_on_elec.position, CHARGE_ELECTRON), &charges) * K_C,
+    )
 }

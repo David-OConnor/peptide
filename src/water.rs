@@ -5,15 +5,13 @@ use rand;
 use crate::{
     bond_vecs::{H_BOND_IN, H_BOND_OUT, WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
     forces::{self},
-    kinematics,
-    util,
+    kinematics, util,
 };
 
+use crate::time_sim::SIM_BOX_DIST;
 use lin_alg2::f64::{Quaternion, Vec3};
 use once_cell::sync::Lazy;
 
-// Distance from the origin.
-const SIM_BOX_DIST: f64 = 20.;
 const VEL_SCALER: f64 = 0.0; // todo: increase A/R
 const ANG_VEL_SCALER: f64 = 0.0; // todo: increase A/R
 

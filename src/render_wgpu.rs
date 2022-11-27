@@ -1,7 +1,7 @@
 //! This module contains code for use with our custom renderer.
 
-use std::f64::consts::TAU;
 use egui::Color32;
+use std::f64::consts::TAU;
 
 use graphics::{
     self, Camera, ControlScheme, DeviceEvent, ElementState, EngineUpdates, Entity, InputSettings,
@@ -15,6 +15,7 @@ use lin_alg2::{
     f64::{Quaternion, Vec3},
 };
 
+use crate::wf_lab::map_h_wf;
 use crate::{
     atom_coords::{AtomCoords, ProteinCoords},
     bond_vecs::{LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA, LEN_N_H},
@@ -28,6 +29,9 @@ use crate::{
     sidechain::LEN_SC,
     time_sim,
     types::State,
+    util,
+    util::{quat_to_f32, vec3_to_f32},
+    wf_lab::{self, N_EXTRA_VISIBLE_ELECTRONS},
     AminoAcidType,
 };
 
@@ -44,14 +48,6 @@ pub const Q_I: QuatF32 = QuatF32 {
     y: 0.,
     z: 0.,
 };
-
-fn vec3_to_f32(v: Vec3) -> lin_alg2::f32::Vec3 {
-    lin_alg2::f32::Vec3::new(v.x as f32, v.y as f32, v.z as f32)
-}
-
-fn quat_to_f32(q: Quaternion) -> lin_alg2::f32::Quaternion {
-    lin_alg2::f32::Quaternion::new(q.w as f32, q.x as f32, q.y as f32, q.z as f32)
-}
 
 /// Adjust the camera to focus on a new point. Does so by rotating in the shortest direction
 /// to point at the new point, then moving forward or back to get to the requested distance.
@@ -551,7 +547,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             1,
             vec3_to_f32(proton.position),
             Q_I,
-            0.5,
+            0.6,
             O_COLOR,
             ATOM_SHINYNESS,
         ));
@@ -563,9 +559,24 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
             vec3_to_f32(*electron),
             Q_I,
             0.2,
-            (0., 0.5, 1.),
-            1.
+            render::ELECTRON_COLOR,
+            1.,
         ));
+    }
+
+    // Non-interacting electrons to better visualize the cloud.
+    // Only show these when the sim is running, so we only see a single electron when stopped.
+    if state.ui.sim_running {
+        for electron in &state.wavefunction_lab.extra_visible_elecs_dynamic {
+            result.push(Entity::new(
+                1,
+                util::vec3_to_f32(*electron),
+                Q_I,
+                0.2,
+                render::ELECTRON_COLOR,
+                1.,
+            ));
+        }
     }
 
     result
