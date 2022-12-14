@@ -18,7 +18,7 @@ const VEL_SCALER: f64 = 0.0; // todo: increase A/R
 
 // Render these electrons per the wave function, but don't apply them to
 // force calculations; helps to better visualize the cloud.
-pub const N_EXTRA_VISIBLE_ELECTRONS: usize = 10;
+pub const N_EXTRA_VISIBLE_ELECTRONS: usize = 30;
 
 #[derive(Clone, Default, Debug)]
 pub struct Proton {
