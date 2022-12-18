@@ -32,7 +32,9 @@ from dataclasses import dataclass;
 import numpy as np
 import matplotlib.pyplot as plt
 
-from numpy import sqrt, pi, cos
+from numpy import sqrt, pi, cos, ndarray, exp
+
+TAU = 2. * pi
 
 A_0 = 1.
 Z_H = 1.
@@ -53,7 +55,24 @@ class Vec3:
         return Vec3(self.x - other.x, self.y - other.y, self.z - other.z)
 
 
-def h_V(posit_nuc: Vec3, posit_sample: Vec3) -> float:
+def make_gaussian(x: ndarray, a: float, b: float, c: float) -> np.ndarray:
+    return a * exp(-(x - b)**2. / (2. * c**2))
+
+
+def score_wf(target: ndarray, attempt: ndarray) -> float:
+    """Score using a least-squares regression."""
+    return sum((attempt - target)**2) / target.size
+
+
+def V_h(posit_nuc: Vec3, posit_sample: Vec3) -> float:
+    """Analytic solution for n=1, s orbital"""
+    diff = posit_sample - posit_nuc
+    r = sqrt(diff.x**2 + diff.y**2 + diff.z**2)
+
+    # todo: Why negative? Seems we need it.
+    return -K_C * Q_PROT / r
+
+def V_h2_ion(posit_nuc: Vec3, posit_sample: Vec3) -> float:
     """Analytic solution for n=1, s orbital"""
     diff = posit_sample - posit_nuc
     r = sqrt(diff.x**2 + diff.y**2 + diff.z**2)
@@ -68,8 +87,8 @@ def h_wf_100(posit_nuc: Vec3, posit_sample: Vec3) -> float:
     r = sqrt(diff.x**2 + diff.y**2 + diff.z**2)
 
     ρ = Z_H * r / A_0
-    return 1. / sqrt(pi) * (Z_H / A_0)**(3. / 2.) * np.exp(-ρ)
-    # return 1. / sqrt(pi) * 1./ A_0**(3. / 2.) * np.exp(-ρ)
+    return 1. / sqrt(pi) * (Z_H / A_0)**(3. / 2.) * exp(-ρ)
+    # return 1. / sqrt(pi) * 1./ A_0**(3. / 2.) * exp(-ρ)
 
 
 def h_wf_200(posit_nuc: Vec3, posit_sample: Vec3) -> float:
@@ -77,15 +96,15 @@ def h_wf_200(posit_nuc: Vec3, posit_sample: Vec3) -> float:
     r = sqrt(diff.x**2 + diff.y**2 + diff.z**2)
 
     ρ = Z_H * r / A_0
-    return 1. / sqrt(32.*pi) * (Z_H / A_0)**(3. / 2.) * (2. - ρ) * np.exp(-ρ/2.)
+    return 1. / sqrt(32.*pi) * (Z_H / A_0)**(3. / 2.) * (2. - ρ) * exp(-ρ/2.)
 
 
-def h_wf_210(posit_nuc: Vec3, posit_sample: Vec3, theta: float) -> float:
+def h_wf_210(posit_nuc: Vec3, posit_sample: Vec3, theta: float=1/2. * TAU) -> float:
     diff = posit_sample - posit_nuc
     r = sqrt(diff.x**2 + diff.y**2 + diff.z**2)
 
     ρ = Z_H * r / A_0
-    return 1. / sqrt(32.*pi) * (Z_H / A_0)**(3. / 2.) * ρ * np.exp(-ρ/2.) * cos(theta)
+    return 1. / sqrt(32.*pi) * (Z_H / A_0)**(3. / 2.) * ρ * exp(-ρ/2.) * cos(theta)
 
 
 
@@ -100,8 +119,6 @@ def main():
 
     # psi(r)'' = (E - V(r)) * 2*m/ħ**2 * psi(r)
     # psi(r) = (E - V(R))^-1 * ħ**2/2m * psi(r)''
-
-    E = -1/2 # n = 1
 
     N = 10_000
 
@@ -118,14 +135,24 @@ def main():
     h = 0.00001  # aka dx?
 
     wf = h_wf_100
+    E = -1/2 # n = 1
+    # E = -1/8 # n = 2
+    # E = -0.05514706 # n = 3
+
+    # Here, we make up a Psi, numerically, to see how it converges.
+    a = 1./sqrt(pi)  # Height
+    b = 0.  # center
+    c = 1.5  # Width
+    psi = make_gaussian(x_vals, a, b, c);
 
     for i, x in enumerate(x_vals):
         posit_sample = Vec3(x, 0., 0.)
 
-        psi[i] = wf(posit_nuc, posit_sample)
+        # Note: If using an analytic etc psi, put this line back.
+        # psi[i] = wf(posit_nuc, posit_sample)
 
         # todo: Experimenting with negative sign here. Why?
-        V = h_V(posit_nuc, posit_sample)
+        V = V_h(posit_nuc, posit_sample)
         V_vals[i] = V
 
         psi_pp_expected[i] = (E - V) * -2. * M_ELEC / ħ**2 * psi[i]
@@ -176,6 +203,10 @@ def main():
 		# 	psi_z_prev2 + psi_z_next2 - 6. * psi[i]
 
     scaler = 1  # to make the plots show together.
+
+
+
+    print(f"ψ'' Score: {score_wf(psi_pp_expected, psi_pp_measured)}")
 
     plt.plot(x_vals, V_vals)
     plt.plot(x_vals, psi)
