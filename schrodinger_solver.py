@@ -142,7 +142,7 @@ def main():
     # Here, we make up a Psi, numerically, to see how it converges.
     a = 1./sqrt(pi)  # Height
     b = 0.  # center
-    c = 1.5  # Width
+    c = 5.  # Width
     psi = make_gaussian(x_vals, a, b, c);
 
     for i, x in enumerate(x_vals):
