@@ -120,7 +120,7 @@ def main():
     # works, to validate our method.
 
     # Set up 3d plot
-    fig = plt.figure()
+    fig = plt.figure(figsize=(12, 8))
     ax = fig.add_subplot(projection='3d')
 
     posit_nuc = Vec3(0., 0., 0.)
@@ -131,7 +131,7 @@ def main():
     # psi(r)'' = (E - V(r)) * 2*m/ħ**2 * psi(r)
     # psi(r) = (E - V(R))^-1 * ħ**2/2m * psi(r)''
 
-    N = 150
+    N = 100
 
 	# As a test iter, keep y and z = 0
 
@@ -145,8 +145,8 @@ def main():
     psi_pp_expected_2d = np.zeros((N, N))
     psi_pp_measured_2d = np.zeros((N, N))
 
-    x_vals = np.linspace(-10, 10, N)
-    y_vals = np.linspace(-10, 10, N)
+    x_vals = np.linspace(-7, 7, N)
+    y_vals = np.linspace(-7, 7, N)
 
     # Used for calculating numerical psi''.
     # Smaller is more precise. Applies to dx, dy, and dz
@@ -165,6 +165,7 @@ def main():
     # E = -1/8 # n = 2
     # E = -0.05514706 # n = 3
 
+    nuclei = [Vec3(-2., 0., 0.), Vec3(2., 0., 0.)] # todo: Find actual dist
 
 
     # todo: Your test wave functions need to be populated in 3 dimensions!
@@ -175,13 +176,16 @@ def main():
         for j, y in enumerate(y_vals):
             posit_sample = Vec3(x, y, 0.)
 
+            V = 0.
+
             # Note: If using an analytic etc psi, put this line back.
             # psi[i] = wf(posit_nuc, posit_sample)
-            psi_2d[i, j] = wf(posit_nuc, posit_sample)
+            for nuc in nuclei:
+                # todo: Naiive superposition
+                psi_2d[i, j] += wf(nuc, posit_sample)
 
-            # todo: Experimenting with negative sign here. Why?
-            V = V_h(posit_nuc, posit_sample)
-            # V_vals[i] = V
+                V += V_h(nuc, posit_sample)
+                # V_vals[i] = V
             V_vals_2d[i, j] = V
 
             # psi_pp_expected[i] = (E - V) * -2. * M_ELEC / ħ**2 * psi[i]
@@ -211,12 +215,20 @@ def main():
             z_prev = Vec3(posit_sample.x, posit_sample.y, posit_sample.z - h)
             z_next = Vec3(posit_sample.x, posit_sample.y, posit_sample.z + h)
 
-            psi_x_prev = wf(posit_nuc, x_prev)
-            psi_x_next = wf(posit_nuc, x_next)
-            psi_y_prev = wf(posit_nuc, y_prev)
-            psi_y_next = wf(posit_nuc, y_next)
-            psi_z_prev = wf(posit_nuc, z_prev)
-            psi_z_next = wf(posit_nuc, z_next)
+            psi_x_prev = 0.
+            psi_x_next = 0.
+            psi_y_prev = 0.
+            psi_y_next = 0.
+            psi_z_prev = 0.
+            psi_z_next = 0.
+
+            for nuc in nuclei:
+                psi_x_prev += wf(nuc, x_prev)
+                psi_x_next += wf(nuc, x_next)
+                psi_y_prev += wf(nuc, y_prev)
+                psi_y_next += wf(nuc, y_next)
+                psi_z_prev += wf(nuc, z_prev)
+                psi_z_next += wf(nuc, z_next)
 
             # Could combine these, but this split-by-axis is easier to understand.
 
@@ -252,15 +264,13 @@ def main():
 
     # plt.ylim(-0.5, 0.8)
 
-    
 
-    # todo: Default to larger window?
 
     # 2d data:
     x_plot, y_plot = np.meshgrid(x_vals, y_vals)
 
-    ax.plot_surface(x_plot, y_plot, V_vals_2d)
-    ax.plot_surface(x_plot, y_plot, psi_2d)
+    # ax.plot_surface(x_plot, y_plot, V_vals_2d)
+    # ax.plot_surface(x_plot, y_plot, psi_2d)
     ax.plot_surface(x_plot, y_plot, psi_pp_expected_2d)
     ax.plot_surface(x_plot, y_plot, psi_pp_measured_2d)
 
