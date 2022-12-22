@@ -33,6 +33,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from numpy import sqrt, pi, cos, ndarray, exp
+import math
 
 TAU = 2. * pi
 
@@ -70,22 +71,40 @@ def score_wf(target: ndarray, attempt: ndarray) -> float:
     """Score using a least-squares regression."""
     return sum((attempt - target)**2) / target.size
 
+def score_wf_2d(target: ndarray, attempt: ndarray) -> float:
+    """Score using a least-squares regression."""
+    result = 0.
+    for i in range(target[0].size):
+        for j in range(target[1].size):
+            result += attempt[i, j] - target[i, j]
+
+    return result / target.size
+
 
 def V_h(posit_nuc: Vec3, posit_sample: Vec3) -> float:
-    """Analytic solution for n=1, s orbital"""
+    """Hydrogen potential"""
     diff = posit_sample - posit_nuc
     r = sqrt(diff.x**2 + diff.y**2 + diff.z**2)
 
     # todo: Why negative? Seems we need it.
     return -K_C * Q_PROT / r
+
 
 def V_h2_ion(posit_nuc: Vec3, posit_sample: Vec3) -> float:
-    """Analytic solution for n=1, s orbital"""
+    """Hydrogen ion potential"""
     diff = posit_sample - posit_nuc
     r = sqrt(diff.x**2 + diff.y**2 + diff.z**2)
 
     # todo: Why negative? Seems we need it.
     return -K_C * Q_PROT / r
+
+
+def V_osc(posit_nuc: Vec3, posit_sample: Vec3) -> float:
+    """Quantum oscillator potential"""
+    diff = posit_sample - posit_nuc
+    r = sqrt(diff.x**2 + diff.y**2 + diff.z**2)
+
+    return (r/10)**2
 
 
 def h_wf_100(posit_nuc: Vec3, posit_sample: Vec3) -> float:
@@ -114,16 +133,55 @@ def h_wf_210(posit_nuc: Vec3, posit_sample: Vec3, theta: float=1/2. * TAU) -> fl
     return 1. / sqrt(32.*pi) * (Z_H / A_0)**(3. / 2.) * ρ * exp(-ρ/2.) * cos(theta)
 
 
+def wf_osc(posit_nuc: Vec3, posit_sample: Vec3, theta: float=1/2. * TAU) -> float:
+    """Quantum harmonic oscillator"""
+    diff = posit_sample - posit_nuc
+    r = sqrt(diff.x**2 + diff.y**2 + diff.z**2)
+
+    n = 0
+    omega = 1
+
+    part1 = 1./(sqrt(2**n * math.factorial(n)))
+    part2 = (M_ELEC * omega / (pi * hbar))**(1/4)
+    part3 = exp(-(M_ELEC * omega * r**2 / (2 * hbar)))
+    part4 = H_n * sqrt((M_ELEC * omega / hbar) * r)
+
+    # todo: Incomplete
+
+    return part1 * part2 * part3 * part4
+
+
+def plot_1d(x_vals: ndarray, data: list[ndarray]):
+    for d in data:
+        plt.plot(x_vals, data)
+
+    plt.ylim(-0.5, 0.8)
+
+    plt.show()
+
+
+def plot_2d(x_vals: ndarray, y_vals: ndarray, data: list[ndarray]):
+    fig = plt.figure(figsize=(12, 8))
+    ax = fig.add_subplot(projection='3d')
+
+    x_plot, y_plot = np.meshgrid(x_vals, y_vals)
+
+    for d in data:
+        ax.plot_surface(x_plot, y_plot, d)
+
+    ax.set_aspect('equal')
+    ax.set_xlim(-4, 4)
+    ax.set_ylim(-4, 4)
+    ax.set_zlim(-0.5, 0.8)
+
+    plt.show()
+
 
 def main():
     # Let's stick to 3D. And try the H WF as a test that it
     # works, to validate our method.
 
-    # Set up 3d plot
-    fig = plt.figure(figsize=(12, 8))
-    ax = fig.add_subplot(projection='3d')
-
-    posit_nuc = Vec3(0., 0., 0.)
+    # posit_nuc = Vec3(0., 0., 0.)
 
     # Schrod eq for H: 
     # V for hydrogen: K_C * Q_PROT / r
@@ -145,8 +203,8 @@ def main():
     psi_pp_expected_2d = np.zeros((N, N))
     psi_pp_measured_2d = np.zeros((N, N))
 
-    x_vals = np.linspace(-7, 7, N)
-    y_vals = np.linspace(-7, 7, N)
+    x_vals = np.linspace(-4, 4, N)
+    y_vals = np.linspace(-4, 4, N)
 
     # Used for calculating numerical psi''.
     # Smaller is more precise. Applies to dx, dy, and dz
@@ -158,14 +216,20 @@ def main():
     b = 0.  # center
     c = 1.5  # Width
 
+    # wf = wf_osc
     wf = h_wf_100
     # wf = lambda poisit_nuc, posit_sample: make_gaussian_3d(posit_nuc, posit_sample, a, b, c)
+
+    potential_fn = V_h
+    # potential_fn = V_osc
 
     E = -1/2 # n = 1
     # E = -1/8 # n = 2
     # E = -0.05514706 # n = 3
 
-    nuclei = [Vec3(-2., 0., 0.), Vec3(2., 0., 0.)] # todo: Find actual dist
+    # nuclei = [Vec3(2., 0., 0.)]
+     # H ion nuc dist is I believe 2 bohr radii.
+    nuclei = [Vec3(-0.5, 0., 0.), Vec3(0.5, 0., 0.)]
 
 
     # todo: Your test wave functions need to be populated in 3 dimensions!
@@ -184,7 +248,7 @@ def main():
                 # todo: Naiive superposition
                 psi_2d[i, j] += wf(nuc, posit_sample)
 
-                V += V_h(nuc, posit_sample)
+                V += potential_fn(nuc, posit_sample)
                 # V_vals[i] = V
             V_vals_2d[i, j] = V
 
@@ -250,37 +314,17 @@ def main():
 		# psi_pp_measured[i] = 0.25 * psi_x_prev2 + psi_x_next2 + psi_y_prev2 + psi_y_next2 + \
 		# 	psi_z_prev2 + psi_z_next2 - 6. * psi[i]
 
-    scaler = 1  # to make the plots show together.
+    # print(f"ψ'' Score: {round(score_wf(psi_pp_expected, psi_pp_measured), 5)}")
+    print(f"ψ'' Score: {round(score_wf_2d(psi_pp_expected_2d, psi_pp_measured_2d), 5)}")
 
+    # plot_1d(x_vals, [V_vals, psi, psi_pp_expected, psi_pp_measured])
 
-
-    print(f"ψ'' Score: {score_wf(psi_pp_expected, psi_pp_measured)}")
-
-    # 1D data:
-    # plt.plot(x_vals, V_vals)
-    # plt.plot(x_vals, psi)
-    # plt.plot(x_vals, psi_pp_expected * scaler)  # Scaler for visualization
-    # plt.plot(x_vals, psi_pp_measured * scaler)
-
-    # plt.ylim(-0.5, 0.8)
-
-
-
-    # 2d data:
-    x_plot, y_plot = np.meshgrid(x_vals, y_vals)
-
-    # ax.plot_surface(x_plot, y_plot, V_vals_2d)
-    # ax.plot_surface(x_plot, y_plot, psi_2d)
-    ax.plot_surface(x_plot, y_plot, psi_pp_expected_2d)
-    ax.plot_surface(x_plot, y_plot, psi_pp_measured_2d)
-
-    ax.set_aspect('equal')
-    ax.set_zlim(-0.5, 0.8)
-
-    
-
-    plt.show()
-
+    plot_2d(x_vals, y_vals, [
+        # V_vals_2d,
+        psi_2d,
+        psi_pp_expected_2d,
+        psi_pp_measured_2d
+    ]) 
 
 
 main()
