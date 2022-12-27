@@ -161,7 +161,6 @@ pub fn run(state: &mut State, dt: f32) {
     // }
 
     state.water_env.update_atom_posits();
-
     state.wavefunction_lab.update_posits(dt_modified);
 
     // todo: Since we don't have a way to update teh electron centers properly, do this fudge.

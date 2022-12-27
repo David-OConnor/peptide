@@ -30,3 +30,13 @@ pub fn vec3_to_f32(v: Vec3) -> lin_alg2::f32::Vec3 {
 pub fn quat_to_f32(q: Quaternion) -> lin_alg2::f32::Quaternion {
     lin_alg2::f32::Quaternion::new(q.w as f32, q.x as f32, q.y as f32, q.z as f32)
 }
+
+/// Utility function to linearly map an input value to an output
+/// todo: Modified from how we usually do this, with out being a Vec.
+pub fn map_linear(val: f64, range_in: (f64, f64), range_out: (Vec3, Vec3)) -> Vec3 {
+    // todo: You may be able to optimize calls to this by having the ranges pre-store
+    // todo the total range vals.
+    let portion = (val - range_in.0) / (range_in.1 - range_in.0);
+
+    portion * (range_out.1 - range_out.0) + range_out.0
+}

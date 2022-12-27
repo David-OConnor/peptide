@@ -1425,7 +1425,6 @@ dependencies = [
  "once_cell",
  "rand",
  "rfd",
- "winit",
 ]
 
 [[package]]

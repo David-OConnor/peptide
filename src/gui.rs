@@ -54,22 +54,6 @@ pub enum UiMode {
     MotionSim,
 }
 
-//fn make_event_handler(
-//     state: &mut State,
-// ) -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) -> bool {
-//     // todo: Higher level api from winit or otherwise instead of scancode?
-//     let mut coords_changed = false;
-//     let mut active_res_backbone_changed = false;
-//     let mut active_res_sidechain_changed = false;
-//     let mut active_res_changed = false;
-//
-//     // We count starting at 1, per chem conventions.
-//     let ar_i = state.ui.active_residue - 1;
-//     // code shortener
-//
-//     // Box::new(move |event: DeviceEvent, scene: &mut Scene, dt: f32| {
-//     move |state: &mut State, event: DeviceEvent, scene: &mut Scene, dt: f32| {
-
 /// Updating the position of the light source on the active residue.
 pub fn change_lit_res(state: &State, scene: &mut Scene) {
     let active_n_posit = state
@@ -453,10 +437,7 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
         let panel = egui::SidePanel::left(0) // ID must be unique among panels.
             .default_width(SIDE_PANEL_SIZE);
 
-        // ctx.set_mar
-
         panel.show(ctx, |ui| {
-            // println!("{:?}", ui.spacing());
             ui.spacing_mut().item_spacing = egui::vec2(10.0, 12.0);
 
             // todo: Wider values on larger windows?

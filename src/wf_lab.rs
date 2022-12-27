@@ -13,17 +13,22 @@ use rand;
 const A_0: f64 = 1.; // Bohr radius.
 const Z_H: f64 = 1.; // Z is the atomic number.
 
-const N_MOLECULES: usize = 200;
+const N_MOLECULES: usize = 2;
 const VEL_SCALER: f64 = 0.0; // todo: increase A/R
+
+// WF mapping precision, per dimension. Memory use and some parts of computation
+// scale with the cube of this.
+const WF_PRECISION: usize = 100;
 
 // Render these electrons per the wave function, but don't apply them to
 // force calculations; helps to better visualize the cloud.
 pub const N_EXTRA_VISIBLE_ELECTRONS: usize = 30;
 
 #[derive(Clone, Default, Debug)]
-pub struct Proton {
+pub struct Charge {
     pub position: Vec3,
     pub velocity: Vec3,
+    pub charge: f64,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -51,9 +56,10 @@ pub struct Electron {
 /// to a wavefunction; then coulomb attraction applied.
 #[derive(Debug)]
 pub struct WaveFunctionState {
-    pub protons: Vec<Proton>,
+    pub charges: Vec<Charge>,
     /// Temp struct that models the wave function as a sphere with decreasing probabilities
-    /// with distance. This is a crude wave function-like function we use for testing infrastructure
+    /// with distance. This is a crude wave function-like function we use for 
+    /// testing infrastructure
     /// and rendering.
     pub electron_centers: Vec<Electron>,
     /// Used for rendering and charge calculations; the on-the-fly electron positions
@@ -67,7 +73,7 @@ pub struct WaveFunctionState {
 
 impl WaveFunctionState {
     pub fn build() -> Self {
-        let mut protons = Vec::new();
+        let mut charges = Vec::new();
         let mut electron_centers = Vec::new();
 
         for _ in 0..N_MOLECULES {
@@ -84,7 +90,7 @@ impl WaveFunctionState {
                 rand::random::<f64>() * VEL_SCALER - VEL_SCALER / 2.,
             );
 
-            protons.push(Proton { position, velocity });
+            charges.push(Charge { position, velocity, charge: 1. });
             electron_centers.push(Electron {
                 position,
                 velocity,
@@ -92,26 +98,41 @@ impl WaveFunctionState {
             });
         }
 
+        let wfs = vec![
+            (h_wf_100, 1.),
+            (h_wf_100, -1.),
+        ];
+
         let mut result = WaveFunctionState {
-            protons,
-            electron_centers,
-            // protons: vec![
-            //     Proton {
-            //         position: Vec3::new(5., -10., 0.),
-            //         velocity: Vec3::new_zero(),
-            //     },
-            //     Proton {
-            //         position: Vec3::new(5., -14., 0.),
-            //         velocity: Vec3::new_zero(),
-            //     }
-            // ],
-            // electron_centers: vec![
-            //     Vec3::new(5., -10., 0.),
-            //     Vec3::new(5., -14., 0.),
-            // ],
+            // Charges,
+            // electron_centers,
+            charges: vec![
+                Charge {
+                    position: Vec3::new(5., -10., 0.),
+                    velocity: Vec3::new_zero(),
+                    charge: 1.,
+                },
+                Charge {
+                    position: Vec3::new(5., -12., 0.),
+                    velocity: Vec3::new_zero(),
+                    charge: 1.,
+                }
+            ],
+            electron_centers: vec![
+                Electron {
+                    position: Vec3::new(5., -10., 0.),
+                    velocity: Vec3::new_zero(),
+                    spin: Spin::Up,
+                },
+                Electron {
+                    position: Vec3::new(5., -14., 0.),
+                    velocity: Vec3::new_zero(),
+                    spin: Spin::Up,
+                },
+            ],
             electron_posits_dynamic: Vec::new(),
             extra_visible_elecs_dynamic: Vec::new(),
-            h_pdf_map: generate_pdf_map(&h_wavefn, (0., 10.), 1_000),
+            h_pdf_map: generate_pdf_map(&wfs, (0., 10.), WF_PRECISION),
         };
 
         result.update_posits(0.);
@@ -119,26 +140,27 @@ impl WaveFunctionState {
         result
     }
 
-    /// Update proton positions based on their velocity. Update electroncs based on their wavefunction.
+    /// Update Charge positions based on their velocity. Update electroncs based on 
+    /// their wavefunction.
     pub fn update_posits(&mut self, dt: f64) {
-        for prot in &mut self.protons {
-            prot.position += prot.velocity * dt;
+        for nuc in &mut self.nuclei {
+            nuc.position += nuc.velocity * dt;
         }
 
         self.electron_posits_dynamic = Vec::new();
         self.extra_visible_elecs_dynamic = Vec::new();
 
-        for electron in &mut self.electron_centers {
-            self.electron_posits_dynamic
-                .push(gen_electron_posit(electron.position, &self.h_pdf_map));
+        // for electron in &mut self.electron_centers {
+        //     self.electron_posits_dynamic
+        //         .push(gen_electron_posit(electron.position, &self.h_pdf_map));
 
-            // electron.position += electron.velocity * dt;
+        //     // electron.position += electron.velocity * dt;
 
-            for _ in 0..N_EXTRA_VISIBLE_ELECTRONS {
-                self.extra_visible_elecs_dynamic
-                    .push(gen_electron_posit(electron.position, &self.h_pdf_map));
-            }
-        }
+        //     for _ in 0..N_EXTRA_VISIBLE_ELECTRONS {
+        //         self.extra_visible_elecs_dynamic
+        //             .push(gen_electron_posit(electron.position, &self.h_pdf_map));
+        //     }
+        // }
     }
 }
 
@@ -159,25 +181,62 @@ fn linspace(range: (f64, f64), num_vals: usize) -> Vec<f64> {
     result
 }
 
+/// https://chem.libretexts.org/Courses/University_of_California_Davis/UCD_Chem_107B%3A_
+/// Physical_Chemistry_for_Life_Scientists/Chapters/4%3A_Quantum_Theory/
+/// 4.10%3A_The_Schr%C3%B6dinger_Wave_Equation_for_the_Hydrogen_Atom
+/// Analytic solution for n=1, s orbital
+fn h_wf_100(posit_nuc: Vec3, posit_sample: Vec3) -> f64 {
+    let diff = posit_sample - posit_nuc;
+    let r = (diff.x.powi(2) + diff.y.powi(2) + diff.z.powi(2)).sqrt();
+
+    let ρ = Z_H * r / A_0;
+    1. / PI.sqrt() * (Z_H / A_0).powf(3. / 2.) * (-ρ).exp()
+    // 1. / sqrt(pi) * 1./ A_0.powf(3. / 2.) * (-ρ).exp()
+}
+
+/// Analytic solution for n=2, s orbital
+fn h_wf_200(posit_nuc: Vec3, posit_sample: Vec3) -> f64 {
+    let diff = posit_sample - posit_nuc;
+    let r = (diff.x.powi(2) + diff.y.powi(2) + diff.z.powi(2)).sqrt();
+
+    let ρ = Z_H * r / A_0;
+    1. / (32. * PI).sqrt() * (Z_H / A_0).powf(3. / 2.) * (2. - ρ) * (-ρ / 2.).exp()
+}
+
 /// Generate discrete mappings between a 0. - 1. uniform distribution
-/// to the wave function's PDF.
-/// Output is in the format `(uniform distro value, radius)`.
+/// to the wave function's PDF: Discretized through 3D space. ie, each
+/// PDF value maps to a cube of space.
 fn generate_pdf_map(
-    wave_fn: &dyn Fn(f64, u8, u8, u8) -> f64,
-    r_range: (f64, f64),
-    num_r_vals: usize,
-) -> Vec<(f64, f64)> {
-    let r_vals = linspace(r_range, num_r_vals);
+    // WF, weight
+    wave_fns: &Vec<(&dyn Fn(Vec3, Vec3) -> f64>, f64),
+    dist_range: (f64, f64),
+    // Of a cube, centered on... center-of-mass of system??
+    vals_per_side: usize,
+) -> Vec<(f64, Vec3)> {
+    let x_vals = linspace(dist_range, vals_per_side);
+    let y_vals = linspace(dist_range, vals_per_side);
+    let z_vals = linspace(dist_range, vals_per_side);
 
     let mut pdf_cum = 0.;
 
     let mut gates = Vec::new();
-    for r in r_vals {
-        // This PDF is psi^2.
-        let pdf_at_r = wave_fn(r, 0, 1, 1).powi(2);
 
-        pdf_cum += pdf_at_r;
-        gates.push((pdf_cum, r));
+    for x in x_vals {
+        for y in y_vals {
+            for z in z_vals {
+                // todo: Normalize.
+
+                let mut pdf_this_cube = 0.;
+
+                for (wf, weight) in wfs {
+                    // This PDF is psi^2.
+                    pdf_this_cube += (wf(posit_nuc, posit_sample), weight).powi(2);
+                }
+
+                pdf_cum += pdf_at_r;
+                gates.push((pdf_cum, Vec3::new(x, y, z)));
+            }
+        }
     }
 
     // Now that we have our gates maping r to a cumulative PDF,
@@ -196,35 +255,52 @@ fn generate_pdf_map(
     result
 }
 
-/// https://chem.libretexts.org/Courses/University_of_California_Davis/UCD_Chem_107B%3A_Physical_Chemistry_for_Life_Scientists/Chapters/4%3A_Quantum_Theory/
-/// 4.10%3A_The_Schr%C3%B6dinger_Wave_Equation_for_the_Hydrogen_Atom
-fn h_wavefn(r: f64, n: u8, l: u8, m: u8) -> f64 {
-    // todo: QC this.
-    // todo: Hardcoded for n=1, l=m=0
-    let ρ = Z_H * r / A_0;
-    1. / PI.sqrt() * (Z_H / A_0).powf(3. / 2.) * (-ρ).exp() * r
-}
+// /// Using a cumultive probability map, map a uniform RNG value
+// /// to a wavefunction value. Assumes increasing
+// /// PDF values in the map (it's 0 index.)
+// pub fn map_wf(v: f64, map: &Vec<(f64, Vec3)>) -> Vec3 {
+//     for (pdf, posit) in map {
+//         if v < *pdf {
+//             return *posit;
+//         }
+//     }
+//     // If it's the final value.
+//     map[map.len() - 1].1
+// }
+
+// todo: May need to combine above and below fns to turn this cartesian vice radial.
 
 /// Using a cumultive probability map, map a uniform RNG value
-/// to a wavefunction value, eg radial position. Assumes increasing
+/// to a wavefunction value. Assumes increasing
 /// PDF values in the map (it's 0 index.)
-pub fn map_h_wf(v: f64, map: &Vec<(f64, f64)>) -> f64 {
-    for (pdf, r) in map {
-        if v < *pdf {
-            return *r;
+///
+/// Generate a random electron position, per a center reference point, and the wave 
+/// function.
+fn gen_electron_posit(ctr_pt: Vec3, map: &Vec<(f64, Vec3)>) -> Vec3 {
+    let uniform_sample = rand::random::<f64>();
+
+    for (i, (pdf, posit)) in map.into_iter().enumerate() {
+        if uniform_sample < *pdf {
+            // Interpolate.
+            let v = if i > 0 {
+                // todo: QC this. If you're having trouble, TS by using just *posit,
+                // todo as below.
+                util::map_linear(uniform_sample, (map[i-1].0, pdf), (map[i-1].1, *posit))
+            } else {
+                // todo: Map to 0 here?
+                *posit
+            };
+
+            return center_pt + v;
         }
     }
-    // If it's the final value.
-    map[map.len() - 1].1
-}
 
-/// Generate a random electron position, per a center point, and the wave function.
-fn gen_electron_posit(ctr_pt: Vec3, map: &Vec<(f64, f64)>) -> Vec3 {
-    let rotation = util::rand_orientation();
-
-    // Radial component of hydrogen with n = 1, l = 0, m = 0
-    let uniform_sample = rand::random::<f64>();
-    let r = map_h_wf(uniform_sample, map);
-
-    ctr_pt + rotation.rotate_vec(Vec3::new(r, 0., 0.))
+    // If it's the final value, return this.
+    // todo: Map lin on this too.?   
+    // center_pt + map[map.len() - 1].1
+    center_pt + util::map_linear(
+        uniform_sample, 
+        (map[map.len() - 2].0, map[map.len() - 1].0), 
+        (map[map.len() - 2].1, map[map.len() - 1].1), 
+    )
 }

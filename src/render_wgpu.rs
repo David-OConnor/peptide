@@ -25,6 +25,7 @@ use crate::{
         self, ACTIVE_CALPHA_COLOR, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
         BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS, CALPHA_COLOR, H_COLOR,
         H_SCALE, M_SCALE, O_COLOR, RENDER_DIST, WINDOW_SIZE_X, WINDOW_SIZE_Y, WINDOW_TITLE,
+        BACKGROUND_COLOR,
     },
     sidechain::LEN_SC,
     time_sim,
@@ -72,7 +73,6 @@ pub fn look_at(cam: &mut Camera, focus_pt: Vec3F32, dist: f32) {
 }
 
 fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) -> EngineUpdates {
-    // Box::new(move |event: DeviceEvent, scene: &mut Scene, dt: f32| {
     move |state: &mut State, event: DeviceEvent, scene: &mut Scene, dt: f32| {
         // todo: Higher level api from winit or otherwise instead of scancode?
         let mut entities_changed = false;
@@ -244,6 +244,7 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
         // }
 
         EngineUpdates {
+            meshes: false,
             entities: entities_changed,
             camera: false,
             lighting: lighting_changed,
@@ -266,6 +267,7 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
     }
 
     EngineUpdates {
+        meshes: false,
         entities: entities_changed,
         camera: false,
         lighting: false,
@@ -611,7 +613,6 @@ pub fn run(state: State) {
         lighting: Lighting {
             ambient_color: [1., 1., 1., 0.5],
             ambient_intensity: 0.05,
-            // Light from above. The sun?
             point_lights: vec![
                 // Light from above. The sun?
                 PointLight {
@@ -633,7 +634,7 @@ pub fn run(state: State) {
                 },
             ],
         },
-        background_color: render::BACKGROUND_COLOR,
+        background_color: BACKGROUND_COLOR,
         window_size: (WINDOW_SIZE_X, WINDOW_SIZE_Y),
         window_title: WINDOW_TITLE.to_owned(),
         ..Default::default()
@@ -650,10 +651,9 @@ pub fn run(state: State) {
         icon_path: Some("./resources/icon.png".to_owned()),
     };
 
-    // Of note, these functions could be used directly, vice as closures.
+    // Of note, our event_handler and gui_handler functions could be used directly,
+    // vice as closures.
     // Leaving them as closure-creators now for flexibility.
-    let event_handler = make_event_handler();
-    let gui_handler = gui::run();
 
     graphics::run(
         state,
@@ -661,8 +661,8 @@ pub fn run(state: State) {
         input_settings,
         ui_settings,
         render_handler,
-        event_handler,
-        gui_handler,
+        make_event_handler(),
+        gui::run(),
     );
 }
 
