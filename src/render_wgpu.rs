@@ -15,17 +15,16 @@ use lin_alg2::{
     f64::{Quaternion, Vec3},
 };
 
-use crate::wf_lab::map_h_wf;
 use crate::{
     atom_coords::{AtomCoords, ProteinCoords},
     bond_vecs::{LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA, LEN_N_H},
     chem_definitions::AtomRole,
     gui,
     render::{
-        self, ACTIVE_CALPHA_COLOR, ATOM_SHINYNESS, BOND_COLOR_BACKBONE, BOND_COLOR_SIDECHAIN,
-        BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS, CALPHA_COLOR, H_COLOR,
-        H_SCALE, M_SCALE, O_COLOR, RENDER_DIST, WINDOW_SIZE_X, WINDOW_SIZE_Y, WINDOW_TITLE,
-        BACKGROUND_COLOR,
+        self, ACTIVE_CALPHA_COLOR, ATOM_SHINYNESS, BACKGROUND_COLOR, BOND_COLOR_BACKBONE,
+        BOND_COLOR_SIDECHAIN, BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS,
+        CALPHA_COLOR, H_COLOR, H_SCALE, M_SCALE, O_COLOR, RENDER_DIST, WINDOW_SIZE_X,
+        WINDOW_SIZE_Y, WINDOW_TITLE,
     },
     sidechain::LEN_SC,
     time_sim,
@@ -544,10 +543,10 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
         }
     }
 
-    for proton in &state.wavefunction_lab.protons {
+    for nuc in &state.wavefunction_lab.nuclei {
         result.push(Entity::new(
             1,
-            vec3_to_f32(proton.position),
+            vec3_to_f32(nuc.position),
             Q_I,
             0.6,
             O_COLOR,

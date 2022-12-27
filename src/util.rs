@@ -38,5 +38,5 @@ pub fn map_linear(val: f64, range_in: (f64, f64), range_out: (Vec3, Vec3)) -> Ve
     // todo the total range vals.
     let portion = (val - range_in.0) / (range_in.1 - range_in.0);
 
-    portion * (range_out.1 - range_out.0) + range_out.0
+    (range_out.1 - range_out.0) * portion + range_out.0
 }

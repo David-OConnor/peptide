@@ -18,7 +18,7 @@ use once_cell::sync::Lazy;
 use crate::{
     bond_vecs::{WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
     water::{WaterMolecule, A, B, H_CHARGE, M_CHARGE, O_H_DIST, O_M_DIST},
-    wf_lab::{Electron, Proton},
+    wf_lab::{Electron, Nucleus},
 };
 use lin_alg2::f64::Vec3;
 
@@ -316,9 +316,9 @@ pub fn force_tipt4(
 }
 
 pub fn hydrogen_atoms(
-    acted_on_prot: &Proton,
+    acted_on_prot: &Nucleus,
     acted_on_elec: &Electron,
-    protons: &Vec<Proton>,
+    protons: &Vec<Nucleus>,
     elec_posits_dynamic: &Vec<Vec3>,
     i: usize,
 ) -> (Vec3, Vec3) {
@@ -339,6 +339,9 @@ pub fn hydrogen_atoms(
 
     (
         coulomb_force((acted_on_prot.position, CHARGE_PROTON), &charges) * K_C,
-        coulomb_force((acted_on_elec.position, CHARGE_ELECTRON), &charges) * K_C,
+        Vec3::new_zero(), // todo?
+
+                          // todo: Posit dynamic?
+                          // coulomb_force((acted_on_elec.position, CHARGE_ELECTRON), &charges) * K_C,
     )
 }

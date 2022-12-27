@@ -18,14 +18,19 @@ const VEL_SCALER: f64 = 0.0; // todo: increase A/R
 
 // WF mapping precision, per dimension. Memory use and some parts of computation
 // scale with the cube of this.
-const WF_PRECISION: usize = 100;
+const WF_PRECISION: usize = 40;
+// These dists are around each charge, for atomic orbitals. Smaller gives
+// more precision around the value we care about; larger takes into account
+// less-likely values(?) farther out.
+const WF_DIST_MIN: f64 = -8.;
+const WF_DIST_MAX: f64 = 8.;
 
 // Render these electrons per the wave function, but don't apply them to
 // force calculations; helps to better visualize the cloud.
 pub const N_EXTRA_VISIBLE_ELECTRONS: usize = 30;
 
 #[derive(Clone, Default, Debug)]
-pub struct Charge {
+pub struct Nucleus {
     pub position: Vec3,
     pub velocity: Vec3,
     pub charge: f64,
@@ -46,8 +51,8 @@ impl Default for Spin {
 #[derive(Clone, Default, Debug)]
 pub struct Electron {
     // todo: Is this OK for electron centers?
-    pub position: Vec3,
-    pub velocity: Vec3,
+    // pub position: Vec3,
+    // pub velocity: Vec3,
     pub spin: Spin,
 }
 
@@ -56,25 +61,26 @@ pub struct Electron {
 /// to a wavefunction; then coulomb attraction applied.
 #[derive(Debug)]
 pub struct WaveFunctionState {
-    pub charges: Vec<Charge>,
+    pub nuclei: Vec<Nucleus>,
+    // pub charges: Vec<Charge>,
     /// Temp struct that models the wave function as a sphere with decreasing probabilities
-    /// with distance. This is a crude wave function-like function we use for 
+    /// with distance. This is a crude wave function-like function we use for
     /// testing infrastructure
     /// and rendering.
-    pub electron_centers: Vec<Electron>,
+    pub electrons: Vec<Electron>,
     /// Used for rendering and charge calculations; the on-the-fly electron positions
     /// generated each iteration.
     pub electron_posits_dynamic: Vec<Vec3>,
     pub extra_visible_elecs_dynamic: Vec<Vec3>,
     /// Map 0-1 uniform distribution values to radius, for Hydrogen wavefunction,
     /// n = 1, l=m=0
-    pub h_pdf_map: Vec<(f64, f64)>,
+    pub pdf_map: Vec<(f64, Vec3)>,
 }
 
 impl WaveFunctionState {
     pub fn build() -> Self {
-        let mut charges = Vec::new();
-        let mut electron_centers = Vec::new();
+        let mut nuclei = Vec::new();
+        let mut electrons = Vec::new();
 
         for _ in 0..N_MOLECULES {
             // todo: QC and clean up this logic.
@@ -90,49 +96,57 @@ impl WaveFunctionState {
                 rand::random::<f64>() * VEL_SCALER - VEL_SCALER / 2.,
             );
 
-            charges.push(Charge { position, velocity, charge: 1. });
-            electron_centers.push(Electron {
+            nuclei.push(Nucleus {
                 position,
                 velocity,
+                charge: 1.,
+            });
+            electrons.push(Electron {
+                // position,
+                // velocity,
                 spin: Spin::Up,
             });
         }
 
-        let wfs = vec![
-            (h_wf_100, 1.),
-            (h_wf_100, -1.),
+        let wfs = vec![(&h_wf_100, 1.), (&h_wf_100, -1.)];
+
+        let nuclei = vec![
+            Nucleus {
+                position: Vec3::new(5., -10., 0.),
+                velocity: Vec3::new_zero(),
+                charge: 1.,
+            },
+            Nucleus {
+                position: Vec3::new(5., -12., 0.),
+                velocity: Vec3::new_zero(),
+                charge: 1.,
+            },
         ];
+
+        // todo: Put wfs back. Having trouble passing fns as args.
+        // let pdf_map = generate_pdf_map(&nuclei, wfs, (WF_DIST_MIN, WF_DIST_MAX), WF_PRECISION);
+        let pdf_map = generate_pdf_map(&nuclei, (WF_DIST_MIN, WF_DIST_MAX), WF_PRECISION);
 
         let mut result = WaveFunctionState {
             // Charges,
             // electron_centers,
-            charges: vec![
-                Charge {
-                    position: Vec3::new(5., -10., 0.),
-                    velocity: Vec3::new_zero(),
-                    charge: 1.,
-                },
-                Charge {
-                    position: Vec3::new(5., -12., 0.),
-                    velocity: Vec3::new_zero(),
-                    charge: 1.,
-                }
-            ],
-            electron_centers: vec![
+            nuclei,
+            electrons: vec![
                 Electron {
-                    position: Vec3::new(5., -10., 0.),
-                    velocity: Vec3::new_zero(),
+                    // position: Vec3::new(5., -10., 0.),
+                    // velocity: Vec3::new_zero(),
                     spin: Spin::Up,
                 },
-                Electron {
-                    position: Vec3::new(5., -14., 0.),
-                    velocity: Vec3::new_zero(),
-                    spin: Spin::Up,
-                },
+                // Electron {
+                //     // position: Vec3::new(5., -14., 0.),
+                //     // velocity: Vec3::new_zero(),
+                //     spin: Spin::Up,
+                // },
             ],
             electron_posits_dynamic: Vec::new(),
             extra_visible_elecs_dynamic: Vec::new(),
-            h_pdf_map: generate_pdf_map(&wfs, (0., 10.), WF_PRECISION),
+
+            pdf_map,
         };
 
         result.update_posits(0.);
@@ -140,27 +154,31 @@ impl WaveFunctionState {
         result
     }
 
-    /// Update Charge positions based on their velocity. Update electroncs based on 
+    /// Update Charge positions based on their velocity. Update electroncs based on
     /// their wavefunction.
     pub fn update_posits(&mut self, dt: f64) {
+        // todo: You only want to update nuclei! Chagne this a/r once you
+        // todo have electron charges.
         for nuc in &mut self.nuclei {
             nuc.position += nuc.velocity * dt;
         }
 
+        // todo: Temp
+
         self.electron_posits_dynamic = Vec::new();
         self.extra_visible_elecs_dynamic = Vec::new();
 
-        // for electron in &mut self.electron_centers {
-        //     self.electron_posits_dynamic
-        //         .push(gen_electron_posit(electron.position, &self.h_pdf_map));
+        for electron in &mut self.electrons {
+            self.electron_posits_dynamic
+                .push(gen_electron_posit(Vec3::new(0., 0., 0.), &self.pdf_map));
 
-        //     // electron.position += electron.velocity * dt;
+            // electron.position += electron.velocity * dt;
 
-        //     for _ in 0..N_EXTRA_VISIBLE_ELECTRONS {
-        //         self.extra_visible_elecs_dynamic
-        //             .push(gen_electron_posit(electron.position, &self.h_pdf_map));
-        //     }
-        // }
+            for _ in 0..N_EXTRA_VISIBLE_ELECTRONS {
+                self.extra_visible_elecs_dynamic
+                    .push(gen_electron_posit(Vec3::new(0., 0., 0.), &self.pdf_map));
+            }
+        }
     }
 }
 
@@ -208,7 +226,10 @@ fn h_wf_200(posit_nuc: Vec3, posit_sample: Vec3) -> f64 {
 /// PDF value maps to a cube of space.
 fn generate_pdf_map(
     // WF, weight
-    wave_fns: &Vec<(&dyn Fn(Vec3, Vec3) -> f64>, f64),
+    // todo: Enforce same len of charges and wfs.
+    nuclei: &Vec<Nucleus>,
+    // todo: Put wfs back. Having trouble with fn passing
+    // wave_fns: Vec<(dyn Fn(Vec3, Vec3) -> f64, f64)>,
     dist_range: (f64, f64),
     // Of a cube, centered on... center-of-mass of system??
     vals_per_side: usize,
@@ -221,20 +242,27 @@ fn generate_pdf_map(
 
     let mut gates = Vec::new();
 
-    for x in x_vals {
-        for y in y_vals {
-            for z in z_vals {
+    for x in &x_vals {
+        for y in &y_vals {
+            for z in &z_vals {
+                let posit_sample = Vec3::new(*x, *y, *z);
                 // todo: Normalize.
 
                 let mut pdf_this_cube = 0.;
 
-                for (wf, weight) in wfs {
-                    // This PDF is psi^2.
-                    pdf_this_cube += (wf(posit_nuc, posit_sample), weight).powi(2);
-                }
+                // todo: Put back! Having trouble with fn passing
+                // for (i, (wf, weight)) in wave_fns.into_iter().enumerate() {
+                //     // This PDF is psi^2.
 
-                pdf_cum += pdf_at_r;
-                gates.push((pdf_cum, Vec3::new(x, y, z)));
+                //     // todo: Take into account the charges... charge. (Here?)
+                //     pdf_this_cube += (wf(nuclei[i].position, posit_sample) * weight).powi(2);
+                // }
+                // todo temp hardcoded fns/weights
+                pdf_this_cube += (h_wf_100(nuclei[0].position, posit_sample) * 1.).powi(2);
+                pdf_this_cube += (h_wf_100(nuclei[1].position, posit_sample) * -1.).powi(2);
+
+                pdf_cum += pdf_this_cube;
+                gates.push((pdf_cum, posit_sample));
             }
         }
     }
@@ -245,11 +273,11 @@ fn generate_pdf_map(
     let scale_factor = pdf_cum / (1.0 - 0.0); // Always works out to be pdf_cum.
 
     let mut result = Vec::new();
-    for (pdf, r) in gates {
+    for (pdf, cube) in gates {
         // Implicit in this is that the output range starts at 0.
         // todo: This currently assumes pdf starts at 0 as well.
         // todo: You will need to change this for other functions.
-        result.push((pdf / scale_factor, r));
+        result.push((pdf / scale_factor, cube));
     }
 
     result
@@ -274,10 +302,13 @@ fn generate_pdf_map(
 /// to a wavefunction value. Assumes increasing
 /// PDF values in the map (it's 0 index.)
 ///
-/// Generate a random electron position, per a center reference point, and the wave 
+/// Generate a random electron position, per a center reference point, and the wave
 /// function.
 fn gen_electron_posit(ctr_pt: Vec3, map: &Vec<(f64, Vec3)>) -> Vec3 {
     let uniform_sample = rand::random::<f64>();
+
+    // todo: we can't interpolate unless the grid mapping is continuous.
+    // todo currently, it wraps.
 
     for (i, (pdf, posit)) in map.into_iter().enumerate() {
         if uniform_sample < *pdf {
@@ -285,22 +316,24 @@ fn gen_electron_posit(ctr_pt: Vec3, map: &Vec<(f64, Vec3)>) -> Vec3 {
             let v = if i > 0 {
                 // todo: QC this. If you're having trouble, TS by using just *posit,
                 // todo as below.
-                util::map_linear(uniform_sample, (map[i-1].0, pdf), (map[i-1].1, *posit))
+                // util::map_linear(uniform_sample, (map[i - 1].0, *pdf), (map[i - 1].1, *posit))
+                *posit
             } else {
                 // todo: Map to 0 here?
                 *posit
             };
 
-            return center_pt + v;
+            return ctr_pt + v;
         }
     }
 
     // If it's the final value, return this.
-    // todo: Map lin on this too.?   
-    // center_pt + map[map.len() - 1].1
-    center_pt + util::map_linear(
-        uniform_sample, 
-        (map[map.len() - 2].0, map[map.len() - 1].0), 
-        (map[map.len() - 2].1, map[map.len() - 1].1), 
-    )
+    // todo: Map lin on this too.?
+    ctr_pt + map[map.len() - 1].1
+    // center_pt
+    //     + util::map_linear(
+    //         uniform_sample,
+    //         (map[map.len() - 2].0, map[map.len() - 1].0),
+    //         (map[map.len() - 2].1, map[map.len() - 1].1),
+    //     )
 }

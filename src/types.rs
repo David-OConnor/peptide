@@ -10,7 +10,7 @@ use crate::{
     time_sim::SIM_BOX_DIST,
     util,
     water::{WaterEnvironment, N_MOLECULES},
-    wf_lab::{Proton, WaveFunctionState},
+    wf_lab::{Nucleus, WaveFunctionState},
 };
 
 use lin_alg2::f64::{Quaternion, Vec3};

@@ -136,17 +136,17 @@ pub fn run(state: &mut State, dt: f32) {
         // todo: Code to re-generate out-of-bond molecules?
     }
 
-    let prot_dup = state.wavefunction_lab.protons.clone();
+    let nuc_dup = state.wavefunction_lab.nuclei.clone();
 
-    for (i, prot_this) in state.wavefunction_lab.protons.iter_mut().enumerate() {
+    for (i, prot_this) in state.wavefunction_lab.nuclei.iter_mut().enumerate() {
         let (force_prot, force_elec) = forces::hydrogen_atoms(
             prot_this,
             &Electron {
-                position: Vec3::new_zero(),
-                velocity: Vec3::new_zero(),
+                // position: Vec3::new_zero(),
+                // velocity: Vec3::new_zero(),
                 spin: Default::default(),
             }, // unused
-            &prot_dup,
+            &nuc_dup,
             &state.wavefunction_lab.electron_posits_dynamic,
             i,
         );
@@ -164,12 +164,12 @@ pub fn run(state: &mut State, dt: f32) {
     state.wavefunction_lab.update_posits(dt_modified);
 
     // todo: Since we don't have a way to update teh electron centers properly, do this fudge.
-    for (i, elec) in state
-        .wavefunction_lab
-        .electron_centers
-        .iter_mut()
-        .enumerate()
-    {
-        elec.position = state.wavefunction_lab.protons[i].position;
-    }
+    // for (i, elec) in state
+    //     .wavefunction_lab
+    //     .electrons
+    //     .iter_mut()
+    //     .enumerate()
+    // {
+    //     elec.position = state.wavefunction_lab.nuclei[i].position;
+    // }
 }
