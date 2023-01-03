@@ -20,6 +20,7 @@ use crate::{
     bond_vecs::{LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA, LEN_N_H},
     chem_definitions::AtomRole,
     gui,
+    quantum::{self, N_EXTRA_VISIBLE_ELECTRONS},
     render::{
         self, ACTIVE_CALPHA_COLOR, ATOM_SHINYNESS, BACKGROUND_COLOR, BOND_COLOR_BACKBONE,
         BOND_COLOR_SIDECHAIN, BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS,
@@ -31,7 +32,6 @@ use crate::{
     types::State,
     util,
     util::{quat_to_f32, vec3_to_f32},
-    wf_lab::{self, N_EXTRA_VISIBLE_ELECTRONS},
     AminoAcidType,
 };
 

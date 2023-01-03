@@ -55,6 +55,7 @@ mod forces;
 mod gui;
 mod kinematics;
 mod proteins;
+mod quantum;
 mod render;
 mod render_wgpu;
 mod save_load;
@@ -64,7 +65,6 @@ mod time_sim;
 mod types;
 mod util;
 mod water;
-mod wf_lab;
 
 use crate::types::State;
 

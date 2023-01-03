@@ -6,11 +6,11 @@ use crate::{
     atom_coords::ProteinCoords,
     gui::UiMode,
     proteins,
+    quantum::{Nucleus, WaveFunctionState},
     sidechain::Sidechain,
     time_sim::SIM_BOX_DIST,
     util,
     water::{WaterEnvironment, N_MOLECULES},
-    wf_lab::{Nucleus, WaveFunctionState},
 };
 
 use lin_alg2::f64::{Quaternion, Vec3};

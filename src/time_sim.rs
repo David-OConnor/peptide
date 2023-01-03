@@ -7,8 +7,8 @@ use crate::{
     atom_coords::ProteinCoords,
     bond_vecs::{LEN_O_H, WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
     forces::{self, CHARGE_ELECTRON, CHARGE_PROTON, K_C},
+    quantum::Electron,
     water::{self, H_MASS, O_H_DIST},
-    wf_lab::Electron,
     AminoAcidType, State,
 };
 

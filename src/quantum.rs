@@ -4,6 +4,8 @@ use core::f64::consts::PI;
 
 use crate::{time_sim::SIM_BOX_DIST, util};
 
+use wf_lab::basis_wfs;
+
 use lin_alg2::f64::Vec3;
 
 use rand;
@@ -106,7 +108,7 @@ impl WaveFunctionState {
             });
         }
 
-        let wfs = vec![(&h_wf_100, 1.), (&h_wf_100, -1.)];
+        let wfs = vec![(&basis_wfs::h_wf_100, 1.), (&basis_wfs::h_wf_100, -1.)];
 
         let nuclei = vec![
             Nucleus {
@@ -223,28 +225,6 @@ impl WaveFunctionState {
     }
 }
 
-/// https://chem.libretexts.org/Courses/University_of_California_Davis/UCD_Chem_107B%3A_
-/// Physical_Chemistry_for_Life_Scientists/Chapters/4%3A_Quantum_Theory/
-/// 4.10%3A_The_Schr%C3%B6dinger_Wave_Equation_for_the_Hydrogen_Atom
-/// Analytic solution for n=1, s orbital
-fn h_wf_100(posit_nuc: Vec3, posit_sample: Vec3) -> f64 {
-    let diff = posit_sample - posit_nuc;
-    let r = (diff.x.powi(2) + diff.y.powi(2) + diff.z.powi(2)).sqrt();
-
-    let ρ = Z_H * r / A_0;
-    1. / PI.sqrt() * (Z_H / A_0).powf(3. / 2.) * (-ρ).exp()
-    // 1. / sqrt(pi) * 1./ A_0.powf(3. / 2.) * (-ρ).exp()
-}
-
-/// Analytic solution for n=2, s orbital
-fn h_wf_200(posit_nuc: Vec3, posit_sample: Vec3) -> f64 {
-    let diff = posit_sample - posit_nuc;
-    let r = (diff.x.powi(2) + diff.y.powi(2) + diff.z.powi(2)).sqrt();
-
-    let ρ = Z_H * r / A_0;
-    1. / (32. * PI).sqrt() * (Z_H / A_0).powf(3. / 2.) * (2. - ρ) * (-ρ / 2.).exp()
-}
-
 /// Generate discrete mappings between a 0. - 1. uniform distribution
 /// to the wave function's PDF: Discretized through 3D space. ie, each
 /// PDF value maps to a cube of space.
@@ -284,8 +264,8 @@ fn generate_pdf_map(
                 //     pdf_this_cube += (wf(nuclei[i].position, posit_sample) * weight).powi(2);
                 // }
                 // todo temp hardcoded fns/weights
-                pdf_this_cube += h_wf_100(nuclei[0].position, posit_sample) * 1.;
-                pdf_this_cube += h_wf_100(nuclei[1].position, posit_sample) * 1.;
+                pdf_this_cube += basis_wfs::h_wf_100(nuclei[0].position, posit_sample) * 1.;
+                pdf_this_cube += basis_wfs::h_wf_100(nuclei[1].position, posit_sample) * 1.;
 
                 // We are interested in amplitude of wf**2.
                 pdf_cum += pdf_this_cube.powi(2);

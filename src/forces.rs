@@ -17,8 +17,8 @@ use once_cell::sync::Lazy;
 
 use crate::{
     bond_vecs::{WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
+    quantum::{Electron, Nucleus},
     water::{WaterMolecule, A, B, H_CHARGE, M_CHARGE, O_H_DIST, O_M_DIST},
-    wf_lab::{Electron, Nucleus},
 };
 use lin_alg2::f64::Vec3;
 
