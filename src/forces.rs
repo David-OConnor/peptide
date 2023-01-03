@@ -33,7 +33,7 @@ pub const MAG_N: f64 = 1.; // Atomic mass units
 // todo?
 pub const CHARGE_PROTON: f64 = 1.;
 pub const CHARGE_ELECTRON: f64 = -1.;
-pub const MASS_PROT: f64 = 1.; // todo?
+pub const MASS_PROT: f64 = 1.; // todo: Wrong if using Hartree units.
 
 // todo: Move these to the `water` module?
 // 104.52 to radians.

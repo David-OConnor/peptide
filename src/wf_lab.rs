@@ -1,13 +1,11 @@
 //! Wave function lab.
 
 use core::f64::consts::PI;
-use graphics::Entity;
 
-use crate::{time_sim::SIM_BOX_DIST, util, wf_lab};
+use crate::{time_sim::SIM_BOX_DIST, util};
 
-use lin_alg2::f64::{Quaternion, Vec3};
+use lin_alg2::f64::Vec3;
 
-use crate::render_wgpu::Q_I;
 use rand;
 
 const A_0: f64 = 1.; // Bohr radius.
@@ -18,7 +16,7 @@ const VEL_SCALER: f64 = 0.0; // todo: increase A/R
 
 // WF mapping precision, per dimension. Memory use and some parts of computation
 // scale with the cube of this.
-const WF_PRECISION: usize = 40;
+const WF_PRECISION: usize = 60;
 // These dists are around each charge, for atomic orbitals. Smaller gives
 // more precision around the value we care about; larger takes into account
 // less-likely values(?) farther out.
@@ -123,9 +121,30 @@ impl WaveFunctionState {
             },
         ];
 
+        // We construct a box centered on our area of interest.
+        // todo: Dynamic, instead of with fixed dimensions.
+
+        // WF_DIST_MIN, WF_DIST_MAX
+
+        // todo: Temp. Needs to be re-built or modified over time. Maybe by shifting the box
+        // todo post map-gen? Not sure. Actually maybe we need to re-gen each time and here is fine?
+
+        // todo: Hard-coded for 2 nuclei
+        let ctr_pt = (nuclei[0].position + nuclei[1].position) / 2.;
+
+        let (x_min, x_max) = (ctr_pt.x - WF_DIST_MAX, ctr_pt.x + WF_DIST_MAX);
+        let (y_min, y_max) = (ctr_pt.y - WF_DIST_MAX, ctr_pt.y + WF_DIST_MAX);
+        let (z_min, z_max) = (ctr_pt.z - WF_DIST_MAX, ctr_pt.z + WF_DIST_MAX);
+
         // todo: Put wfs back. Having trouble passing fns as args.
         // let pdf_map = generate_pdf_map(&nuclei, wfs, (WF_DIST_MIN, WF_DIST_MAX), WF_PRECISION);
-        let pdf_map = generate_pdf_map(&nuclei, (WF_DIST_MIN, WF_DIST_MAX), WF_PRECISION);
+        let pdf_map = generate_pdf_map(
+            &nuclei,
+            (x_min, x_max),
+            (y_min, y_max),
+            (z_min, z_max),
+            WF_PRECISION,
+        );
 
         let mut result = WaveFunctionState {
             // Charges,
@@ -159,6 +178,26 @@ impl WaveFunctionState {
     pub fn update_posits(&mut self, dt: f64) {
         // todo: You only want to update nuclei! Chagne this a/r once you
         // todo have electron charges.
+
+        // todo: Regen map here??
+
+        // todo: DRY this hard-coded 2-nuclei thing from init.
+        let ctr_pt = (self.nuclei[0].position + self.nuclei[1].position) / 2.;
+
+        let (x_min, x_max) = (ctr_pt.x - WF_DIST_MAX, ctr_pt.x + WF_DIST_MAX);
+        let (y_min, y_max) = (ctr_pt.y - WF_DIST_MAX, ctr_pt.y + WF_DIST_MAX);
+        let (z_min, z_max) = (ctr_pt.z - WF_DIST_MAX, ctr_pt.z + WF_DIST_MAX);
+
+        // todo: Put wfs back. Having trouble passing fns as args.
+        // let pdf_map = generate_pdf_map(&nuclei, wfs, (WF_DIST_MIN, WF_DIST_MAX), WF_PRECISION);
+        self.pdf_map = generate_pdf_map(
+            &self.nuclei,
+            (x_min, x_max),
+            (y_min, y_max),
+            (z_min, z_max),
+            WF_PRECISION,
+        );
+
         for nuc in &mut self.nuclei {
             nuc.position += nuc.velocity * dt;
         }
@@ -170,33 +209,18 @@ impl WaveFunctionState {
 
         for electron in &mut self.electrons {
             self.electron_posits_dynamic
-                .push(gen_electron_posit(Vec3::new(0., 0., 0.), &self.pdf_map));
+                // .push(gen_electron_posit(Vec3::new(0., 0., 0.), &self.pdf_map));
+                .push(gen_electron_posit(&self.pdf_map));
 
             // electron.position += electron.velocity * dt;
 
             for _ in 0..N_EXTRA_VISIBLE_ELECTRONS {
                 self.extra_visible_elecs_dynamic
-                    .push(gen_electron_posit(Vec3::new(0., 0., 0.), &self.pdf_map));
+                    // .push(gen_electron_posit(Vec3::new(0., 0., 0.), &self.pdf_map));
+                    .push(gen_electron_posit(&self.pdf_map));
             }
         }
     }
-}
-
-/// Create a set of values in a given range, with a given number of values.
-/// Similar to `numpy.linspace`.
-/// The result terminates one step before the end of the range.
-fn linspace(range: (f64, f64), num_vals: usize) -> Vec<f64> {
-    let step = (range.1 - range.0) / num_vals as f64;
-
-    let mut result = Vec::new();
-
-    let mut val = range.0;
-    for _ in 0..num_vals {
-        result.push(val);
-        val += step;
-    }
-
-    result
 }
 
 /// https://chem.libretexts.org/Courses/University_of_California_Davis/UCD_Chem_107B%3A_
@@ -230,13 +254,15 @@ fn generate_pdf_map(
     nuclei: &Vec<Nucleus>,
     // todo: Put wfs back. Having trouble with fn passing
     // wave_fns: Vec<(dyn Fn(Vec3, Vec3) -> f64, f64)>,
-    dist_range: (f64, f64),
+    x_range: (f64, f64),
+    y_range: (f64, f64),
+    z_range: (f64, f64),
     // Of a cube, centered on... center-of-mass of system??
     vals_per_side: usize,
 ) -> Vec<(f64, Vec3)> {
-    let x_vals = linspace(dist_range, vals_per_side);
-    let y_vals = linspace(dist_range, vals_per_side);
-    let z_vals = linspace(dist_range, vals_per_side);
+    let x_vals = util::linspace(x_range, vals_per_side);
+    let y_vals = util::linspace(y_range, vals_per_side);
+    let z_vals = util::linspace(z_range, vals_per_side);
 
     let mut pdf_cum = 0.;
 
@@ -258,10 +284,11 @@ fn generate_pdf_map(
                 //     pdf_this_cube += (wf(nuclei[i].position, posit_sample) * weight).powi(2);
                 // }
                 // todo temp hardcoded fns/weights
-                pdf_this_cube += (h_wf_100(nuclei[0].position, posit_sample) * 1.).powi(2);
-                pdf_this_cube += (h_wf_100(nuclei[1].position, posit_sample) * -1.).powi(2);
+                pdf_this_cube += h_wf_100(nuclei[0].position, posit_sample) * 1.;
+                pdf_this_cube += h_wf_100(nuclei[1].position, posit_sample) * 1.;
 
-                pdf_cum += pdf_this_cube;
+                // We are interested in amplitude of wf**2.
+                pdf_cum += pdf_this_cube.powi(2);
                 gates.push((pdf_cum, posit_sample));
             }
         }
@@ -304,7 +331,8 @@ fn generate_pdf_map(
 ///
 /// Generate a random electron position, per a center reference point, and the wave
 /// function.
-fn gen_electron_posit(ctr_pt: Vec3, map: &Vec<(f64, Vec3)>) -> Vec3 {
+// fn gen_electron_posit(ctr_pt: Vec3, map: &Vec<(f64, Vec3)>) -> Vec3 {
+fn gen_electron_posit(map: &Vec<(f64, Vec3)>) -> Vec3 {
     let uniform_sample = rand::random::<f64>();
 
     // todo: we can't interpolate unless the grid mapping is continuous.
@@ -323,13 +351,17 @@ fn gen_electron_posit(ctr_pt: Vec3, map: &Vec<(f64, Vec3)>) -> Vec3 {
                 *posit
             };
 
-            return ctr_pt + v;
+            // return ctr_pt + v;
+            return v;
         }
     }
 
     // If it's the final value, return this.
     // todo: Map lin on this too.?
-    ctr_pt + map[map.len() - 1].1
+
+    // ctr_pt + map[map.len() - 1].1
+    map[map.len() - 1].1
+
     // center_pt
     //     + util::map_linear(
     //         uniform_sample,
