@@ -4,7 +4,7 @@ use core::f64::consts::PI;
 
 use crate::{time_sim::SIM_BOX_DIST, util};
 
-use wf_lab::basis_wfs;
+use wf_lab::{basis_wfs, complex_nums::Cplx, Arr3d, Arr3dReal};
 
 use lin_alg2::f64::Vec3;
 
@@ -22,12 +22,14 @@ const WF_PRECISION: usize = 60;
 // These dists are around each charge, for atomic orbitals. Smaller gives
 // more precision around the value we care about; larger takes into account
 // less-likely values(?) farther out.
-const WF_DIST_MIN: f64 = -8.;
-const WF_DIST_MAX: f64 = 8.;
+const WF_DIST_MIN: f64 = -7.;
+const WF_DIST_MAX: f64 = 7.;
 
 // Render these electrons per the wave function, but don't apply them to
 // force calculations; helps to better visualize the cloud.
 pub const N_EXTRA_VISIBLE_ELECTRONS: usize = 30;
+
+const WF_N: usize = 50; // number of values on a side. Computation scales with this ^3.
 
 #[derive(Clone, Default, Debug)]
 pub struct Nucleus {
@@ -63,10 +65,10 @@ pub struct Electron {
 pub struct WaveFunctionState {
     pub nuclei: Vec<Nucleus>,
     // pub charges: Vec<Charge>,
-    /// Temp struct that models the wave function as a sphere with decreasing probabilities
-    /// with distance. This is a crude wave function-like function we use for
-    /// testing infrastructure
-    /// and rendering.
+    // /// Temp struct that models the wave function as a sphere with decreasing probabilities
+    // /// with distance. This is a crude wave function-like function we use for
+    // /// testing infrastructure
+    // /// and rendering.
     pub electrons: Vec<Electron>,
     /// Used for rendering and charge calculations; the on-the-fly electron positions
     /// generated each iteration.
@@ -107,8 +109,6 @@ impl WaveFunctionState {
                 spin: Spin::Up,
             });
         }
-
-        let wfs = vec![(&basis_wfs::h_wf_100, 1.), (&basis_wfs::h_wf_100, -1.)];
 
         let nuclei = vec![
             Nucleus {
@@ -254,7 +254,7 @@ fn generate_pdf_map(
                 let posit_sample = Vec3::new(*x, *y, *z);
                 // todo: Normalize.
 
-                let mut pdf_this_cube = 0.;
+                let mut pdf_this_cube: f64 = 0.;
 
                 // todo: Put back! Having trouble with fn passing
                 // for (i, (wf, weight)) in wave_fns.into_iter().enumerate() {
@@ -264,8 +264,8 @@ fn generate_pdf_map(
                 //     pdf_this_cube += (wf(nuclei[i].position, posit_sample) * weight).powi(2);
                 // }
                 // todo temp hardcoded fns/weights
-                pdf_this_cube += basis_wfs::h_wf_100(nuclei[0].position, posit_sample) * 1.;
-                pdf_this_cube += basis_wfs::h_wf_100(nuclei[1].position, posit_sample) * 1.;
+                // pdf_this_cube += basis_wfs::h_wf_100(nuclei[0].position, posit_sample) * 1.;
+                // pdf_this_cube += basis_wfs::h_wf_100(nuclei[1].position, posit_sample) * 1.;
 
                 // We are interested in amplitude of wf**2.
                 pdf_cum += pdf_this_cube.powi(2);

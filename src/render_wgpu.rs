@@ -247,6 +247,7 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
             entities: entities_changed,
             camera: false,
             lighting: lighting_changed,
+            ui_size: 0.,
         }
     }
 }
@@ -258,7 +259,7 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
     // delegate to a sim fn/module
 
     if state.ui.sim_running {
-        time_sim::run(state, dt);
+        time_sim::run_frame(state, dt);
 
         scene.entities = generate_entities(&state);
 
@@ -270,6 +271,7 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
         entities: entities_changed,
         camera: false,
         lighting: false,
+        ui_size: 0.,
     }
     // todo: This may be where you need to update the render after changing a slider
 }
@@ -646,8 +648,8 @@ pub fn run(state: State) {
     let ui_settings = UiSettings {
         // todo: How to handle this? For blocking keyboard and moues inputs when over the UI.
         // width: gui::UI_WIDTH as f64, // todo: Not working correctly.
-        width: 500.,
         icon_path: Some("./resources/icon.png".to_owned()),
+        ..Default::default()
     };
 
     // Of note, our event_handler and gui_handler functions could be used directly,

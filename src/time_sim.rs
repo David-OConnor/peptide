@@ -9,9 +9,12 @@ use crate::{
     forces::{self, CHARGE_ELECTRON, CHARGE_PROTON, K_C},
     quantum::Electron,
     water::{self, H_MASS, O_H_DIST},
-    AminoAcidType, State,
+    AminoAcidType, ProteinDescription, State,
 };
 
+use crate::quantum::WaveFunctionState;
+use crate::types::UiState;
+use crate::water::WaterEnvironment;
 use lin_alg2::f64::{Quaternion, Vec3};
 
 // Distance from the origin.
@@ -23,13 +26,17 @@ fn rng() -> f64 {
     rand::random::<f64>() - 0.5
 }
 
-/// Execute our simulation.
-pub fn run(state: &mut State, dt: f32) {
+fn run_frame_protein_jitter(
+    protein_coords: &mut ProteinCoords,
+    protein_desc: &mut ProteinDescription,
+    ui: &UiState,
+    dt: f32,
+) {
     // Constant term in our noise.
-    let dt_modified = state.ui.temperature * state.ui.sim_time_scale * dt as f64;
+    let dt_modified = ui.temperature * ui.sim_time_scale * dt as f64;
     // Crude approach, where we add random noise to the angles.
 
-    for res in &mut state.protein.descrip.residues {
+    for res in &mut protein_desc.residues {
         res.ψ += rng() * dt_modified;
         res.φ += rng() * dt_modified;
 
@@ -58,17 +65,19 @@ pub fn run(state: &mut State, dt: f32) {
         }
     }
 
-    state.protein.coords = ProteinCoords::from_descrip(&state.protein.descrip);
+    *protein_coords = ProteinCoords::from_descrip(protein_desc);
+}
 
-    let mut dt_modified = state.ui.sim_time_scale * dt as f64;
+fn run_frame_water(water_env: &mut WaterEnvironment, ui: &UiState, dt: f32) {
+    let mut dt_modified = ui.sim_time_scale * dt as f64;
     dt_modified *= 1000.; // todo: Temp fudge factor
 
     // todo: Hack to prevent editing the loop we're itereating through.
-    let wm_dup = state.water_env.water_molecules.clone();
+    let wm_dup = water_env.water_molecules.clone();
 
     // todo: is thsi right?
     let m_water = water::O_MASS + 2. * water::H_MASS;
-    for (i, water) in state.water_env.water_molecules.iter_mut().enumerate() {
+    for (i, water) in water_env.water_molecules.iter_mut().enumerate() {
         // let v_o = forces::potential(water.o_posit_world, forces::O_CHARGE, &wm_dup);
         // let v_h_a = forces::potential(water.h_a_posit_world, forces::H_CHARGE, &wm_dup);
         // let v_h_b = forces::potential(water.h_b_posit_world, forces::H_CHARGE, &wm_dup);
@@ -84,7 +93,7 @@ pub fn run(state: &mut State, dt: f32) {
         // let f_m = forces::force(water.m_posit, forces::M_CHARGE, &wm_dup, i);
 
         // let (force, torque) = forces::force_tipt4(water, &wm_dup, i);
-        let (force, torque) = forces::water_tipt4(water, &wm_dup, i);
+        let (force, torque) = water::water_tipt4(water, &wm_dup, i);
 
         // todo: Dist of just O?
         // let force = (water.o_posit_world)
@@ -136,32 +145,27 @@ pub fn run(state: &mut State, dt: f32) {
         // todo: Code to re-generate out-of-bond molecules?
     }
 
-    let nuc_dup = state.wavefunction_lab.nuclei.clone();
+    water_env.update_atom_posits();
+}
 
-    for (i, prot_this) in state.wavefunction_lab.nuclei.iter_mut().enumerate() {
-        let (force_prot, force_elec) = forces::hydrogen_atoms(
-            prot_this,
-            &Electron {
-                // position: Vec3::new_zero(),
-                // velocity: Vec3::new_zero(),
-                spin: Default::default(),
-            }, // unused
-            &nuc_dup,
-            &state.wavefunction_lab.electron_posits_dynamic,
-            i,
-        );
+fn run_frame_wavefunction(wf_state: &mut WaveFunctionState, ui: &UiState, dt: f32) {
+    let mut dt_modified = ui.sim_time_scale * dt as f64;
 
-        let a = force_prot / forces::MASS_PROT;
+    let nuc_dup = wf_state.nuclei.clone();
+
+    for (i, nuc_this) in wf_state.nuclei.iter_mut().enumerate() {
+        let force_nuc = forces::atoms(nuc_this, &nuc_dup, &wf_state.electron_posits_dynamic, i);
+
+        let a = force_nuc / forces::MASS_PROT;
         // todo: dt or dt_modified here, as above?
-        prot_this.velocity += a * dt_modified as f64 * 0.001; // todo: Euler integration - not great
+        nuc_this.velocity += a * dt_modified as f64 * 0.001; // todo: Euler integration - not great
     }
     //
     // for (i, elec) in state.wavefunction_lab.electron_posits_dynamic.iter_mut().enumerate() {
     //
     // }
 
-    state.water_env.update_atom_posits();
-    state.wavefunction_lab.update_posits(dt_modified);
+    wf_state.update_posits(dt_modified);
 
     // todo: Since we don't have a way to update teh electron centers properly, do this fudge.
     // for (i, elec) in state
@@ -172,4 +176,19 @@ pub fn run(state: &mut State, dt: f32) {
     // {
     //     elec.position = state.wavefunction_lab.nuclei[i].position;
     // }
+}
+
+/// Execute a frame of our simulation by updating positions and wave functions at a single
+/// time step.
+pub fn run_frame(state: &mut State, dt: f32) {
+    // run_frame_protein_jitter(
+    //     &mut state.protein.coords,
+    //     &mut state.protein.descrip,
+    //     &state.ui,
+    //     dt,
+    // );
+    //
+    // run_frame_water(&mut state.water_env, &state.ui, dt);
+
+    run_frame_wavefunction(&mut state.wavefunction_lab, &state.ui, dt);
 }
