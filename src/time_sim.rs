@@ -151,31 +151,24 @@ fn run_frame_water(water_env: &mut WaterEnvironment, ui: &UiState, dt: f32) {
 fn run_frame_wavefunction(wf_state: &mut WaveFunctionState, ui: &UiState, dt: f32) {
     let mut dt_modified = ui.sim_time_scale * dt as f64;
 
-    let nuc_dup = wf_state.nuclei.clone();
+    let nuclei_dup = wf_state.nuclei.clone();
 
     for (i, nuc_this) in wf_state.nuclei.iter_mut().enumerate() {
-        let force_nuc = forces::atoms(nuc_this, &nuc_dup, &wf_state.electron_posits_dynamic, i);
+        let force_nuc = forces::atoms(nuc_this, &nuclei_dup,
+                                      &wf_state.electron_posits_dynamic, i);
 
         let a = force_nuc / forces::MASS_PROT;
         // todo: dt or dt_modified here, as above?
         nuc_this.velocity += a * dt_modified as f64 * 0.001; // todo: Euler integration - not great
     }
-    //
-    // for (i, elec) in state.wavefunction_lab.electron_posits_dynamic.iter_mut().enumerate() {
-    //
-    // }
+
+    for (i, elec) in wf_state
+        .electron_posits_dynamic
+        .iter_mut()
+        .enumerate()
+    {}
 
     wf_state.update_posits(dt_modified);
-
-    // todo: Since we don't have a way to update teh electron centers properly, do this fudge.
-    // for (i, elec) in state
-    //     .wavefunction_lab
-    //     .electrons
-    //     .iter_mut()
-    //     .enumerate()
-    // {
-    //     elec.position = state.wavefunction_lab.nuclei[i].position;
-    // }
 }
 
 /// Execute a frame of our simulation by updating positions and wave functions at a single
