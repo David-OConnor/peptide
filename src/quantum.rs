@@ -2,9 +2,13 @@
 
 use core::f64::consts::PI;
 
-use crate::{time_sim::SIM_BOX_DIST, util, forces::{CHARGE_PROTON, CHARGE_ELECTRON}};
+use crate::{
+    forces::{CHARGE_ELECTRON, CHARGE_PROTON},
+    time_sim::SIM_BOX_DIST,
+    util,
+};
 
-use wf_lab::{basis_wfs, complex_nums::Cplx, Arr3d, Arr3dReal};
+use wf_lab::{basis_wfs, complex_nums::Cplx, wf_ops::N, Arr3d, Arr3dReal};
 
 use lin_alg2::f64::Vec3;
 
@@ -13,7 +17,7 @@ use rand;
 const A_0: f64 = 1.; // Bohr radius.
 const Z_H: f64 = 1.; // Z is the atomic number.
 
-const N_MOLECULES: usize = 2;
+// const N_MOLECULES: usize = 2;
 const VEL_SCALER: f64 = 0.0; // todo: increase A/R
 
 // These dists are around each charge, for atomic orbitals. Smaller gives
@@ -30,7 +34,7 @@ pub const EXTRA_VISIBILE_ELECTRONS: usize = 30;
 
 // WF mapping precision, per dimension. Memory use and some parts of computation
 // scale with the cube of this.
-const WF_N: usize = 50; // number of values on a side. Computation scales with this ^3.
+// const WF_N: usize = wf_lab::wf_ops::N; // number of values on a side. Computation scales with this ^3.
 
 #[derive(Clone, Default, Debug)]
 pub struct Nucleus {
@@ -77,39 +81,43 @@ pub struct WaveFunctionState {
     pub extra_visible_elecs_dynamic: Vec<Vec3>,
     /// Map 0-1 uniform distribution values to radius, for Hydrogen wavefunction,
     /// n = 1, l=m=0
-    pub pdf_map: Vec<(f64, Vec3)>,
+    // pub pdf_map: Vec<(f64, Vec3)>,
+    /// Outer `Vec` iterates over electrons; inner one iterates over
+    /// PDF gates. (ie cubes or grid points). This is set up as PDF map per electron so
+    /// we can exclude an electron's own charge when calculating it's next position.
+    pub pdf_maps: Vec<Vec<(f64, Vec3)>>,
 }
 
 impl WaveFunctionState {
     pub fn build() -> Self {
-        let mut nuclei = Vec::new();
-        let mut electrons = Vec::new();
-
-        for _ in 0..N_MOLECULES {
-            // todo: QC and clean up this logic.
-            let position = Vec3::new(
-                rand::random::<f64>() * SIM_BOX_DIST - SIM_BOX_DIST / 2.,
-                rand::random::<f64>() * SIM_BOX_DIST - SIM_BOX_DIST / 2.,
-                rand::random::<f64>() * SIM_BOX_DIST - SIM_BOX_DIST / 2.,
-            );
-
-            let velocity = Vec3::new(
-                rand::random::<f64>() * VEL_SCALER - VEL_SCALER / 2.,
-                rand::random::<f64>() * VEL_SCALER - VEL_SCALER / 2.,
-                rand::random::<f64>() * VEL_SCALER - VEL_SCALER / 2.,
-            );
-
-            nuclei.push(Nucleus {
-                position,
-                velocity,
-                charge: 1.,
-            });
-            electrons.push(Electron {
-                // position,
-                // velocity,
-                spin: Spin::Up,
-            });
-        }
+        // let mut nuclei = Vec::new();
+        // let mut electrons = Vec::new();
+        //
+        // for _ in 0..N_MOLECULES {
+        //     // todo: QC and clean up this logic.
+        //     let position = Vec3::new(
+        //         rand::random::<f64>() * SIM_BOX_DIST - SIM_BOX_DIST / 2.,
+        //         rand::random::<f64>() * SIM_BOX_DIST - SIM_BOX_DIST / 2.,
+        //         rand::random::<f64>() * SIM_BOX_DIST - SIM_BOX_DIST / 2.,
+        //     );
+        //
+        //     let velocity = Vec3::new(
+        //         rand::random::<f64>() * VEL_SCALER - VEL_SCALER / 2.,
+        //         rand::random::<f64>() * VEL_SCALER - VEL_SCALER / 2.,
+        //         rand::random::<f64>() * VEL_SCALER - VEL_SCALER / 2.,
+        //     );
+        //
+        //     nuclei.push(Nucleus {
+        //         position,
+        //         velocity,
+        //         charge: 1.,
+        //     });
+        //     electrons.push(Electron {
+        //         // position,
+        //         // velocity,
+        //         spin: Spin::Up,
+        //     });
+        // }
 
         let nuclei = vec![
             Nucleus {
@@ -143,7 +151,7 @@ impl WaveFunctionState {
             electron_posits_dynamic: Vec::new(),
             extra_visible_elecs_dynamic: Vec::new(),
 
-            pdf_map: Vec::new(),
+            pdf_maps: Vec::new(),
         };
 
         result.update_posits(0.);
@@ -154,9 +162,6 @@ impl WaveFunctionState {
     /// Update Charge positions based on their velocity. Update electroncs based on
     /// their wavefunction.
     pub fn update_posits(&mut self, dt: f64) {
-        // todo: You only want to update nuclei! Chagne this a/r once you
-        // todo have electron charges.
-
         // todo: Regen map here??
 
         // todo: DRY this hard-coded 2-nuclei thing from init.
@@ -166,42 +171,44 @@ impl WaveFunctionState {
         let (y_min, y_max) = (ctr_pt.y - WF_DIST_MAX, ctr_pt.y + WF_DIST_MAX);
         let (z_min, z_max) = (ctr_pt.z - WF_DIST_MAX, ctr_pt.z + WF_DIST_MAX);
 
-        // Assemble charges from nuclei, and the previous iteration's generated electrons
-        // shift by center point so center will be at 0 in the coords we pass to `wf_lab`.
-        let mut charges = Vec::new();
-        for nuc in &self.nuclei {
-            charges.push((nuc.position - ctr_pt, CHARGE_PROTON));
+        self.pdf_maps = Vec::new();
+
+        /// We generate separate wave functions for each electron, so as to exclude
+        /// an electron's charge from influencing its wavefunction.
+        for (i, _electron) in self.electrons.iter().enumerate() {
+            // Assemble charges from nuclei, and the previous iteration's generated electrons
+            // shift by center point so center will be at 0 in the coords we pass to `wf_lab`.
+            let mut charges = Vec::new();
+            for nuc in &self.nuclei {
+                charges.push((nuc.position - ctr_pt, CHARGE_PROTON));
+            }
+
+            // Charges from the previous iteration - exclude this electron's own charge.
+            for (j, elec_posit) in self.electron_posits_dynamic.iter().enumerate() {
+                if i == j {
+                    // Don't let the electron interact with itself
+                    continue;
+                }
+                charges.push((*elec_posit - ctr_pt, CHARGE_ELECTRON));
+            }
+
+            // Perform wavefunction computations centered around 0, to avoid floating-point
+            // precision issues.
+            let psi = wf_lab::psi_from_pt_charges(&charges, (-WF_DIST_MAX, WF_DIST_MAX));
+
+            let mut charge_density = wf_lab::wf_ops::new_data_real(N);
+            wf_lab::wf_ops::charge_density_fm_psi(&psi, &mut charge_density, self.electrons.len());
+
+            // todo: Shift center point from 0 to our local coords of interest.
+
+            self.pdf_maps.push(generate_pdf_map(
+                &charge_density,
+                (x_min, x_max),
+                (y_min, y_max),
+                (z_min, z_max),
+                N,
+            ));
         }
-
-        for elec_posit in &self.electron_posits_dynamic {
-            charges.push((*elec_posit - ctr_pt, CHARGE_ELECTRON));
-        }
-
-        let psi = wf_lab::psi_from_pt_charges(&charges, (x_min, x_max));
-
-        // todo: How to sync N here with wf_lab?
-        let mut charge_density = wf_lab::wf_ops::new_data_real(WF_N);
-        wf_lab::wf_ops::charge_density_fm_psi(&psi, &mut charge_density, self.electrons.len());
-
-        // todo: Shift center point from 0 to our local coords of interest.
-
-        // todo: Put wfs back. Having trouble passing fns as args.
-        // let pdf_map = generate_pdf_map(&nuclei, wfs, (WF_DIST_MIN, WF_DIST_MAX), WF_PRECISION);
-        // self.pdf_map = generate_pdf_map(
-        //     &self.nuclei,
-        //     (x_min, x_max),
-        //     (y_min, y_max),
-        //     (z_min, z_max),
-        //     WF_PRECISION,
-        // );
-
-        self.pdf_map = generate_pdf_map(
-            &charge_density,
-            (x_min, x_max),
-            (y_min, y_max),
-            (z_min, z_max),
-            WF_N,
-        );
 
         for nuc in &mut self.nuclei {
             nuc.position += nuc.velocity * dt;
@@ -210,13 +217,13 @@ impl WaveFunctionState {
         self.electron_posits_dynamic = Vec::new();
         self.extra_visible_elecs_dynamic = Vec::new();
 
-        for _electron in &mut self.electrons {
+        for (i, _electron) in self.electrons.iter_mut().enumerate() {
             self.electron_posits_dynamic
-                .push(gen_electron_posit(&self.pdf_map));
+                .push(gen_electron_posit(&self.pdf_maps[i]));
 
             for _ in 0..EXTRA_VISIBILE_ELECTRONS {
                 self.extra_visible_elecs_dynamic
-                    .push(gen_electron_posit(&self.pdf_map));
+                    .push(gen_electron_posit(&self.pdf_maps[i]));
             }
         }
     }
@@ -224,7 +231,7 @@ impl WaveFunctionState {
 
 /// Generate discrete mappings between a 0. - 1. uniform distribution
 /// to the wave function's PDF: Discretized through 3D space. ie, each
-/// PDF value maps to a cube of space.
+/// PDF value maps to a cube of space. <ψ|ψ> is normalized here.
 fn generate_pdf_map(
     charge_density: &Arr3dReal,
     x_range: (f64, f64),
@@ -240,11 +247,19 @@ fn generate_pdf_map(
     let mut pdf_cum = 0.;
     let mut gates = Vec::new();
 
+    // Log the cumulative values of the PDF (charge density), at each point,
+    // as we iterate through the array in a specific, but arbitrary order.
+    // Note that pdf_cum will range from 0. to 1., since charge_density
+    // is normalized. This maps well to a RNG of 0. to 1.
     for (i, x) in x_vals.iter().enumerate() {
         for (j, y) in y_vals.iter().enumerate() {
             for (k, z) in z_vals.iter().enumerate() {
                 let posit_sample = Vec3::new(*x, *y, *z);
-                pdf_cum + charge_density[i][j][k];
+
+                // Note: If you end up with non-size-uniform chunks of space,
+                // you'll need to incorporate a dVolume term.s
+
+                pdf_cum += charge_density[i][j][k];
                 gates.push((pdf_cum, posit_sample));
             }
         }
@@ -258,16 +273,11 @@ fn generate_pdf_map(
 
     let mut result = Vec::new();
     for (pdf, grid_pt) in gates {
-        // Implicit in this is that the output range starts at 0.
-        // todo: This currently assumes pdf starts at 0 as well.
-        // todo: You may need to change this for other functions.
         result.push((pdf / scale_factor, grid_pt));
     }
 
     result
 }
-
-
 
 // todo: May need to combine above and below fns to turn this cartesian vice radial.
 

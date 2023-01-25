@@ -20,6 +20,8 @@ use lin_alg2::f64::{Quaternion, Vec3};
 // Distance from the origin.
 pub const SIM_BOX_DIST: f64 = 40.;
 
+const DT_WAVEFUNCTION: f32 = 0.0001; // in seconds. Decoupled from graphics frame rate.
+
 // todo: Util?
 /// Get a random value from -0.5 to 0.5
 fn rng() -> f64 {
@@ -154,19 +156,14 @@ fn run_frame_wavefunction(wf_state: &mut WaveFunctionState, ui: &UiState, dt: f3
     let nuclei_dup = wf_state.nuclei.clone();
 
     for (i, nuc_this) in wf_state.nuclei.iter_mut().enumerate() {
-        let force_nuc = forces::atoms(nuc_this, &nuclei_dup,
-                                      &wf_state.electron_posits_dynamic, i);
+        let force_nuc = forces::atoms(nuc_this, &nuclei_dup, &wf_state.electron_posits_dynamic, i);
 
         let a = force_nuc / forces::MASS_PROT;
         // todo: dt or dt_modified here, as above?
         nuc_this.velocity += a * dt_modified as f64 * 0.001; // todo: Euler integration - not great
     }
 
-    for (i, elec) in wf_state
-        .electron_posits_dynamic
-        .iter_mut()
-        .enumerate()
-    {}
+    for (i, elec) in wf_state.electron_posits_dynamic.iter_mut().enumerate() {}
 
     wf_state.update_posits(dt_modified);
 }
@@ -183,5 +180,5 @@ pub fn run_frame(state: &mut State, dt: f32) {
     //
     // run_frame_water(&mut state.water_env, &state.ui, dt);
 
-    run_frame_wavefunction(&mut state.wavefunction_lab, &state.ui, dt);
+    run_frame_wavefunction(&mut state.wavefunction_lab, &state.ui, DT_WAVEFUNCTION);
 }
