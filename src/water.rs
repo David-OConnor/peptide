@@ -17,7 +17,7 @@ use once_cell::sync::Lazy;
 const VEL_SCALER: f64 = 0.0; // todo: increase A/R
 const ANG_VEL_SCALER: f64 = 0.0; // todo: increase A/R
 
-pub const N_MOLECULES: usize = 200;
+pub const N_MOLECULES: usize = 0;
 
 // Water model vars below.
 
@@ -181,29 +181,29 @@ impl WaterEnvironment {
         }
 
         // todo: Temp
-        let molecules = vec![
-            WaterMolecule {
-                o_posit: Vec3::new(10., -10., 0.),
-                o_orientation: Quaternion::new_identity(),
-                velocity: Vec3::new_zero(),
-                angular_velocity: Vec3::new_zero(),
-                ha_posit: Vec3::new_zero(),
-                hb_posit: Vec3::new_zero(),
-                m_posit: Vec3::new_zero(),
-            },
-            WaterMolecule {
-                o_posit: Vec3::new(16., -10., 0.),
-                o_orientation: Quaternion::from_axis_angle(
-                    Vec3::new(0., 1., 1.).to_normalized(),
-                    5.,
-                ),
-                velocity: Vec3::new_zero(),
-                angular_velocity: Vec3::new_zero(),
-                ha_posit: Vec3::new_zero(),
-                hb_posit: Vec3::new_zero(),
-                m_posit: Vec3::new_zero(),
-            },
-        ];
+        // let molecules = vec![
+        //     WaterMolecule {
+        //         o_posit: Vec3::new(10., -10., 0.),
+        //         o_orientation: Quaternion::new_identity(),
+        //         velocity: Vec3::new_zero(),
+        //         angular_velocity: Vec3::new_zero(),
+        //         ha_posit: Vec3::new_zero(),
+        //         hb_posit: Vec3::new_zero(),
+        //         m_posit: Vec3::new_zero(),
+        //     },
+        //     WaterMolecule {
+        //         o_posit: Vec3::new(16., -10., 0.),
+        //         o_orientation: Quaternion::from_axis_angle(
+        //             Vec3::new(0., 1., 1.).to_normalized(),
+        //             5.,
+        //         ),
+        //         velocity: Vec3::new_zero(),
+        //         angular_velocity: Vec3::new_zero(),
+        //         ha_posit: Vec3::new_zero(),
+        //         hb_posit: Vec3::new_zero(),
+        //         m_posit: Vec3::new_zero(),
+        //     },
+        // ];
 
         let mut result = Self {
             water_molecules: molecules,

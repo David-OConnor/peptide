@@ -8,7 +8,7 @@ use crate::{
     util,
 };
 
-use wf_lab::{basis_wfs, complex_nums::Cplx, wf_ops::N, Arr3d, Arr3dReal};
+use wf_lab::{basis_wfs, complex_nums::Cplx, wf_ops::N, Arr3d, Arr3dReal, util::linspace};
 
 use lin_alg2::f64::Vec3;
 
@@ -28,9 +28,9 @@ const WF_DIST_MAX: f64 = 7.;
 
 // Each electron will have this many point charges, generated per the PDF.
 // Each charge value will be divided by this.
-const POINT_CHARGES_PER_ELECTRON: usize = 1;
+const POINT_CHARGES_PER_ELECTRON: usize = 3;
 // Render this many electron points in a frame, for a given electron.
-pub const EXTRA_VISIBILE_ELECTRONS: usize = 30;
+pub const EXTRA_VISIBILE_ELECTRONS: usize = 20;
 
 // WF mapping precision, per dimension. Memory use and some parts of computation
 // scale with the cube of this.
@@ -91,7 +91,18 @@ pub struct WaveFunctionState {
 impl WaveFunctionState {
     pub fn build() -> Self {
         // let mut nuclei = Vec::new();
-        // let mut electrons = Vec::new();
+
+
+        let n_electrons = 4;
+
+        let mut electrons = Vec::new();
+        for _ in 2..n_electrons {
+            electrons.push(Electron {
+                // position: Vec3::new(5., -10., 0.),
+                // velocity: Vec3::new_zero(),
+                spin: Spin::Up,
+            });
+        }
         //
         // for _ in 0..N_MOLECULES {
         //     // todo: QC and clean up this logic.
@@ -123,31 +134,20 @@ impl WaveFunctionState {
             Nucleus {
                 position: Vec3::new(5., -10., 0.),
                 velocity: Vec3::new_zero(),
-                charge: 1.,
+                charge: 2.,
             },
-            Nucleus {
-                position: Vec3::new(5., -12., 0.),
-                velocity: Vec3::new_zero(),
-                charge: 1.,
-            },
+            // Nucleus {
+            //     position: Vec3::new(5., -12., 0.),
+            //     velocity: Vec3::new_zero(),
+            //     charge: 1.,
+            // },
         ];
 
         let mut result = WaveFunctionState {
             // Charges,
             // electron_centers,
             nuclei,
-            electrons: vec![
-                Electron {
-                    // position: Vec3::new(5., -10., 0.),
-                    // velocity: Vec3::new_zero(),
-                    spin: Spin::Up,
-                },
-                // Electron {
-                //     // position: Vec3::new(5., -14., 0.),
-                //     // velocity: Vec3::new_zero(),
-                //     spin: Spin::Up,
-                // },
-            ],
+            electrons,
             electron_posits_dynamic: Vec::new(),
             extra_visible_elecs_dynamic: Vec::new(),
 
@@ -165,7 +165,8 @@ impl WaveFunctionState {
         // todo: Regen map here??
 
         // todo: DRY this hard-coded 2-nuclei thing from init.
-        let ctr_pt = (self.nuclei[0].position + self.nuclei[1].position) / 2.;
+        // let ctr_pt = (self.nuclei[0].position + self.nuclei[1].position) / 2.;
+        let ctr_pt = self.nuclei[0].position;
 
         let (x_min, x_max) = (ctr_pt.x - WF_DIST_MAX, ctr_pt.x + WF_DIST_MAX);
         let (y_min, y_max) = (ctr_pt.y - WF_DIST_MAX, ctr_pt.y + WF_DIST_MAX);
@@ -189,7 +190,10 @@ impl WaveFunctionState {
                     // Don't let the electron interact with itself
                     continue;
                 }
-                charges.push((*elec_posit - ctr_pt, CHARGE_ELECTRON));
+                // We divide by the number of point charges per electron, since each dynamic electron
+                // generated represents a fraction of an electron charge.
+                // More charges per electron is probably more accurate, but is more computationally intensive.
+                charges.push((*elec_posit - ctr_pt, CHARGE_ELECTRON / POINT_CHARGES_PER_ELECTRON as f64));
             }
 
             // Perform wavefunction computations centered around 0, to avoid floating-point
@@ -218,8 +222,10 @@ impl WaveFunctionState {
         self.extra_visible_elecs_dynamic = Vec::new();
 
         for (i, _electron) in self.electrons.iter_mut().enumerate() {
-            self.electron_posits_dynamic
-                .push(gen_electron_posit(&self.pdf_maps[i]));
+            for _ in 0..POINT_CHARGES_PER_ELECTRON {
+                self.electron_posits_dynamic
+                    .push(gen_electron_posit(&self.pdf_maps[i]));
+            }
 
             for _ in 0..EXTRA_VISIBILE_ELECTRONS {
                 self.extra_visible_elecs_dynamic
@@ -232,6 +238,7 @@ impl WaveFunctionState {
 /// Generate discrete mappings between a 0. - 1. uniform distribution
 /// to the wave function's PDF: Discretized through 3D space. ie, each
 /// PDF value maps to a cube of space. <ψ|ψ> is normalized here.
+/// This function generates a random number when called.
 fn generate_pdf_map(
     charge_density: &Arr3dReal,
     x_range: (f64, f64),
@@ -240,9 +247,9 @@ fn generate_pdf_map(
     // Of a cube, centered on... center-of-mass of system??
     vals_per_side: usize,
 ) -> Vec<(f64, Vec3)> {
-    let x_vals = util::linspace(x_range, vals_per_side);
-    let y_vals = util::linspace(y_range, vals_per_side);
-    let z_vals = util::linspace(z_range, vals_per_side);
+    let x_vals = linspace(x_range, vals_per_side);
+    let y_vals = linspace(y_range, vals_per_side);
+    let z_vals = linspace(z_range, vals_per_side);
 
     let mut pdf_cum = 0.;
     let mut gates = Vec::new();
@@ -287,12 +294,18 @@ fn generate_pdf_map(
 ///
 /// Generate a random electron position, per a center reference point, and the wave
 /// function.
-// fn gen_electron_posit(ctr_pt: Vec3, map: &Vec<(f64, Vec3)>) -> Vec3 {
 fn gen_electron_posit(map: &Vec<(f64, Vec3)>) -> Vec3 {
     let uniform_sample = rand::random::<f64>();
 
     // todo: we can't interpolate unless the grid mapping is continuous.
     // todo currently, it wraps.
+
+    // todo: This approach will need a 3D map, and possibly 3 RNG values. (Or the RNG range
+    // todo split in 3). You'll need to modify the PDF map to make this happen.
+    // todo: Alternative approach using interpolation:
+    // for (i, (pdf, posit)) in map.into_iter().enumerate() {
+    //     wf_lab::util::interpolate_spline3pt(surface: Arr3d, val: f64, sfc_range: (f64, f64))
+    // }
 
     for (i, (pdf, posit)) in map.into_iter().enumerate() {
         if uniform_sample < *pdf {
@@ -315,7 +328,6 @@ fn gen_electron_posit(map: &Vec<(f64, Vec3)>) -> Vec3 {
     // If it's the final value, return this.
     // todo: Map lin on this too.?
 
-    // ctr_pt + map[map.len() - 1].1
     map[map.len() - 1].1
 
     // center_pt

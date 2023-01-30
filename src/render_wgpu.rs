@@ -243,11 +243,9 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
         // }
 
         EngineUpdates {
-            meshes: false,
             entities: entities_changed,
-            camera: false,
             lighting: lighting_changed,
-            ui_size: 0.,
+            ..Default::default()
         }
     }
 }
@@ -267,11 +265,8 @@ fn render_handler(state: &mut State, scene: &mut Scene, dt: f32) -> EngineUpdate
     }
 
     EngineUpdates {
-        meshes: false,
         entities: entities_changed,
-        camera: false,
-        lighting: false,
-        ui_size: 0.,
+        ..Default::default()
     }
     // todo: This may be where you need to update the render after changing a slider
 }
@@ -664,6 +659,7 @@ pub fn run(state: State) {
         render_handler,
         make_event_handler(),
         gui::run(),
+        include_str!("shader_compute.wgsl"),
     );
 }
 
