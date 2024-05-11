@@ -3,19 +3,17 @@
 
 use core::f64::consts::TAU;
 
+use lin_alg2::f64::{Quaternion, Vec3};
+
 use crate::{
     atom_coords::ProteinCoords,
     bond_vecs::{LEN_O_H, WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
     forces::{self, CHARGE_ELECTRON, CHARGE_PROTON, K_C},
-    quantum::Electron,
-    water::{self, H_MASS, O_H_DIST},
+    quantum::{Electron, WaveFunctionState},
+    types::UiState,
+    water::{self, WaterEnvironment, H_MASS, O_H_DIST},
     AminoAcidType, ProteinDescription, State,
 };
-
-use crate::quantum::WaveFunctionState;
-use crate::types::UiState;
-use crate::water::WaterEnvironment;
-use lin_alg2::f64::{Quaternion, Vec3};
 
 // Distance from the origin.
 pub const SIM_BOX_DIST: f64 = 40.;
@@ -162,8 +160,6 @@ fn run_frame_wavefunction(wf_state: &mut WaveFunctionState, ui: &UiState, dt: f3
         // todo: dt or dt_modified here, as above?
         nuc_this.velocity += a * dt_modified as f64 * 0.001; // todo: Euler integration - not great
     }
-
-    for (i, elec) in wf_state.electron_posits_dynamic.iter_mut().enumerate() {}
 
     wf_state.update_posits(dt_modified);
 }

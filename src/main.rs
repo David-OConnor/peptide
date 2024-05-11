@@ -66,11 +66,13 @@ mod types;
 mod util;
 mod water;
 
-use crate::types::State;
-
-use crate::chem_definitions::AminoAcidType;
-use crate::sidechain::{PRO_PHI_MAX, PRO_PHI_MIN};
 use std::f64::consts::TAU;
+
+use crate::{
+    chem_definitions::AminoAcidType,
+    sidechain::{PRO_PHI_MAX, PRO_PHI_MIN},
+    types::State,
+};
 
 // todo: model the oxygen double-bounded to Cp next.
 

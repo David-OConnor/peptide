@@ -1,11 +1,10 @@
 //! Misc utility functionality
 
-use rand;
-
 use lin_alg2::{
     self,
     f64::{Quaternion, Vec3},
 };
+use rand;
 
 /// Return a random value in the range of -1 to +1: This is what we need for a random quaternion.
 fn rand_for_orientation() -> f64 {

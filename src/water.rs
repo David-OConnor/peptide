@@ -2,17 +2,18 @@
 //! See [this Water Model Wikipedia article](https://en.wikipedia.org/wiki/Water_model) for an
 //! overview of our initial approach.
 
+use lin_alg2::f64::{Quaternion, Vec3};
+use once_cell::sync::Lazy;
 use rand;
 
 use crate::{
     bond_vecs::{H_BOND_IN, H_BOND_OUT, WATER_BOND_H_A, WATER_BOND_H_B, WATER_BOND_M},
-    forces, kinematics, util,
+    forces,
+    forces::K_C,
+    kinematics,
+    time_sim::SIM_BOX_DIST,
+    util,
 };
-
-use crate::forces::K_C;
-use crate::time_sim::SIM_BOX_DIST;
-use lin_alg2::f64::{Quaternion, Vec3};
-use once_cell::sync::Lazy;
 
 const VEL_SCALER: f64 = 0.0; // todo: increase A/R
 const ANG_VEL_SCALER: f64 = 0.0; // todo: increase A/R

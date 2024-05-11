@@ -1,8 +1,8 @@
 //! Add positions and orientations for all sidechain atoms. Quite repetative!
 
-use crate::{bond_vecs::*, kinematics::find_atom_placement, sidechain::*};
-
 use lin_alg2::f64::{Quaternion, Vec3};
+
+use crate::{bond_vecs::*, kinematics::find_atom_placement, sidechain::*};
 
 impl Arg {
     // todo: Equiv from `backbone_cart_coords`.

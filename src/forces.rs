@@ -11,6 +11,7 @@
 
 // TIP4P/F?
 
+use lin_alg2::f64::Vec3;
 use once_cell::sync::Lazy;
 
 use crate::{
@@ -18,7 +19,6 @@ use crate::{
     quantum::{Electron, Nucleus},
     water::{WaterMolecule, A, B, H_CHARGE, M_CHARGE, O_H_DIST, O_M_DIST},
 };
-use lin_alg2::f64::Vec3;
 
 // todo: Is this the unit we want?
 pub const K_C: f64 = 332.1;

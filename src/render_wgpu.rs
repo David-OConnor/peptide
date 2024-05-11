@@ -1,17 +1,15 @@
 //! This module contains code for use with our custom renderer.
 
-use egui::Color32;
 use std::f64::consts::TAU;
 
+use egui::Color32;
 use graphics::{
     self, Camera, ControlScheme, DeviceEvent, ElementState, EngineUpdates, Entity, InputSettings,
     LightType, Lighting, Mesh, PointLight, Scene, UiSettings,
 };
-
 use lin_alg2::{
     self,
-    f32::Quaternion as QuatF32,
-    f32::Vec3 as Vec3F32,
+    f32::{Quaternion as QuatF32, Vec3 as Vec3F32},
     f64::{Quaternion, Vec3},
 };
 
@@ -371,7 +369,7 @@ pub fn generate_entities(state: &State) -> Vec<Entity> {
 
         let atom_mesh = match atom.role {
             AtomRole::N | AtomRole::Cα | AtomRole::Cp => 0, // Cube
-            _ => 1,                                          // Sphere
+            _ => 1,                                         // Sphere
         };
 
         let scale = match atom.role {

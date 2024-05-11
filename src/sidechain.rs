@@ -3,9 +3,9 @@
 // Don't show warnings for un`
 use std::{f64::consts::TAU, fmt};
 
-use crate::chem_definitions::AminoAcidType;
-
 use lin_alg2::f64::{Quaternion, Vec3};
+
+use crate::chem_definitions::AminoAcidType;
 
 pub const TAU_DIV2: f64 = TAU / 2.;
 

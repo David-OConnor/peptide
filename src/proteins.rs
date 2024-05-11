@@ -1,6 +1,7 @@
 //! This module contains descriptions of known proteins.
 
 use core::f64::consts::TAU;
+
 use lin_alg2::f64::{Quaternion, Vec3};
 
 use crate::{

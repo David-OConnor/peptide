@@ -3,8 +3,7 @@
 use lin_alg2::f64::{Quaternion, Vec3};
 
 use crate::{
-    chem_definitions::AminoAcidType,
-    chem_definitions::AtomRole,
+    chem_definitions::{AminoAcidType, AtomRole},
     forces::{MAG_N, MAG_O},
     sidechain::Sidechain,
     types::ProteinDescription,

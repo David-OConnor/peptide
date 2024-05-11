@@ -2,17 +2,15 @@
 
 use core::f64::consts::PI;
 
+use lin_alg2::f64::Vec3;
+use rand;
+use wf_lab::{basis_wfs, complex_nums::Cplx, util::linspace, wf_ops::N, Arr3d, Arr3dReal};
+
 use crate::{
     forces::{CHARGE_ELECTRON, CHARGE_PROTON},
     time_sim::SIM_BOX_DIST,
     util,
 };
-
-use wf_lab::{basis_wfs, complex_nums::Cplx, wf_ops::N, Arr3d, Arr3dReal, util::linspace};
-
-use lin_alg2::f64::Vec3;
-
-use rand;
 
 const A_0: f64 = 1.; // Bohr radius.
 const Z_H: f64 = 1.; // Z is the atomic number.
@@ -23,12 +21,10 @@ const VEL_SCALER: f64 = 0.0; // todo: increase A/R
 // These dists are around each charge, for atomic orbitals. Smaller gives
 // more precision around the value we care about; larger takes into account
 // less-likely values(?) farther out.
-const WF_DIST_MIN: f64 = -7.;
-const WF_DIST_MAX: f64 = 7.;
 
 // Each electron will have this many point charges, generated per the PDF.
 // Each charge value will be divided by this.
-const POINT_CHARGES_PER_ELECTRON: usize = 3;
+const POINT_CHARGES_PER_ELECTRON: usize = 1;
 // Render this many electron points in a frame, for a given electron.
 pub const EXTRA_VISIBILE_ELECTRONS: usize = 20;
 
@@ -86,12 +82,14 @@ pub struct WaveFunctionState {
     /// PDF gates. (ie cubes or grid points). This is set up as PDF map per electron so
     /// we can exclude an electron's own charge when calculating it's next position.
     pub pdf_maps: Vec<Vec<(f64, Vec3)>>,
+    /// Grid min and max. For now, it's a cube centered on 0.
+    /// todo: Consider a more flexible setup in the future.
+    pub grid_range: (f64, f64),
 }
 
 impl WaveFunctionState {
     pub fn build() -> Self {
         // let mut nuclei = Vec::new();
-
 
         let n_electrons = 4;
 
@@ -152,6 +150,7 @@ impl WaveFunctionState {
             extra_visible_elecs_dynamic: Vec::new(),
 
             pdf_maps: Vec::new(),
+            grid_range: (-1., 1.),
         };
 
         result.update_posits(0.);
@@ -168,9 +167,9 @@ impl WaveFunctionState {
         // let ctr_pt = (self.nuclei[0].position + self.nuclei[1].position) / 2.;
         let ctr_pt = self.nuclei[0].position;
 
-        let (x_min, x_max) = (ctr_pt.x - WF_DIST_MAX, ctr_pt.x + WF_DIST_MAX);
-        let (y_min, y_max) = (ctr_pt.y - WF_DIST_MAX, ctr_pt.y + WF_DIST_MAX);
-        let (z_min, z_max) = (ctr_pt.z - WF_DIST_MAX, ctr_pt.z + WF_DIST_MAX);
+        let (x_min, x_max) = (ctr_pt.x - self.grid_range.0, ctr_pt.x + self.grid_range.1);
+        let (y_min, y_max) = (ctr_pt.y - self.grid_range.0, ctr_pt.y + self.grid_range.1);
+        let (z_min, z_max) = (ctr_pt.z - self.grid_range.0, ctr_pt.z + self.grid_range.1);
 
         self.pdf_maps = Vec::new();
 
@@ -193,12 +192,15 @@ impl WaveFunctionState {
                 // We divide by the number of point charges per electron, since each dynamic electron
                 // generated represents a fraction of an electron charge.
                 // More charges per electron is probably more accurate, but is more computationally intensive.
-                charges.push((*elec_posit - ctr_pt, CHARGE_ELECTRON / POINT_CHARGES_PER_ELECTRON as f64));
+                charges.push((
+                    *elec_posit - ctr_pt,
+                    CHARGE_ELECTRON / POINT_CHARGES_PER_ELECTRON as f64,
+                ));
             }
 
             // Perform wavefunction computations centered around 0, to avoid floating-point
             // precision issues.
-            let psi = wf_lab::psi_from_pt_charges(&charges, (-WF_DIST_MAX, WF_DIST_MAX));
+            let psi = wf_lab::psi_from_pt_charges(&charges, &mut self.grid_range);
 
             let mut charge_density = wf_lab::wf_ops::new_data_real(N);
             wf_lab::wf_ops::charge_density_fm_psi(&psi, &mut charge_density, self.electrons.len());

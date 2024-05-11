@@ -1,9 +1,7 @@
 use core::f64::consts::TAU;
 
 use egui::{self, Color32, RichText};
-
 use graphics::{EngineUpdates, Scene};
-
 use rfd::FileDialog;
 
 use crate::{

@@ -2,6 +2,8 @@
 
 use std::{f64::consts::TAU, fmt};
 
+use lin_alg2::f64::{Quaternion, Vec3};
+
 use crate::{
     atom_coords::ProteinCoords,
     gui::UiMode,
@@ -12,8 +14,6 @@ use crate::{
     util,
     water::{WaterEnvironment, N_MOLECULES},
 };
-
-use lin_alg2::f64::{Quaternion, Vec3};
 
 #[derive(Debug)]
 /// A protein defined by AminoAcids: Name and bond angle.
