@@ -2,14 +2,16 @@
 
 use core::f64::consts::PI;
 
-use lin_alg2::f64::Vec3;
+use lin_alg::{complex_nums::Cplx, f64::Vec3};
 use rand;
-use wf_lab::{basis_wfs, complex_nums::Cplx, util::linspace, wf_ops::N, Arr3d, Arr3dReal};
+// use wf_lab::{basis_wfs, util::linspace, wf_ops::N, Arr3d, Arr3dReal};
+use util::linspace;
 
 use crate::{
     forces::{CHARGE_ELECTRON, CHARGE_PROTON},
     time_sim::SIM_BOX_DIST,
     util,
+    util::Arr3dReal,
 };
 
 const A_0: f64 = 1.; // Bohr radius.
@@ -200,10 +202,14 @@ impl WaveFunctionState {
 
             // Perform wavefunction computations centered around 0, to avoid floating-point
             // precision issues.
-            let psi = wf_lab::psi_from_pt_charges(&charges, &mut self.grid_range);
+            // let psi = wf_lab::psi_from_pt_charges(&charges, &mut self.grid_range);
+            //
+            // let mut charge_density = wf_lab::wf_ops::new_data_real(N);
+            // wf_lab::wf_ops::charge_density_fm_psi(&psi, &mut charge_density, self.electrons.len());
 
-            let mut charge_density = wf_lab::wf_ops::new_data_real(N);
-            wf_lab::wf_ops::charge_density_fm_psi(&psi, &mut charge_density, self.electrons.len());
+            let mut charge_density = Vec::new();
+
+            const N: usize = 1;
 
             // todo: Shift center point from 0 to our local coords of interest.
 

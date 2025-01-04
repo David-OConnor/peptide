@@ -4,10 +4,11 @@ use std::f64::consts::TAU;
 
 use egui::Color32;
 use graphics::{
-    self, Camera, ControlScheme, DeviceEvent, ElementState, EngineUpdates, Entity, InputSettings,
-    LightType, Lighting, Mesh, PointLight, Scene, UiSettings,
+    self, winit::platform::scancode::PhysicalKeyExtScancode, Camera, ControlScheme, DeviceEvent,
+    ElementState, EngineUpdates, Entity, InputSettings, LightType, Lighting, Mesh, PointLight,
+    Scene, UiSettings,
 };
-use lin_alg2::{
+use lin_alg::{
     self,
     f32::{Quaternion as QuatF32, Vec3 as Vec3F32},
     f64::{Quaternion, Vec3},
@@ -18,7 +19,7 @@ use crate::{
     bond_vecs::{LEN_CALPHA_CP, LEN_CALPHA_H, LEN_CP_N, LEN_CP_O, LEN_N_CALPHA, LEN_N_H},
     chem_definitions::AtomRole,
     gui,
-    quantum::{self, EXTRA_VISIBILE_ELECTRONS},
+    // quantum::{self, EXTRA_VISIBILE_ELECTRONS},
     render::{
         self, ACTIVE_CALPHA_COLOR, ATOM_SHINYNESS, BACKGROUND_COLOR, BOND_COLOR_BACKBONE,
         BOND_COLOR_SIDECHAIN, BOND_RADIUS_BACKBONE, BOND_RADIUS_SIDECHAIN, BOND_SHINYNESS,
@@ -89,7 +90,7 @@ fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) 
             DeviceEvent::Key(key) => {
                 if key.state == ElementState::Pressed {
                     // todo: These should probably be every 10 residues.
-                    match key.scancode {
+                    match key.physical_key.to_scancode().unwrap() {
                         // todo: Why are these scan codes for up/down so high??
                         57_416 => {
                             // Up arrow
@@ -657,7 +658,6 @@ pub fn run(state: State) {
         render_handler,
         make_event_handler(),
         gui::run(),
-        include_str!("shader_compute.wgsl"),
     );
 }
 

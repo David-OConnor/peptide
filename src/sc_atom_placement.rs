@@ -1,6 +1,6 @@
 //! Add positions and orientations for all sidechain atoms. Quite repetative!
 
-use lin_alg2::f64::{Quaternion, Vec3};
+use lin_alg::f64::{Quaternion, Vec3};
 
 use crate::{bond_vecs::*, kinematics::find_atom_placement, sidechain::*};
 

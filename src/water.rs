@@ -2,7 +2,7 @@
 //! See [this Water Model Wikipedia article](https://en.wikipedia.org/wiki/Water_model) for an
 //! overview of our initial approach.
 
-use lin_alg2::f64::{Quaternion, Vec3};
+use lin_alg::f64::{Quaternion, Vec3};
 use once_cell::sync::Lazy;
 use rand;
 

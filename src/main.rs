@@ -159,7 +159,7 @@ pub fn clamp_angle(angle: &mut f64, pro_φ: bool) {
 fn main() {
     bond_vecs::init_local_bond_vecs();
 
-    let state = State::new(crate::init_protein());
+    let state = State::new(init_protein());
 
     render_wgpu::run(state);
 }

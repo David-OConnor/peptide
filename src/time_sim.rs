@@ -3,7 +3,7 @@
 
 use core::f64::consts::TAU;
 
-use lin_alg2::f64::{Quaternion, Vec3};
+use lin_alg::f64::{Quaternion, Vec3};
 
 use crate::{
     atom_coords::ProteinCoords,

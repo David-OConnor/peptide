@@ -9,7 +9,7 @@ use std::{
     str,
 };
 
-use lin_alg2::f64::{Quaternion, Vec3};
+use lin_alg::f64::{Quaternion, Vec3};
 
 use crate::{
     sidechain::*,

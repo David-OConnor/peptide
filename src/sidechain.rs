@@ -3,7 +3,7 @@
 // Don't show warnings for un`
 use std::{f64::consts::TAU, fmt};
 
-use lin_alg2::f64::{Quaternion, Vec3};
+use lin_alg::f64::{Quaternion, Vec3};
 
 use crate::chem_definitions::AminoAcidType;
 

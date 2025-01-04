@@ -11,7 +11,7 @@
 
 // TIP4P/F?
 
-use lin_alg2::f64::Vec3;
+use lin_alg::f64::Vec3;
 use once_cell::sync::Lazy;
 
 use crate::{

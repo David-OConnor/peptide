@@ -5,9 +5,9 @@
 
 use std::f64::consts::TAU;
 
-use lin_alg2::f64::{Quaternion, Vec3};
+use lin_alg::f64::{Quaternion, Vec3};
 
-use crate::{forces, water};
+use crate::water;
 
 // These lengths are in angstroms.
 

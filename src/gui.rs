@@ -28,13 +28,13 @@ pub const FOCUS_TARGET_DIST: f32 = 15.;
 const ACTIVE_MODE_COLOR: Color32 = Color32::LIGHT_BLUE;
 const INACTIVE_MODE_COLOR: Color32 = Color32::LIGHT_GRAY;
 
-const WINDOW_MARGIN: egui::style::Margin = egui::style::Margin {
-    // todo not working
-    left: 10.,
-    right: 10.,
-    top: 10.,
-    bottom: 30.,
-};
+// const WINDOW_MARGIN: egui::style::Margin = egui::style::Margin {
+//     // todo not working
+//     left: 10.,
+//     right: 10.,
+//     top: 10.,
+//     bottom: 30.,
+// };
 
 const SIM_TIME_SCALE_MIN: f64 = 0.;
 const SIM_TIME_SCALE_MAX: f64 = 1.;
@@ -43,7 +43,7 @@ const SIM_TIME_SCALE_MAX: f64 = 1.;
 const TEMPERATURE_MIN: f64 = 273.15;
 const TEMPERATURE_MAX: f64 = 373.15;
 
-use lin_alg2::f32::Vec3;
+use lin_alg::f32::Vec3;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum UiMode {
@@ -383,7 +383,7 @@ fn add_sequence_editor(
             state.protein.descrip.residues.remove(ar_i);
         }
 
-        ui.spacing_mut().window_margin = WINDOW_MARGIN;
+        // ui.spacing_mut().window_margin = WINDOW_MARGIN;
     });
 }
 
@@ -432,7 +432,7 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
     move |state: &mut State, ctx: &egui::Context, scene: &mut Scene| {
         let mut engine_updates = EngineUpdates::default();
 
-        let panel = egui::SidePanel::left(0) // ID must be unique among panels.
+        let panel = egui::SidePanel::left("0") // ID must be unique among panels.
             .default_width(SIDE_PANEL_SIZE);
 
         panel.show(ctx, |ui| {
@@ -598,10 +598,10 @@ pub fn run() -> impl FnMut(&mut State, &egui::Context, &mut Scene) -> EngineUpda
 
             ui.add_space(SPACE_BETWEEN_SECTIONS * 2.);
 
-            ui.add(egui::Label::new("Keyboard commands:").wrap(true));
-            ui.add(egui::Label::new("W/S/A/D: Move forward, back, left, right. C: down. Space: up. Q/E: Roll.").wrap(true));
-            ui.add(egui::Label::new("Mouse left click + drag: Pitch and yaw. Up and down arrows: change active residue.").wrap(true));
-            ui.add(egui::Label::new("Hold shift to move faster.").wrap(true));
+            ui.add(egui::Label::new("Keyboard commands:").wrap());
+            ui.add(egui::Label::new("W/S/A/D: Move forward, back, left, right. C: down. Space: up. Q/E: Roll.").wrap());
+            ui.add(egui::Label::new("Mouse left click + drag: Pitch and yaw. Up and down arrows: change active residue.").wrap());
+            ui.add(egui::Label::new("Hold shift to move faster.").wrap());
             // ui.label("Keyboard commands:").wrap(true);
             // ui.label("WSAD: Move forward, back, left, right. C: down. Space: up. Q/E: Roll.");
             // ui.label("Mouse left click + drag: Pitch and yaw. Up and down arrows: change active residue.");

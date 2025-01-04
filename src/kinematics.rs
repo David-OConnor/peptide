@@ -3,7 +3,7 @@
 
 use std::f64::consts::TAU;
 
-use lin_alg2::f64::{self, Quaternion, Vec3};
+use lin_alg::f64::{self, Quaternion, Vec3};
 
 use crate::{
     bond_vecs::*,
@@ -23,7 +23,7 @@ fn calc_dihedral_angle(bond_middle: Vec3, bond_adjacent1: Vec3, bond_adjacent2: 
     // The dot product approach to angles between vectors only covers half of possible
     // rotations; use a determinant of the 3 vectors as matrix columns to determine if we
     // need to modify to be on the second half.
-    let det = lin_alg2::f64::det_from_cols(bond1_on_plane, bond2_on_plane, bond_middle);
+    let det = lin_alg::f64::det_from_cols(bond1_on_plane, bond2_on_plane, bond_middle);
 
     // todo: Exception if vecs are the same??
     if det < 0. {
