@@ -18,7 +18,7 @@ fn calc_dihedral_angle(bond_middle: Vec3, bond_adjacent1: Vec3, bond_adjacent2: 
     let bond2_on_plane = bond_adjacent2.project_to_plane(bond_middle).to_normalized();
 
     // Not sure why we need to offset by 𝜏/2 here, but it seems to be the case
-    let result = (bond1_on_plane.dot(bond2_on_plane)).acos() + TAU / 2.;
+    let result = bond1_on_plane.dot(bond2_on_plane).acos() + TAU / 2.;
 
     // The dot product approach to angles between vectors only covers half of possible
     // rotations; use a determinant of the 3 vectors as matrix columns to determine if we

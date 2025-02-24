@@ -4,15 +4,16 @@ use std::f64::consts::TAU;
 
 use egui::Color32;
 use graphics::{
-    self, winit::platform::scancode::PhysicalKeyExtScancode, Camera, ControlScheme, DeviceEvent,
-    ElementState, EngineUpdates, Entity, InputSettings, LightType, Lighting, Mesh, PointLight,
-    Scene, UiSettings,
+    self, event::WindowEvent, winit::platform::scancode::PhysicalKeyExtScancode, Camera,
+    ControlScheme, DeviceEvent, ElementState, EngineUpdates, Entity, InputSettings, LightType,
+    Lighting, Mesh, PointLight, Scene, UiSettings, FWD_VEC,
 };
 use lin_alg::{
     self,
     f32::{Quaternion as QuatF32, Vec3 as Vec3F32},
     f64::{Quaternion, Vec3},
 };
+use na_seq::AminoAcid;
 
 use crate::{
     atom_coords::{AtomCoords, ProteinCoords},
@@ -31,7 +32,6 @@ use crate::{
     types::State,
     util,
     util::{quat_to_f32, vec3_to_f32},
-    AminoAcidType,
 };
 
 // The length-wise axis of our graphics engine's cylinder mesh.
@@ -56,7 +56,7 @@ pub fn look_at(cam: &mut Camera, focus_pt: Vec3F32, dist: f32) {
 
     // todo: Add this to your quaternion article.
 
-    let vec_currently_looking_at = cam.orientation.rotate_vec(Vec3F32::new(0., 0., 1.)); // fwd vec
+    let vec_currently_looking_at = cam.orientation.rotate_vec(FWD_VEC);
     let dir_to_pt = (focus_pt - cam.position).to_normalized();
 
     let rotation = QuatF32::from_unit_vecs(vec_currently_looking_at, dir_to_pt);
@@ -70,183 +70,195 @@ pub fn look_at(cam: &mut Camera, focus_pt: Vec3F32, dist: f32) {
     cam.position = focus_pt - dir_to_pt * dist;
 }
 
-fn make_event_handler() -> impl FnMut(&mut State, DeviceEvent, &mut Scene, f32) -> EngineUpdates {
-    move |state: &mut State, event: DeviceEvent, scene: &mut Scene, dt: f32| {
-        // todo: Higher level api from winit or otherwise instead of scancode?
-        let mut entities_changed = false;
-        let mut active_res_backbone_changed = false;
-        let mut active_res_sidechain_changed = false;
-        let mut active_res_changed = false;
-        let mut lighting_changed = false;
+fn event_dev_handler(
+    state: &mut State,
+    event: DeviceEvent,
+    scene: &mut Scene,
+    dt: f32,
+) -> EngineUpdates {
+    // todo: Higher level api from winit or otherwise instead of scancode?
+    let mut entities_changed = false;
+    let mut active_res_backbone_changed = false;
+    let mut active_res_sidechain_changed = false;
+    let mut active_res_changed = false;
+    let mut lighting_changed = false;
 
-        // We count starting at 1, per chem conventions.
-        let ar_i = state.ui.active_residue - 1;
-        // code shortener
+    // We count starting at 1, per chem conventions.
+    let ar_i = state.ui.active_residue - 1;
+    // code shortener
 
-        let mut active_res = &mut state.protein.descrip.residues[ar_i];
-        let rotation_amt = crate::BOND_ROTATION_SPEED * dt as f64;
+    let mut active_res = &mut state.protein.descrip.residues[ar_i];
+    let rotation_amt = crate::BOND_ROTATION_SPEED * dt as f64;
 
-        match event {
-            DeviceEvent::Key(key) => {
-                if key.state == ElementState::Pressed {
-                    // todo: These should probably be every 10 residues.
-                    match key.physical_key.to_scancode().unwrap() {
-                        // todo: Why are these scan codes for up/down so high??
-                        57_416 => {
-                            // Up arrow
-                            if state.ui.active_residue != state.protein.descrip.residues.len() {
-                                state.ui.active_residue += 1;
-                                entities_changed = true;
-                                active_res_changed = true;
-                            }
-                        }
-                        57_424 => {
-                            // Down arrow
-                            if state.ui.active_residue != 1 {
-                                state.ui.active_residue -= 1;
-                                entities_changed = true;
-                                active_res_changed = true;
-                            }
-                        }
-                        20 => {
-                            // T
-                            active_res.φ += rotation_amt;
-                            active_res_backbone_changed = true;
+    match event {
+        DeviceEvent::Key(key) => {
+            if key.state == ElementState::Pressed {
+                // todo: These should probably be every 10 residues.
+                match key.physical_key.to_scancode().unwrap() {
+                    // todo: Why are these scan codes for up/down so high??
+                    57_416 => {
+                        // Up arrow
+                        if state.ui.active_residue != state.protein.descrip.residues.len() {
+                            state.ui.active_residue += 1;
                             entities_changed = true;
+                            active_res_changed = true;
                         }
-                        34 => {
-                            // G
-                            active_res.φ -= rotation_amt;
-                            active_res_backbone_changed = true;
-                            entities_changed = true;
-                        }
-                        21 => {
-                            // Y
-                            active_res.ψ += rotation_amt;
-                            active_res_backbone_changed = true;
-                            entities_changed = true;
-                        }
-                        35 => {
-                            // H
-                            active_res.ψ -= rotation_amt;
-                            active_res_backbone_changed = true;
-                            entities_changed = true;
-                        }
-                        22 => {
-                            // U
-                            active_res.ω += rotation_amt;
-                            active_res_backbone_changed = true;
-                            entities_changed = true;
-                        }
-                        36 => {
-                            // J
-                            active_res.ω -= rotation_amt;
-                            active_res_backbone_changed = true;
-                            entities_changed = true;
-                        }
-                        23 => {
-                            // I
-                            active_res.sidechain.add_to_χ1(rotation_amt);
-                            active_res_sidechain_changed = true;
-                            entities_changed = true;
-                        }
-                        37 => {
-                            // K
-                            active_res.sidechain.add_to_χ1(-rotation_amt);
-                            active_res_sidechain_changed = true;
-                            entities_changed = true;
-                        }
-                        24 => {
-                            // O
-                            active_res.sidechain.add_to_χ2(rotation_amt);
-                            active_res_sidechain_changed = true;
-                            entities_changed = true;
-                        }
-                        38 => {
-                            // L
-                            active_res.sidechain.add_to_χ2(-rotation_amt);
-                            active_res_sidechain_changed = true;
-                            entities_changed = true;
-                        }
-                        36 => {
-                            // P
-                            active_res.sidechain.add_to_χ3(rotation_amt);
-                            active_res_sidechain_changed = true;
-                            entities_changed = true;
-                        }
-                        39 => {
-                            // ;
-                            active_res.sidechain.add_to_χ3(-rotation_amt);
-                            active_res_sidechain_changed = true;
-                            entities_changed = true;
-                        }
-                        // 29 => {
-                        //     // Left ctrl
-                        // }
-                        // todo: Sidechain dihedral angles
-                        _ => {}
                     }
+                    57_424 => {
+                        // Down arrow
+                        if state.ui.active_residue != 1 {
+                            state.ui.active_residue -= 1;
+                            entities_changed = true;
+                            active_res_changed = true;
+                        }
+                    }
+                    20 => {
+                        // T
+                        active_res.φ += rotation_amt;
+                        active_res_backbone_changed = true;
+                        entities_changed = true;
+                    }
+                    34 => {
+                        // G
+                        active_res.φ -= rotation_amt;
+                        active_res_backbone_changed = true;
+                        entities_changed = true;
+                    }
+                    21 => {
+                        // Y
+                        active_res.ψ += rotation_amt;
+                        active_res_backbone_changed = true;
+                        entities_changed = true;
+                    }
+                    35 => {
+                        // H
+                        active_res.ψ -= rotation_amt;
+                        active_res_backbone_changed = true;
+                        entities_changed = true;
+                    }
+                    22 => {
+                        // U
+                        active_res.ω += rotation_amt;
+                        active_res_backbone_changed = true;
+                        entities_changed = true;
+                    }
+                    36 => {
+                        // J
+                        active_res.ω -= rotation_amt;
+                        active_res_backbone_changed = true;
+                        entities_changed = true;
+                    }
+                    23 => {
+                        // I
+                        active_res.sidechain.add_to_χ1(rotation_amt);
+                        active_res_sidechain_changed = true;
+                        entities_changed = true;
+                    }
+                    37 => {
+                        // K
+                        active_res.sidechain.add_to_χ1(-rotation_amt);
+                        active_res_sidechain_changed = true;
+                        entities_changed = true;
+                    }
+                    24 => {
+                        // O
+                        active_res.sidechain.add_to_χ2(rotation_amt);
+                        active_res_sidechain_changed = true;
+                        entities_changed = true;
+                    }
+                    38 => {
+                        // L
+                        active_res.sidechain.add_to_χ2(-rotation_amt);
+                        active_res_sidechain_changed = true;
+                        entities_changed = true;
+                    }
+                    36 => {
+                        // P
+                        active_res.sidechain.add_to_χ3(rotation_amt);
+                        active_res_sidechain_changed = true;
+                        entities_changed = true;
+                    }
+                    39 => {
+                        // ;
+                        active_res.sidechain.add_to_χ3(-rotation_amt);
+                        active_res_sidechain_changed = true;
+                        entities_changed = true;
+                    }
+                    // 29 => {
+                    //     // Left ctrl
+                    // }
+                    // todo: Sidechain dihedral angles
+                    _ => {}
                 }
             }
-            // todo: Gamepad not yet supported by winit, but WIP.
-            // GamepadEvent::Axis { axis_id, axis, value, stick } => {
-            //     println!("Axis id: {:?}, axis: {:?}, value: {:?}, stick: {:?}", axis_id, axis, value, stick)
-            // }
-            // // GamepadEvent::Stick => {
-            // GamepadEvent::Button{ button_id, button, state } => {
-            //     // todo: Println etc
-            // }
-            _ => {}
         }
-
-        if entities_changed {
-            // Recalculate coordinates now that we've updated our bond angles
-            state.protein.coords = ProteinCoords::from_descrip(&state.protein.descrip);
-            scene.entities = generate_entities(&state);
-        }
-
-        if active_res_changed {
-            // state.ui.active_res_id = state.ui.active_residue;
-            //
-            // // let aa_name = format!("{}", state.protein.descrip.residues[state.ui.active_residue].sidechain);
-            // // let aa_name =
-            // state.ui.active_res_aa_name = state.protein.descrip.residues[ar_i]
-            //     .sidechain
-            //     .aa_name()
-            //     .to_owned();
-
-            gui::change_lit_res(state, scene);
-            lighting_changed = true;
-        }
-
-        if active_res_changed || active_res_backbone_changed {
-            // todo: Break this out by psi, phi etc instead of always updating all?
-            let res = &mut state.protein.descrip.residues[state.ui.active_residue - 1];
-
-            // todo: Only do this for backbone changd; not acive res
-
-            crate::clamp_angle(&mut res.φ, res.sidechain.aa_type() == AminoAcidType::Pro);
-            crate::clamp_angle(&mut res.ψ, false);
-            crate::clamp_angle(&mut res.ω, false);
-        }
-
-        // if active_res_changed || active_res_sidechain_changed {
-        //     // todo: Break this out by psi, phi etc instead of always updating all?
-        //     // let sc = &state.protein.descrip.residues[state.ui.active_residue - 1].sidechain;
-        //     //
-        //     // state.ui.active_res_χ1 = sc.get_χ1();
-        //     // state.ui.active_res_χ2 = sc.get_χ2();
-        //     // state.ui.active_res_χ3 = sc.get_χ3();
-        //     // state.ui.active_res_χ4 = sc.get_χ4();
-        //     // state.ui.active_res_χ5 = sc.get_χ5();
+        // todo: Gamepad not yet supported by winit, but WIP.
+        // GamepadEvent::Axis { axis_id, axis, value, stick } => {
+        //     println!("Axis id: {:?}, axis: {:?}, value: {:?}, stick: {:?}", axis_id, axis, value, stick)
         // }
-
-        EngineUpdates {
-            entities: entities_changed,
-            lighting: lighting_changed,
-            ..Default::default()
-        }
+        // // GamepadEvent::Stick => {
+        // GamepadEvent::Button{ button_id, button, state } => {
+        //     // todo: Println etc
+        // }
+        _ => {}
     }
+
+    if entities_changed {
+        // Recalculate coordinates now that we've updated our bond angles
+        state.protein.coords = ProteinCoords::from_descrip(&state.protein.descrip);
+        scene.entities = generate_entities(&state);
+    }
+
+    if active_res_changed {
+        // state.ui.active_res_id = state.ui.active_residue;
+        //
+        // // let aa_name = format!("{}", state.protein.descrip.residues[state.ui.active_residue].sidechain);
+        // // let aa_name =
+        // state.ui.active_res_aa_name = state.protein.descrip.residues[ar_i]
+        //     .sidechain
+        //     .aa_name()
+        //     .to_owned();
+
+        gui::change_lit_res(state, scene);
+        lighting_changed = true;
+    }
+
+    if active_res_changed || active_res_backbone_changed {
+        // todo: Break this out by psi, phi etc instead of always updating all?
+        let res = &mut state.protein.descrip.residues[state.ui.active_residue - 1];
+
+        // todo: Only do this for backbone changd; not acive res
+
+        crate::clamp_angle(&mut res.φ, res.sidechain.aa_type() == AminoAcid::Pro);
+        crate::clamp_angle(&mut res.ψ, false);
+        crate::clamp_angle(&mut res.ω, false);
+    }
+
+    // if active_res_changed || active_res_sidechain_changed {
+    //     // todo: Break this out by psi, phi etc instead of always updating all?
+    //     // let sc = &state.protein.descrip.residues[state.ui.active_residue - 1].sidechain;
+    //     //
+    //     // state.ui.active_res_χ1 = sc.get_χ1();
+    //     // state.ui.active_res_χ2 = sc.get_χ2();
+    //     // state.ui.active_res_χ3 = sc.get_χ3();
+    //     // state.ui.active_res_χ4 = sc.get_χ4();
+    //     // state.ui.active_res_χ5 = sc.get_χ5();
+    // }
+
+    EngineUpdates {
+        entities: entities_changed,
+        lighting: lighting_changed,
+        ..Default::default()
+    }
+}
+
+fn event_win_handler(
+    _state: &mut State,
+    _event: WindowEvent,
+    _scene: &mut Scene,
+    _dt: f32,
+) -> EngineUpdates {
+    EngineUpdates::default()
 }
 
 /// This runs each frame. Update our time-based simulation here.
@@ -594,8 +606,8 @@ pub fn run(state: State) {
             ),
             Mesh::new_sphere(render::SIDE_LEN / 2., 20, 20),
             // todo: Temp bond len. You prob need a mesh per possible len.
-            Mesh::new_cylinder(1.2, render::BOND_RADIUS_BACKBONE, render::BOND_N_SIDES),
-            Mesh::new_cylinder(1.2, render::BOND_RADIUS_SIDECHAIN, render::BOND_N_SIDES),
+            Mesh::new_cylinder(1.2, BOND_RADIUS_BACKBONE, render::BOND_N_SIDES),
+            Mesh::new_cylinder(1.2, BOND_RADIUS_SIDECHAIN, render::BOND_N_SIDES),
         ],
         entities,
         camera: Camera {
@@ -655,8 +667,10 @@ pub fn run(state: State) {
         scene,
         input_settings,
         ui_settings,
+        Default::default(),
         render_handler,
-        make_event_handler(),
+        event_dev_handler,
+        event_win_handler,
         gui::run(),
     );
 }

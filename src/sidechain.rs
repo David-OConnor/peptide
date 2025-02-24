@@ -4,8 +4,7 @@
 use std::{f64::consts::TAU, fmt};
 
 use lin_alg::f64::{Quaternion, Vec3};
-
-use crate::chem_definitions::AminoAcidType;
+use na_seq::AminoAcid;
 
 pub const TAU_DIV2: f64 = TAU / 2.;
 
@@ -205,29 +204,29 @@ impl fmt::Display for Sidechain {
 
 impl Sidechain {
     /// Construct an AA (with default dihedral angles) from an amino acid type.
-    pub fn from_aa_type(aa_type: AminoAcidType) -> Self {
+    pub fn from_aa_type(aa_type: AminoAcid) -> Self {
         match aa_type {
-            AminoAcidType::Arg => Self::Arg(Default::default()),
-            AminoAcidType::His => Self::His(Default::default()),
-            AminoAcidType::Lys => Self::Lys(Default::default()),
-            AminoAcidType::Asp => Self::Asp(Default::default()),
-            AminoAcidType::Glu => Self::Glu(Default::default()),
-            AminoAcidType::Ser => Self::Ser(Default::default()),
-            AminoAcidType::Thr => Self::Thr(Default::default()),
-            AminoAcidType::Asn => Self::Asn(Default::default()),
-            AminoAcidType::Gln => Self::Gln(Default::default()),
-            AminoAcidType::Cys => Self::Cys(Default::default()),
-            AminoAcidType::Sec => Self::Sec(Default::default()),
-            AminoAcidType::Gly => Self::Gly(Default::default()),
-            AminoAcidType::Pro => Self::Pro(Default::default()),
-            AminoAcidType::Ala => Self::Ala(Default::default()),
-            AminoAcidType::Val => Self::Val(Default::default()),
-            AminoAcidType::Ile => Self::Ile(Default::default()),
-            AminoAcidType::Leu => Self::Leu(Default::default()),
-            AminoAcidType::Met => Self::Met(Default::default()),
-            AminoAcidType::Phe => Self::Phe(Default::default()),
-            AminoAcidType::Tyr => Self::Tyr(Default::default()),
-            AminoAcidType::Trp => Self::Trp(Default::default()),
+            AminoAcid::Arg => Self::Arg(Default::default()),
+            AminoAcid::His => Self::His(Default::default()),
+            AminoAcid::Lys => Self::Lys(Default::default()),
+            AminoAcid::Asp => Self::Asp(Default::default()),
+            AminoAcid::Glu => Self::Glu(Default::default()),
+            AminoAcid::Ser => Self::Ser(Default::default()),
+            AminoAcid::Thr => Self::Thr(Default::default()),
+            AminoAcid::Asn => Self::Asn(Default::default()),
+            AminoAcid::Gln => Self::Gln(Default::default()),
+            AminoAcid::Cys => Self::Cys(Default::default()),
+            AminoAcid::Sec => Self::Sec(Default::default()),
+            AminoAcid::Gly => Self::Gly(Default::default()),
+            AminoAcid::Pro => Self::Pro(Default::default()),
+            AminoAcid::Ala => Self::Ala(Default::default()),
+            AminoAcid::Val => Self::Val(Default::default()),
+            AminoAcid::Ile => Self::Ile(Default::default()),
+            AminoAcid::Leu => Self::Leu(Default::default()),
+            AminoAcid::Met => Self::Met(Default::default()),
+            AminoAcid::Phe => Self::Phe(Default::default()),
+            AminoAcid::Tyr => Self::Tyr(Default::default()),
+            AminoAcid::Trp => Self::Trp(Default::default()),
         }
     }
 
@@ -261,29 +260,29 @@ impl Sidechain {
     }
 
     /// todo: Instead of this, many impl partial eq in a way that makes sense?
-    pub fn aa_type(&self) -> AminoAcidType {
+    pub fn aa_type(&self) -> AminoAcid {
         match self {
-            Self::Arg(_) => AminoAcidType::Arg,
-            Self::His(_) => AminoAcidType::His,
-            Self::Lys(_) => AminoAcidType::Lys,
-            Self::Asp(_) => AminoAcidType::Asp,
-            Self::Glu(_) => AminoAcidType::Glu,
-            Self::Ser(_) => AminoAcidType::Ser,
-            Self::Thr(_) => AminoAcidType::Thr,
-            Self::Asn(_) => AminoAcidType::Asn,
-            Self::Gln(_) => AminoAcidType::Gln,
-            Self::Cys(_) => AminoAcidType::Cys,
-            Self::Sec(_) => AminoAcidType::Sec,
-            Self::Gly(_) => AminoAcidType::Gly,
-            Self::Pro(_) => AminoAcidType::Pro,
-            Self::Ala(_) => AminoAcidType::Ala,
-            Self::Val(_) => AminoAcidType::Val,
-            Self::Ile(_) => AminoAcidType::Ile,
-            Self::Leu(_) => AminoAcidType::Leu,
-            Self::Met(_) => AminoAcidType::Met,
-            Self::Phe(_) => AminoAcidType::Phe,
-            Self::Tyr(_) => AminoAcidType::Tyr,
-            Self::Trp(_) => AminoAcidType::Trp,
+            Self::Arg(_) => AminoAcid::Arg,
+            Self::His(_) => AminoAcid::His,
+            Self::Lys(_) => AminoAcid::Lys,
+            Self::Asp(_) => AminoAcid::Asp,
+            Self::Glu(_) => AminoAcid::Glu,
+            Self::Ser(_) => AminoAcid::Ser,
+            Self::Thr(_) => AminoAcid::Thr,
+            Self::Asn(_) => AminoAcid::Asn,
+            Self::Gln(_) => AminoAcid::Gln,
+            Self::Cys(_) => AminoAcid::Cys,
+            Self::Sec(_) => AminoAcid::Sec,
+            Self::Gly(_) => AminoAcid::Gly,
+            Self::Pro(_) => AminoAcid::Pro,
+            Self::Ala(_) => AminoAcid::Ala,
+            Self::Val(_) => AminoAcid::Val,
+            Self::Ile(_) => AminoAcid::Ile,
+            Self::Leu(_) => AminoAcid::Leu,
+            Self::Met(_) => AminoAcid::Met,
+            Self::Phe(_) => AminoAcid::Phe,
+            Self::Tyr(_) => AminoAcid::Tyr,
+            Self::Trp(_) => AminoAcid::Trp,
         }
     }
 

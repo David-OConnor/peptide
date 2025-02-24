@@ -1,9 +1,10 @@
 //! This module contains respresentations of atom coords.
 
 use lin_alg::f64::{Quaternion, Vec3};
+use na_seq::AminoAcid;
 
 use crate::{
-    chem_definitions::{AminoAcidType, AtomRole},
+    chem_definitions::AtomRole,
     forces::{MAG_N, MAG_O},
     sidechain::Sidechain,
     types::ProteinDescription,
@@ -123,7 +124,7 @@ impl ProteinCoords {
             // Proline sees the nitrogen bonded to one of the sidechain carbons (the one that
             // completes the ring) vice a hydrogen.
             let mut cα_bond_step = 2;
-            if res.sidechain.aa_type() != AminoAcidType::Pro {
+            if res.sidechain.aa_type() != AminoAcid::Pro {
                 add_atom(
                     AtomRole::HN,
                     bb_coords.h_n,

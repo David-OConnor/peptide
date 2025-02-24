@@ -6,12 +6,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-graphics = "^0.3.1"
-lin_alg = "^1.0.1"
-egui = "0.30.0"
-#wf_lab = { path = "../wf-lab" }  # todo: What? Remove this.
+graphics = { path = "../graphics" }
+#graphics = "^0.3.1"
+#lin_alg = "^1.0.6"
+lin_alg = { path = "../lin_alg" }
+
+na_seq = "^0.2.7"
+
+egui = "0.31.0"
+
 #rand = { version = "^0.8.5", features = ["std", "std_rng"] }
-rand = "^0.8.5"
+rand = "^0.9.0"
+
 # todo: Replace rfd with what you use in plasCad
 rfd = "0.15.2"  # File dialogs for saving and loading
+
 once_cell = "^1.16.0"  # todo: Temp. Will eventually be in stable rust

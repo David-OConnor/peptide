@@ -68,8 +68,9 @@ mod water;
 
 use std::f64::consts::TAU;
 
+use na_seq::AminoAcid;
+
 use crate::{
-    chem_definitions::AminoAcidType,
     sidechain::{PRO_PHI_MAX, PRO_PHI_MIN},
     types::State,
 };
@@ -106,7 +107,7 @@ fn init_protein() -> ProteinDescription {
     // todo: Would this make sense elsewhere, given it's only for the GUI?
 
     for res in &mut prot_test.residues {
-        clamp_angle(&mut res.φ, res.sidechain.aa_type() == AminoAcidType::Pro);
+        clamp_angle(&mut res.φ, res.sidechain.aa_type() == AminoAcid::Pro);
         clamp_angle(&mut res.ψ, false);
         clamp_angle(&mut res.ω, false);
 

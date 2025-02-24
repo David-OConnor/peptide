@@ -4,6 +4,7 @@
 use core::f64::consts::TAU;
 
 use lin_alg::f64::{Quaternion, Vec3};
+use na_seq::AminoAcid;
 
 use crate::{
     atom_coords::ProteinCoords,
@@ -12,7 +13,7 @@ use crate::{
     quantum::{Electron, WaveFunctionState},
     types::UiState,
     water::{self, WaterEnvironment, H_MASS, O_H_DIST},
-    AminoAcidType, ProteinDescription, State,
+    ProteinDescription, State,
 };
 
 // Distance from the origin.
@@ -40,7 +41,7 @@ fn run_frame_protein_jitter(
         res.ψ += rng() * dt_modified;
         res.φ += rng() * dt_modified;
 
-        crate::clamp_angle(&mut res.φ, res.sidechain.aa_type() == AminoAcidType::Pro);
+        crate::clamp_angle(&mut res.φ, res.sidechain.aa_type() == AminoAcid::Pro);
         crate::clamp_angle(&mut res.ψ, false);
 
         if let Some(χ) = res.sidechain.get_mut_χ1() {

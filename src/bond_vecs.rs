@@ -11,6 +11,8 @@ use crate::water;
 
 // These lengths are in angstroms.
 
+// Some info here: https://www.ruppweb.org/Xray/tutorial/protein_structure.htm
+
 // Double bond len of C' to N.
 pub const LEN_CP_N: f64 = 1.33; // angstrom
 pub const LEN_N_CALPHA: f64 = 1.46; // angstrom

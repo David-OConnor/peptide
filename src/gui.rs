@@ -2,11 +2,12 @@ use core::f64::consts::TAU;
 
 use egui::{self, Color32, RichText};
 use graphics::{EngineUpdates, Scene};
+use na_seq::AminoAcid;
 use rfd::FileDialog;
 
 use crate::{
     atom_coords::ProteinCoords,
-    chem_definitions::{AminoAcidType, AtomRole},
+    chem_definitions::AtomRole,
     render_wgpu,
     sidechain::{Sidechain, PRO_PHI_MAX, PRO_PHI_MIN},
     types::{State, UiState},
@@ -165,7 +166,7 @@ fn add_active_aa_editor(
     let active_res = &mut state.protein.descrip.residues[ar_i];
 
     // For proline, limit φ range.
-    let pro = active_aa_type == AminoAcidType::Pro;
+    let pro = active_aa_type == AminoAcid::Pro;
 
     // We use this syntax instead of the more concise `new` syntax, so we know
     // if we need to change the scene.
@@ -224,7 +225,7 @@ fn add_aa_selector(
     scene: &mut Scene,
     engine_updates: &mut EngineUpdates,
     ar_i: usize,
-    initial_type: AminoAcidType,
+    initial_type: AminoAcid,
     sel_id: usize,
 ) -> bool {
     let mut res_removed = false;
@@ -244,33 +245,33 @@ fn add_aa_selector(
             .selected_text(format!("{}", selected))
             .show_ui(ui, |ui| {
                 // todo: Code shortener
-                ui.selectable_value(&mut selected, AminoAcidType::Arg, "Arg (R)");
-                ui.selectable_value(&mut selected, AminoAcidType::His, "His (H)");
-                ui.selectable_value(&mut selected, AminoAcidType::Lys, "Lys (K)");
-                ui.selectable_value(&mut selected, AminoAcidType::Asp, "Asp (D)");
-                ui.selectable_value(&mut selected, AminoAcidType::Glu, "Glu (E)");
-                ui.selectable_value(&mut selected, AminoAcidType::Ser, "Ser (S)");
-                ui.selectable_value(&mut selected, AminoAcidType::Thr, "Thr (T)");
-                ui.selectable_value(&mut selected, AminoAcidType::Asn, "Asn (N)");
-                ui.selectable_value(&mut selected, AminoAcidType::Gln, "Gln (Q)");
-                ui.selectable_value(&mut selected, AminoAcidType::Cys, "Cys (C)");
-                ui.selectable_value(&mut selected, AminoAcidType::Sec, "Sec (U)");
-                ui.selectable_value(&mut selected, AminoAcidType::Gly, "Gly (G)");
-                ui.selectable_value(&mut selected, AminoAcidType::Pro, "Pro (P)");
-                ui.selectable_value(&mut selected, AminoAcidType::Ala, "Ala (A)");
-                ui.selectable_value(&mut selected, AminoAcidType::Val, "Val (V)");
-                ui.selectable_value(&mut selected, AminoAcidType::Ile, "Ile (I)");
-                ui.selectable_value(&mut selected, AminoAcidType::Leu, "Leu (L)");
-                ui.selectable_value(&mut selected, AminoAcidType::Met, "Met (M)");
-                ui.selectable_value(&mut selected, AminoAcidType::Phe, "Phe (F)");
-                ui.selectable_value(&mut selected, AminoAcidType::Tyr, "Tyr (Y)");
-                ui.selectable_value(&mut selected, AminoAcidType::Trp, "Trp (W)");
+                ui.selectable_value(&mut selected, AminoAcid::Arg, "Arg (R)");
+                ui.selectable_value(&mut selected, AminoAcid::His, "His (H)");
+                ui.selectable_value(&mut selected, AminoAcid::Lys, "Lys (K)");
+                ui.selectable_value(&mut selected, AminoAcid::Asp, "Asp (D)");
+                ui.selectable_value(&mut selected, AminoAcid::Glu, "Glu (E)");
+                ui.selectable_value(&mut selected, AminoAcid::Ser, "Ser (S)");
+                ui.selectable_value(&mut selected, AminoAcid::Thr, "Thr (T)");
+                ui.selectable_value(&mut selected, AminoAcid::Asn, "Asn (N)");
+                ui.selectable_value(&mut selected, AminoAcid::Gln, "Gln (Q)");
+                ui.selectable_value(&mut selected, AminoAcid::Cys, "Cys (C)");
+                ui.selectable_value(&mut selected, AminoAcid::Sec, "Sec (U)");
+                ui.selectable_value(&mut selected, AminoAcid::Gly, "Gly (G)");
+                ui.selectable_value(&mut selected, AminoAcid::Pro, "Pro (P)");
+                ui.selectable_value(&mut selected, AminoAcid::Ala, "Ala (A)");
+                ui.selectable_value(&mut selected, AminoAcid::Val, "Val (V)");
+                ui.selectable_value(&mut selected, AminoAcid::Ile, "Ile (I)");
+                ui.selectable_value(&mut selected, AminoAcid::Leu, "Leu (L)");
+                ui.selectable_value(&mut selected, AminoAcid::Met, "Met (M)");
+                ui.selectable_value(&mut selected, AminoAcid::Phe, "Phe (F)");
+                ui.selectable_value(&mut selected, AminoAcid::Tyr, "Tyr (Y)");
+                ui.selectable_value(&mut selected, AminoAcid::Trp, "Trp (W)");
             });
 
         if selected != state.protein.descrip.residues[ar_i].sidechain.aa_type() {
             state.protein.descrip.residues[ar_i].sidechain = Sidechain::from_aa_type(selected);
 
-            if selected == AminoAcidType::Pro {
+            if selected == AminoAcid::Pro {
                 crate::clamp_angle(&mut state.protein.descrip.residues[ar_i].φ, true);
             }
 
@@ -294,7 +295,7 @@ fn add_aa_selector(
                         engine_updates.entities = true;
 
                         if state.protein.descrip.residues[ar_i].sidechain.aa_type()
-                            == AminoAcidType::Pro
+                            == AminoAcid::Pro
                         {
                             crate::clamp_angle(&mut state.protein.descrip.residues[ar_i].φ, true);
                         }
